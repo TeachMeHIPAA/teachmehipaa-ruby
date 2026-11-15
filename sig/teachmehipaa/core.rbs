@@ -102,6 +102,27 @@ module TeachMeHipaa
   class APITimeoutError < APIConnectionError
   end
 
+  class WebhookSignatureError < Error
+    def initialize: (String code, String message) -> void
+  end
+
+  module Webhook
+    # Request headers: a Hash in any key case, a Rack env, or Rails'
+    # request.headers.
+    interface _Headers
+      def each: () { ([untyped, untyped]) -> void } -> untyped
+    end
+
+    DEFAULT_TOLERANCE: Integer
+
+    # A nil or empty secret (an unset environment variable, say) raises
+    # ArgumentError.
+    def self.construct_event: (String payload, _Headers headers, String? secret, String path,
+                               ?tolerance: Numeric, ?received_at: Time?) -> (Event | TestDelivery)
+    def self.generate_test_headers: (payload: String, secret: String?, path: String, ?timestamp: Time?,
+                                     ?event_type: String?, ?event_id: String?, ?key_id: String?) -> headers
+  end
+
   module Transport
     class Request < Data
       attr_reader http_method: String
@@ -236,6 +257,17 @@ module TeachMeHipaa
       def self.success?: (Transport::Response response) -> bool
     end
 
+    module WebhookInput
+      ISO_8601_DATE_TIME: Regexp
+
+      def self.header: (Webhook::_Headers headers, String name) -> untyped
+      def self.required_header: (Webhook::_Headers headers, String name) -> String
+      def self.path_and_query: (untyped path) -> String
+      def self.check_secret: (untyped secret) -> void
+      def self.parse_timestamp: (String timestamp) -> Time
+      def self.parse: (String payload) -> (Event | TestDelivery)
+    end
+
     module Multipart
       def self.encode: (Hash[String, untyped] body, Hash[String, String] binary_parts) -> [String, String]
       def self.file_part: (String name, upload value, String content_type) -> String
@@ -340,5 +372,6 @@ module TeachMeHipaa
     def base_url: () -> String
     def max_retries: () -> Integer
     def timeout: () -> Float
+    def webhooks: () -> singleton(Webhook)
   end
 end

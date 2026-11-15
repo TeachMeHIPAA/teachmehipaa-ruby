@@ -147,4 +147,14 @@ module TeachMeHipaa
 
   # No response arrived within the timeout.
   class APITimeoutError < APIConnectionError; end
+
+  # A webhook Delivery failed verification. +code+ says why:
+  # "missing_header", "invalid_timestamp", "timestamp_outside_tolerance",
+  # "body_hash_mismatch" or "signature_mismatch". Carries neither the body
+  # nor the headers, which may hold PHI (ADR-0007).
+  class WebhookSignatureError < Error
+    def initialize(code, message)
+      super(message, code:)
+    end
+  end
 end

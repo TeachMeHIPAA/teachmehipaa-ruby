@@ -41,6 +41,10 @@ module TeachMeHipaa
     def max_retries = config.max_retries
     def timeout = config.timeout
 
+    # TeachMeHipaa::Webhook, for verifying Deliveries. It needs only the
+    # Signing secret, so it is also usable without a client.
+    def webhooks = Webhook
+
     def inspect
       "#<#{self.class.name} environment=#{environment.inspect} base_url=#{base_url.inspect}>"
     end
