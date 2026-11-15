@@ -1,10 +1,25 @@
 # frozen_string_literal: true
 
+require "bundler/gem_tasks"
 require "minitest/test_task"
 require "rubocop/rake_task"
 
+# The contract and sandbox suites live in subdirectories, so a plain
+# `rake test` needs neither Node nor credentials.
 Minitest::TestTask.create(:test) do |t|
-  t.test_globs = ["test/**/*_test.rb"]
+  t.test_globs = ["test/*_test.rb"]
+end
+
+namespace :test do
+  Minitest::TestTask.create(:contract) do |t|
+    t.test_globs = ["test/contract/**/*_test.rb"]
+  end
+  Rake::Task["test:contract"].clear_comments.add_description "Run the client against a Prism mock of the spec"
+
+  Minitest::TestTask.create(:sandbox) do |t|
+    t.test_globs = ["test/sandbox/**/*_test.rb"]
+  end
+  Rake::Task["test:sandbox"].clear_comments.add_description "Smoke-test the real Sandbox (needs credentials)"
 end
 
 RuboCop::RakeTask.new(:rubocop)

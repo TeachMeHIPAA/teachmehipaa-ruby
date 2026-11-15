@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     name: Ruby ${{ matrix.ruby-version }}
@@ -29,3 +33,22 @@ jobs:
         run: bundle exec rake rbs:validate
       - name: Test (with runtime signature checks)
         run: bundle exec rake rbs:test
+      - name: Build
+        run: gem build teachmehipaa.gemspec --strict
+
+  contract:
+    name: Contract tests (Prism mock of the developer spec)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      # Prism runs through npx.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - run: bundle exec rake test:contract

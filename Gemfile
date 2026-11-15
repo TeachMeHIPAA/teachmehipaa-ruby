@@ -11,3 +11,5 @@ gem "rbs", "~> 3.9"
 # into surprise CI failures.
 gem "rubocop", "1.92.2"
 gem "rubocop-minitest", "0.41.0"
+# The README's Sinatra webhook handler runs under the README doc test.
+gem "sinatra", "~> 4.1"
