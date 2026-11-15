@@ -1,16 +1,77 @@
 # frozen_string_literal: true
 
 module TeachMeHipaa
-  # One page of a list. Pass #next_cursor back as +cursor:+ for the next
-  # page; it is nil on the last one.
+  # One page of a list, as every list method returns it.
+  #
+  # Like Stripe's list objects, a page is Enumerable over its own #items
+  # only: +each+, +map+ and +first+ never make a request. #auto_paging_each
+  # iterates every item across this page and the pages after it, fetching
+  # each page only when iteration reaches it:
+  #
+  #   client.learners.list(limit: 100).auto_paging_each { |learner| ... }
+  #   client.learners.list.auto_paging_each.lazy.select(&:certificate).first(10)
+  #
+  # Later pages repeat the first call's filters, limit and request options;
+  # the API, not the library, validates them. A page can hold fewer items
+  # than the limit (even none) and still have a next page.
   class Page
+    include Enumerable
+
     attr_reader :items, :next_cursor, :last_response
 
-    def initialize(items:, next_cursor:, last_response:)
+    # +fetch_next+ receives this page and returns the next one. A page built
+    # without it (a test double, say) has no next page.
+    def initialize(items:, next_cursor:, last_response:, fetch_next: nil)
       @items = items.freeze
       @next_cursor = next_cursor
       @last_response = last_response
+      @fetch_next = fetch_next
       freeze
+    end
+
+    # Each item on this page only; see #auto_paging_each for every page.
+    def each(&block)
+      return enum_for(:each) { items.length } unless block
+
+      items.each(&block)
+      self
+    end
+
+    # Whether more items follow: the API sent a +next_cursor+.
+    def next_page?
+      !next_cursor.nil? && !@fetch_next.nil?
+    end
+
+    # Fetches the page after this one. On the last page it raises
+    # StopIteration without a request; check #next_page? first.
+    def next_page
+      raise StopIteration, "this is the last page; check next_page? first" unless next_page?
+
+      @fetch_next.call(self)
+    end
+
+    # Yields this page, then each page after it, fetched as the loop asks.
+    # Without a block, returns an Enumerator.
+    def each_page
+      return enum_for(:each_page) unless block_given?
+
+      page = self
+      yield page
+      while page.next_page?
+        page = page.next_page
+        yield page
+      end
+      self
+    end
+
+    # Yields every item on this page and the pages after it, fetching each
+    # page only when the loop reaches it; breaking out stops the fetching.
+    # Without a block, returns an Enumerator, so +lazy+, +first(n)+ and
+    # +each_slice+ fetch only the pages they need.
+    def auto_paging_each(&block)
+      return enum_for(:auto_paging_each) unless block
+
+      each_page { |page| page.items.each(&block) }
     end
 
     def inspect
@@ -41,12 +102,13 @@ module TeachMeHipaa
     module Responses
       module_function
 
-      def read(response, kind, model, accept)
+      # +fetch_next+ is the Page's means to fetch the page after it.
+      def read(response, kind, model, accept, fetch_next: nil)
         last_response = LastResponse.from(response)
         case kind
         when :empty then empty(response, last_response)
         when :binary then binary(response, accept, last_response)
-        when :page then page(response, model, last_response)
+        when :page then page(response, model, last_response, fetch_next)
         when :write_result
           # Not on the wire: 201 created the Learner, 200 found it (grilling Q25).
           model.new(Json.success_body(response).merge("created" => response.status == 201), last_response:)
@@ -74,10 +136,10 @@ module TeachMeHipaa
                            filename: filename(response.headers["content-disposition"]), last_response:)
       end
 
-      def page(response, model, last_response)
+      def page(response, model, last_response, fetch_next)
         body = Json.success_body(response)
         Page.new(items: Array(body["items"]).map { |item| model.new(item) }, next_cursor: body["nextCursor"],
-                 last_response:)
+                 last_response:, fetch_next:)
       end
 
       # RFC 6266: the UTF-8 filename* when present, else the plain filename.

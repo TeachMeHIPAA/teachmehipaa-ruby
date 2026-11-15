@@ -6,11 +6,18 @@ module SdkGenerator
   class Resources
     LIB = "lib/teachmehipaa/resources"
     SIG = "sig/teachmehipaa/resources"
+    # Resources with hand-written methods, by IR path. Their generated class
+    # is <Name>Base; extensions/<file>.rb subclasses it under the plain name,
+    # which the client exposes, and sig/teachmehipaa/extensions/<file>.rbs
+    # signs it.
+    EXTENDED_RESOURCES = %w[events].freeze
 
     Node = Data.define(:path, :operations, :children) do
       def class_name = Naming.resource_class(path)
       def accessor = Naming.snake(path.last)
       def file = Naming.snake(class_name)
+      def extended? = EXTENDED_RESOURCES.include?(path.join("."))
+      def generated_class = extended? ? "#{class_name}Base" : class_name
     end
 
     def initialize(context)
@@ -18,6 +25,7 @@ module SdkGenerator
     end
 
     def files
+      check_extended
       files = flatten(tree).each_with_object({}) do |node, all|
         methods = node.operations.map { |method| ApiMethod.new(@ir, node.path, method) }
         all["#{LIB}/#{node.file}.rb"] = ruby_resource(node, methods)
@@ -26,12 +34,19 @@ module SdkGenerator
       files.merge("#{LIB}/root.rb" => ruby_root, "#{SIG}/root.rbs" => rbs_root).then { |all| all.merge(index(all)) }
     end
 
+    # The extensions load after every generated class they may build on.
     def index(files)
       names = files.keys.grep(/\.rb\z/).sort.map { |path| "resources/#{File.basename(path, ".rb")}" }
-      { "lib/teachmehipaa/resources.rb" => Text::RUBY_HEADER + Text.require_lines(names) }
+      extensions = flatten(tree).select(&:extended?).map { |node| "extensions/#{node.file}" }
+      { "lib/teachmehipaa/resources.rb" => Text::RUBY_HEADER + Text.require_lines(names + extensions) }
     end
 
     private
+
+    def check_extended
+      missing = EXTENDED_RESOURCES - flatten(tree).map { |node| node.path.join(".") }
+      raise ArgumentError, "extended resource(s) not in the IR: #{missing.join(", ")}" if missing.any?
+    end
 
     def tree
       @tree ||= begin
@@ -62,12 +77,16 @@ module SdkGenerator
     end
 
     def class_doc(node)
-      Text.comment(["The methods under +client.#{node.path.map { |segment| Naming.snake(segment) }.join(".")}+."], 4)
+      accessor = node.path.map { |segment| Naming.snake(segment) }.join(".")
+      return Text.comment(["The methods under +client.#{accessor}+."], 4) unless node.extended?
+
+      Text.comment(["The generated methods under +client.#{accessor}+. The client exposes the hand-written " \
+                    "subclass #{node.class_name} in lib/teachmehipaa/extensions/#{node.file}.rb."], 4)
     end
 
     def ruby_resource(node, methods)
       sections = [*ruby_children(node), *methods.map { |method| ruby_method(method) }]
-      wrap(class_doc(node) + Text.block("class #{node.class_name} < Core::Resource", sections.join("\n")))
+      wrap(class_doc(node) + Text.block("class #{node.generated_class} < Core::Resource", sections.join("\n")))
     end
 
     def ruby_children(node)
@@ -90,7 +109,7 @@ module SdkGenerator
           Text.pack("def #{method.ruby_name}: (", method.rbs_parameters, ") -> #{method.rbs_return}", 6)
       end
       sections = [*(readers.join unless readers.empty?), *signatures]
-      wrap_rbs(class_doc(node) + Text.block("class #{node.class_name} < Core::Resource", sections.join("\n")))
+      wrap_rbs(class_doc(node) + Text.block("class #{node.generated_class} < Core::Resource", sections.join("\n")))
     end
 
     def ruby_root

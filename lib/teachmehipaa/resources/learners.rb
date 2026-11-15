@@ -90,6 +90,7 @@ module TeachMeHipaa
           retry_safe: true,
           response: :page,
           model: Learner,
+          pagination: { style: :cursor, cursor_param: "cursor" },
           request_options:,
         )
       end

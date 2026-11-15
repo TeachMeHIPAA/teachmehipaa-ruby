@@ -19,6 +19,8 @@ module SdkGenerator
     lib/teachmehipaa/models lib/teachmehipaa/resources sig/teachmehipaa/models sig/teachmehipaa/resources
   ].freeze
   INDEXES = %w[lib/teachmehipaa/models.rb lib/teachmehipaa/resources.rb].freeze
+  # Hand-written, never generated: one .rb and one .rbs per extended resource.
+  EXTENSIONS = { "lib/teachmehipaa/extensions" => "rb", "sig/teachmehipaa/extensions" => "rbs" }.freeze
 
   module_function
 
@@ -39,6 +41,14 @@ module SdkGenerator
     Models.new(ir).files.merge(Resources.new(ir).files).sort.to_h
   end
 
+  # The hand-written files each of Resources::EXTENDED_RESOURCES needs.
+  def extension_files(root)
+    Resources::EXTENDED_RESOURCES.flat_map do |path|
+      file = Naming.snake(Naming.resource_class(path.split(".")))
+      EXTENSIONS.map { |directory, extension| File.join(root, directory, "#{file}.#{extension}") }
+    end
+  end
+
   # The generated files currently in the repo.
   def committed_paths(root)
     owned = DIRECTORIES.flat_map do |directory|
@@ -50,6 +60,9 @@ module SdkGenerator
 
   # Rewrites the generated files under +root+ and deletes stale ones.
   def write(root)
+    missing = extension_files(root).reject { |path| File.exist?(path) }
+    raise ArgumentError, "extended resources need hand-written #{missing.join(", ")}" if missing.any?
+
     ir = load_ir(root)
     files = generate(ir)
     stale = committed_paths(root) - files.keys

@@ -36,10 +36,11 @@ module TeachMeHipaa
       #
       # +response+ is the IR's response kind: :model (+model+ reads the
       # body), :page (+model+ reads each item), :write_result, :empty, or
-      # :binary (the body must be of media type +accept+).
+      # :binary (the body must be of media type +accept+). A :page also takes
+      # the IR's +pagination+: +{ style: :cursor | :after, cursor_param: }+.
       def request(method:, path:, model: nil, path_params: {}, query: {}, headers: {}, body: nil,
                   content_type: "application/json", binary_parts: {}, retry_safe: false, idempotency_key: nil,
-                  response: :model, accept: nil, request_options: {})
+                  response: :model, accept: nil, pagination: nil, request_options: {})
         options = check_request_options(request_options)
         # One key per call, not per attempt, so every retry and the 401
         # replay is recognised as the same request.
@@ -56,10 +57,27 @@ module TeachMeHipaa
         }
         policy = Retries::Policy.new(retry_safe: retry_safe?(method, retry_safe, key),
                                      max_retries: options.fetch(:max_retries, @connection.config.max_retries))
+        return read_page(request, policy, model, pagination) if response == :page
+
         Responses.read(authorized(request, policy), response, model, accept)
       end
 
+      def config
+        @connection.config
+      end
+
       private
+
+      # Each later page is this request again with only the cursor parameter
+      # changed, so filters, the limit and request options carry over.
+      def read_page(request, policy, model, pagination)
+        fetch_next = pagination && lambda do |page|
+          position = Pagination.position(pagination.fetch(:style), page)
+          query = request[:query].merge(pagination.fetch(:cursor_param) => position)
+          read_page(request.merge(query:), policy, model, pagination)
+        end
+        Responses.read(authorized(request, policy), :page, model, nil, fetch_next:)
+      end
 
       def authorized(request, policy)
         Retries.call(@connection, policy, map_error: Error.method(:from_response),

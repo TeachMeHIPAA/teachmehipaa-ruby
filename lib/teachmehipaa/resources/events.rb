@@ -4,8 +4,9 @@
 
 module TeachMeHipaa
   module Resources
-    # The methods under +client.events+.
-    class Events < Core::Resource
+    # The generated methods under +client.events+. The client exposes the hand-written subclass
+    # Events in lib/teachmehipaa/extensions/events.rb.
+    class EventsBase < Core::Resource
       # List all events
       #
       # Returns a list of the organization's events from the last 30 days, oldest first. Pass the
@@ -19,6 +20,7 @@ module TeachMeHipaa
           retry_safe: true,
           response: :page,
           model: Event,
+          pagination: { style: :after, cursor_param: "after" },
           request_options:,
         )
       end

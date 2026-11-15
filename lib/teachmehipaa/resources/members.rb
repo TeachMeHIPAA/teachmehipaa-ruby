@@ -18,6 +18,7 @@ module TeachMeHipaa
           retry_safe: true,
           response: :page,
           model: MemberListItem,
+          pagination: { style: :cursor, cursor_param: "cursor" },
           request_options:,
         )
       end

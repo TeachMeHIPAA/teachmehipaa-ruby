@@ -198,12 +198,27 @@ module TeachMeHipaa
     def variants: (Hash[String, String] variants, fallback: String, ?property: String?) -> void
   end
 
+  # One page of a list. Enumerable over this page's items only;
+  # #auto_paging_each iterates every page.
   class Page[T]
+    include Enumerable[T]
+
     attr_reader items: Array[T]
     attr_reader next_cursor: String?
     attr_reader last_response: LastResponse
 
-    def initialize: (items: Array[T], next_cursor: String?, last_response: LastResponse) -> void
+    def initialize: (items: Array[T], next_cursor: String?, last_response: LastResponse,
+                     ?fetch_next: (^(Page[T]) -> Page[T])?) -> void
+    # rbs:test checks a returned Enumerator by draining it, which would
+    # fetch every page; the iterators are tested through the client instead.
+    %a{rbs:test:skip} def each: () { (T) -> void } -> self
+                              | () -> Enumerator[T, self]
+    def next_page?: () -> bool
+    def next_page: () -> Page[T]
+    %a{rbs:test:skip} def each_page: () { (Page[T]) -> void } -> self
+                                   | () -> Enumerator[Page[T], self]
+    %a{rbs:test:skip} def auto_paging_each: () { (T) -> void } -> self
+                                          | () -> Enumerator[T, self]
   end
 
   class EmptyResponse < Data
@@ -248,11 +263,21 @@ module TeachMeHipaa
     end
 
     module Responses
-      def self.read: (Transport::Response response, Symbol kind, _ModelClass[untyped]? model, String? accept) -> untyped
+      def self.read: (Transport::Response response, Symbol kind, _ModelClass[untyped]? model, String? accept,
+                      ?fetch_next: (^(Page[untyped]) -> Page[untyped])?) -> untyped
       def self.empty: (Transport::Response response, LastResponse last_response) -> EmptyResponse
       def self.binary: (Transport::Response response, String accept, LastResponse last_response) -> BinaryResponse
-      def self.page: (Transport::Response response, _ModelClass[untyped] model, LastResponse last_response)
-                   -> Page[untyped]
+      def self.page: (Transport::Response response, _ModelClass[untyped] model, LastResponse last_response,
+                      (^(Page[untyped]) -> Page[untyped])? fetch_next) -> Page[untyped]
+    end
+
+    type pagination_style = :cursor | :after
+
+    # The IR's pagination for a list method.
+    type pagination = { style: pagination_style, cursor_param: String }
+
+    module Pagination
+      def self.position: (pagination_style style, Page[untyped] page) -> String?
       def self.filename: (String? content_disposition) -> String?
       def self.success?: (Transport::Response response) -> bool
     end
@@ -341,7 +366,9 @@ module TeachMeHipaa
                     ?idempotency_key: (:required | nil),
                     ?response: (:model | :page | :write_result | :empty | :binary),
                     ?accept: String?,
+                    ?pagination: pagination?,
                     ?request_options: request_options) -> untyped
+      def config: () -> Config
     end
 
     interface _ModelClass[M]
@@ -354,6 +381,7 @@ module TeachMeHipaa
       private
 
       def request: (**untyped) -> untyped
+      def config: () -> Config
       def fixed: (Hash[String, untyped] body, Array[String] path, untyped value) -> Hash[String, untyped]
     end
   end

@@ -49,6 +49,7 @@ module TeachMeHipaa
           retry_safe: true,
           response: :page,
           model: WebhookSubscription,
+          pagination: { style: :cursor, cursor_param: "cursor" },
           request_options:,
         )
       end

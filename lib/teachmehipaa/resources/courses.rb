@@ -17,6 +17,7 @@ module TeachMeHipaa
           retry_safe: true,
           response: :page,
           model: Course,
+          pagination: { style: :cursor, cursor_param: "cursor" },
           request_options:,
         )
       end

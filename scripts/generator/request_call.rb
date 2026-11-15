@@ -93,12 +93,17 @@ module SdkGenerator
     def response_arguments
       response = @data.fetch("response")
       case response.fetch("kind")
-      when "page" then ["response: :page\n", "model: #{@data.dig("pagination", "itemType", "name")}\n"]
+      when "page" then ["response: :page\n", "model: #{@data.dig("pagination", "itemType", "name")}\n", pagination]
       when "writeResult" then ["response: :write_result\n", "model: #{response.dig("type", "name")}\n"]
       when "empty" then ["response: :empty\n"]
       when "binary" then ["response: :binary\n", "accept: #{Text.literal(response.fetch("contentType"))}\n"]
       else ["model: #{response.dig("type", "name")}\n"]
       end
+    end
+
+    def pagination
+      style, cursor_param = @data.fetch("pagination").values_at("style", "cursorParam")
+      "pagination: { style: :#{style}, cursor_param: #{Text.literal(cursor_param)} }\n"
     end
   end
 end
