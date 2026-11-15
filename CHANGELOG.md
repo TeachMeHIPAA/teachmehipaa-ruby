@@ -29,10 +29,10 @@ the Developer API document release `waggish-wombat`.
   `IdempotencyError`, `AuthenticationError`, `PermissionDeniedError`,
   `NotFoundError`, `ConflictError`, `PreconditionFailedError`,
   `RateLimitError`, `APIError`, `APIConnectionError`, `APITimeoutError`),
-  plus `OAuthError`, `TokenStoreError`, `OperationFailedError`,
-  `OperationTimeoutError` and `WebhookSignatureError`, carrying the problem
-  `code`, `detail`, field `errors`, `headers` and `request_id`, with a guard
-  that raises `APIError` for non-JSON responses instead of a parse error.
+  plus `OAuthError`, `OperationFailedError`, `OperationTimeoutError` and
+  `WebhookSignatureError`, carrying the problem `code`, `detail`, field
+  `errors`, `headers` and `request_id`, with a guard that raises `APIError`
+  for non-JSON responses instead of a parse error.
 - Retries with exponential backoff and jitter for network errors, 409
   `conflict`, 429 and 5xx, honoring `Retry-After`, only for calls that are
   safe to replay; a generated `Idempotency-Key` per create and custom method,
@@ -54,10 +54,6 @@ the Developer API document release `waggish-wombat`.
   hash, path and timestamp and returns a typed Event, `UnknownEvent` or
   `TestDelivery`, accepting a Hash, a Rack env or Rails' `request.headers`;
   and `Webhook.generate_test_headers` for testing handlers.
-- Partner apps: `TeachMeHipaa::OAuth` (PKCE pair, state, consent URL, code
-  exchange) and `TokenProviders::PartnerGrant`, which saves every rotated
-  Refresh token to your token store before use and never retries a Refresh
-  token exchange.
 - `events.tail` to read the Event log from a saved position, once or
   following new Events, stoppable with a `stop:` callable.
 - Opt-in logging to a `logger:`, one line per HTTP exchange with method,

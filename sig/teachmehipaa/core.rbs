@@ -59,12 +59,6 @@ module TeachMeHipaa
     def invalidate: (String access_token) -> void
   end
 
-  # Where a Partner Grant's Refresh token lives between processes.
-  interface _TokenStore
-    def load: () -> String?
-    def save: (String refresh_token) -> untyped
-  end
-
   class FieldError < Data
     attr_reader path: String
     attr_reader message: String
@@ -119,9 +113,6 @@ module TeachMeHipaa
   end
 
   class OAuthError < Error
-  end
-
-  class TokenStoreError < Error
   end
 
   class APIConnectionError < Error
@@ -315,48 +306,6 @@ module TeachMeHipaa
 
       def initialize: (String access_token) -> void
     end
-
-    class PartnerGrant
-      include _TokenProvider
-
-      def base_url: () -> String
-
-      def initialize: (client_id: String, client_secret: String, token_store: _TokenStore,
-                       ?refresh_token: String?, ?scopes: Array[String | Symbol]?,
-                       ?environment: environment | String, ?base_url: String?, ?timeout: Numeric,
-                       ?app_info: app_info?, ?transport: _Transport?, ?clock: _Clock?) -> void
-    end
-  end
-
-  module OAuth
-    class PkcePair < Data
-      attr_reader code_verifier: String
-      attr_reader code_challenge: String
-      attr_reader code_challenge_method: "S256"
-
-      def self.new: (code_verifier: String, code_challenge: String, code_challenge_method: "S256") -> instance
-    end
-
-    class GrantTokens < Data
-      attr_reader access_token: String
-      attr_reader refresh_token: String
-      attr_reader expires_in: Float
-      attr_reader scopes: Array[String]
-
-      def self.new: (access_token: String, refresh_token: String, expires_in: Float,
-                     scopes: Array[String]) -> instance
-    end
-
-    AUTHORIZATION_URLS: Hash[environment, String?]
-
-    def self.create_pkce_pair: () -> PkcePair
-    def self.create_state: () -> String
-    def self.authorize_url: (client_id: String, redirect_uri: String, scopes: Array[String | Symbol],
-                             state: String, code_challenge: String, ?environment: environment | String,
-                             ?authorization_url: String?) -> String
-    def self.exchange_code: (client_id: String, client_secret: String, code: String, redirect_uri: String,
-                             code_verifier: String, ?environment: environment | String, ?base_url: String?,
-                             ?timeout: Numeric, ?app_info: app_info?, ?transport: _Transport?) -> GrantTokens
   end
 
   type request_options = {
@@ -371,7 +320,6 @@ module TeachMeHipaa
   module Core
     module Arguments
       def self.text?: (untyped value) -> bool
-      def self.require_text: (untyped value, String name) -> String
     end
 
     module Values
@@ -497,32 +445,6 @@ module TeachMeHipaa
       def self.call: (Connection connection, Policy policy, map_error: _ErrorMapper,
                       ?replay: _Replay?, ?not_modified: bool) { () -> request } -> Transport::Response
       def self.backoff: (Numeric base, Integer attempt, Numeric cap) -> Numeric
-    end
-
-    module GrantExchange
-      TOKEN_PATH: String
-      NEVER_RETRY: Retries::Policy
-
-      class Guidance < Data
-        attr_reader network_failure: String
-        attr_reader invalid_grant: String?
-
-        def self.new: (network_failure: String, invalid_grant: String?) -> instance
-      end
-
-      class Exchange < Data
-        attr_reader tokens: OAuth::GrantTokens
-        attr_reader requested_at: Float
-
-        def self.new: (tokens: OAuth::GrantTokens, requested_at: Float) -> instance
-        def expires_at: () -> Float
-      end
-
-      def self.connection: (environment: environment | String, base_url: String?, timeout: Numeric,
-                            app_info: app_info?, transport: _Transport?, clock: _Clock?) -> Connection
-      def self.call: (Connection connection, client_id: String, client_secret: String,
-                      form: Hash[String, String], guidance: Guidance) -> Exchange
-      def self.token_request: (String client_id, String client_secret, Hash[String, String] form) -> request
     end
 
     class AccessTokenCache

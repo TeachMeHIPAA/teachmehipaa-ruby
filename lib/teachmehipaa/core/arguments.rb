@@ -13,12 +13,6 @@ module TeachMeHipaa
       def text?(value)
         value.is_a?(String) && !value.strip.empty?
       end
-
-      def require_text(value, name)
-        return value if text?(value)
-
-        raise ArgumentError, "#{name} must be a non-empty String"
-      end
     end
   end
 end

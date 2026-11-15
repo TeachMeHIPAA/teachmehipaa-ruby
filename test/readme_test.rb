@@ -7,8 +7,8 @@ require "stringio"
 require "tmpdir"
 
 # Every Transport::NetHttp, including the ones README samples create through
-# their own clients and OAuth calls, sends to the current sample run's fake
-# instead of the network.
+# their own clients, sends to the current sample run's fake instead of the
+# network.
 module ReadmeTransport
   def call(request, &)
     fake = Thread.current[:teachmehipaa_readme_transport]
@@ -38,8 +38,6 @@ class ReadmeTest < Minitest::Test
   ENVIRONMENT = {
     "TMH_CLIENT_ID" => CLIENT_ID,
     "TMH_CLIENT_SECRET" => CLIENT_SECRET,
-    "TMH_APP_ID" => APP_ID,
-    "TMH_APP_SECRET" => APP_SECRET,
     "TMH_WEBHOOK_SECRET" => WEBHOOK_SECRET,
   }.freeze
 
@@ -70,31 +68,6 @@ class ReadmeTest < Minitest::Test
   def self.runs(id, behaviour, &)
     run_checks << id
     define_method("test_readme_sample_#{id.tr("-", "_")}_#{behaviour}", &)
-  end
-
-  # Reads and writes Grant rows like an ActiveRecord model would, for the
-  # partner samples' OrganizationGrant.
-  class GrantRows
-    Row = Struct.new(:rows, :org_id, :refresh_token) do
-      def update!(refresh_token:)
-        self.refresh_token = refresh_token
-        rows[org_id] = refresh_token
-      end
-    end
-
-    attr_reader :rows
-
-    def initialize(rows = {})
-      @rows = rows
-    end
-
-    def create!(org_id:, refresh_token:)
-      @rows[org_id] = refresh_token
-    end
-
-    def find_by!(org_id:)
-      Row.new(@rows, org_id, @rows.fetch(org_id))
-    end
   end
 
   # What a sample runs as: +puts+ is recorded, +client+ is the Quickstart's
@@ -331,64 +304,6 @@ class ReadmeTest < Minitest::Test
 
     assert_equal ["learner.certified", SAMPLE_LEARNER_ID], run_sample("webhook-test-headers", fake)
     assert_empty fake.requests
-  end
-
-  runs "partner-consent", "builds_the_consent_url_and_saves_the_grant" do
-    context = SampleContext.new
-    grants = GrantRows.new
-    context.singleton_class.const_set(:OrganizationGrant, grants)
-    fake = FakeTransport.new.on("POST", "/auth/token", grant_token_reply(ACCESS_TOKEN, REFRESH_TOKEN_1))
-    session = {}
-    url = consent = nil
-
-    run_sample("partner-consent", fake, context:) do
-      url = URI(context.start_consent(session))
-      consent = URI.decode_www_form(url.query).to_h
-      context.finish_consent(session, code: "code_7QX2", state: consent["state"], org_id: ORG_ID)
-    end
-
-    assert_equal "https://console.teachmehipaa.com/oauth/authorize", "#{url.scheme}://#{url.host}#{url.path}"
-    assert_equal [APP_ID, "https://partner.example.com/tmh/callback"], consent.values_at("client_id", "redirect_uri")
-    assert_equal({ ORG_ID => REFRESH_TOKEN_1 }, grants.rows)
-    assert_empty session
-    form = URI.decode_www_form(only(fake.requests_to("POST", "/auth/token")).body).to_h
-
-    assert_equal %w[authorization_code code_7QX2], form.values_at("grant_type", "code")
-  end
-
-  runs "partner-consent", "refuses_a_redirect_with_another_state" do
-    context = SampleContext.new
-    session = {}
-
-    error = assert_raises(RuntimeError) do
-      run_sample("partner-consent", FakeTransport.new, context:) do
-        context.start_consent(session)
-        context.finish_consent(session, code: "code_7QX2", state: "forged", org_id: ORG_ID)
-      end
-    end
-    assert_match(/state mismatch/, error.message)
-  end
-
-  runs "partner-grant", "saves_the_rotated_refresh_token_before_listing" do
-    context = SampleContext.new
-    grants = GrantRows.new(ORG_ID => REFRESH_TOKEN_1)
-    context.singleton_class.const_set(:OrganizationGrant, grants)
-    fake = FakeTransport.new.on("POST", "/auth/token", grant_token_reply(ACCESS_TOKEN, REFRESH_TOKEN_2))
-    fake.on("GET", LEARNERS_PATH, FakeTransport::Reply.json({ "items" => [LEARNER_JSON], "nextCursor" => nil }))
-
-    assert_equal ["1"], run_sample("partner-grant", fake, context:)
-    assert_equal({ ORG_ID => REFRESH_TOKEN_2 }, grants.rows)
-    assert_equal REFRESH_TOKEN_1, URI.decode_www_form(fake.requests.first.body).to_h["refresh_token"]
-  end
-
-  runs "partner-organizations", "lists_customer_organizations_as_the_partner_app" do
-    fake = FakeTransport.new.on("POST", "/auth/token", FakeTransport::Reply.json(token_json))
-    fake.on("GET", "/partners/ptn_01JD8E2C3D4E5F6G7H8J9K0M1N/organizations",
-            FakeTransport::Reply.json({ "items" => [{ "orgId" => ORG_ID, "grantActive" => true }],
-                                        "nextCursor" => nil }))
-
-    assert_equal ["org_acme true"], run_sample("partner-organizations", fake)
-    assert_equal "Basic #{APP_BASIC_CREDENTIALS}", fake.requests.first.headers["authorization"]
   end
 
   runs "events-tail", "resumes_from_the_saved_position_and_saves_each_event" do

@@ -17,11 +17,8 @@ module TeachMeHipaa
     attr_reader :config
 
     # Pass the API client's +client_id+ and +client_secret+, or a
-    # +token_provider+ such as a TokenProviders::PartnerGrant or a
-    # TokenProviders::Static that supplies every Access token instead. A
-    # Partner app's own id and secret mint a Partner-level token for
-    # +partners+, which needs no Organization. A PartnerGrant must exchange
-    # in this client's Environment, or this raises ArgumentError.
+    # +token_provider+ such as a TokenProviders::Static that supplies every
+    # Access token instead.
     #
     # With none of them, the client can call only the methods that need no
     # Access token (the course catalog and Certificate verification); any
@@ -42,7 +39,6 @@ module TeachMeHipaa
       token_provider = token_provider_for(client_id, client_secret, token_provider, scopes)
       @config = Config.build(environment:, base_url:, organization_id:, max_retries:, timeout:,
                              app_info:, logger:, clock:, sleep:)
-      check_token_endpoint(token_provider)
       connection = Core::Connection.new(@config, transport || Transport::NetHttp.new)
       build_resources(Core::Requestor.new(connection, token_provider))
       freeze
@@ -79,16 +75,6 @@ module TeachMeHipaa
       return TokenProviders::ClientCredentials.new(client_id:, client_secret:, scopes:) if client_id && client_secret
 
       raise ArgumentError, "pass both client_id and client_secret, or token_provider (got only #{given.join(", ")})"
-    end
-
-    # A Grant's tokens are only good in the Environment that issued them, so
-    # a provider exchanging elsewhere would fail every call with a 401.
-    def check_token_endpoint(token_provider)
-      return unless token_provider.is_a?(TokenProviders::PartnerGrant)
-      return if token_provider.base_url == base_url
-
-      raise ArgumentError, "the token provider exchanges Refresh tokens at #{token_provider.base_url}, but this " \
-                           "client calls #{base_url}; give both the same environment (or base_url)"
     end
   end
 end

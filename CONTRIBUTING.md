@@ -100,16 +100,15 @@ README must follow a `<!-- sample: <id> -->` line, and every sample must
 compile (`RubyVM::InstructionSequence.compile`). Each sample then either
 runs, or is listed in the test's `SYNTAX_ONLY` with the reason it can't (the
 Gemfile snippet, and the Rails controller, which needs Rails). A sample runs
-with every client it creates, and every OAuth call it makes, sent to a
-`FakeTransport`, with the README's environment variables set, and the test
-checks what it printed (`puts` is captured) and what it sent. The Sinatra
-webhook handler is driven with `Rack::MockRequest` and signed Deliveries on
-the exact path they were signed for, and once on the wrong path. A sample
-that uses `client` without creating it gets the Quickstart's client. Stand-ins
-the README's prose names (`OrganizationGrant`, `cursor_store`,
-`shutting_down?`) are defined by the test. To add a sample, tag it and add a
-`runs "<id>", "<behaviour>" do ... end` check; the test fails if a tagged
-sample has none.
+with every client it creates sent to a `FakeTransport`, with the README's
+environment variables set, and the test checks what it printed (`puts` is
+captured) and what it sent. The Sinatra webhook handler is driven with
+`Rack::MockRequest` and signed Deliveries on the exact path they were signed
+for, and once on the wrong path. A sample that uses `client` without
+creating it gets the Quickstart's client. Stand-ins the README's prose names
+(`cursor_store`, `shutting_down?`) are defined by the test. To add a sample,
+tag it and add a `runs "<id>", "<behaviour>" do ... end` check; the test
+fails if a tagged sample has none.
 
 ### Contract suite
 

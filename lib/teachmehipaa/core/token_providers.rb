@@ -85,8 +85,7 @@ module TeachMeHipaa
       end
 
       # A client-credentials grant mints a fresh token each time, so replaying
-      # it is harmless. Refresh-token and authorization-code exchanges must
-      # never retry: replaying one revokes the Grant (ADR-0004).
+      # it is harmless.
       def mint_retry_policy(config)
         Core::Retries::Policy.new(retry_safe: true, max_retries: config.max_retries)
       end
@@ -94,7 +93,22 @@ module TeachMeHipaa
       def mint_request
         form = { "grant_type" => "client_credentials" }
         form["scope"] = @scopes.join(" ") unless @scopes.nil?
-        Core::GrantExchange.token_request(@client_id, @client_secret, form)
+        {
+          method: "POST",
+          path: "/auth/token",
+          headers: {
+            "authorization" => "Basic #{basic_credentials}",
+            "content-type" => "application/x-www-form-urlencoded",
+          },
+          body: URI.encode_www_form(form),
+        }
+      end
+
+      # client_secret_basic, per RFC 6749 §2.3.1: form-encode each half
+      # before base64.
+      def basic_credentials
+        pair = "#{URI.encode_www_form_component(@client_id)}:#{URI.encode_www_form_component(@client_secret)}"
+        [pair].pack("m0")
       end
     end
 

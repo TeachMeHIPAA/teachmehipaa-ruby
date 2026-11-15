@@ -11,28 +11,9 @@ A machine credential (client id and secret) bound to exactly one Organization,
 created by an Organization admin.
 _Avoid_: API key, app, client (alone)
 
-**Partner app**:
-A machine credential that many Organizations connect to through consent; each
-connection is a separate Grant.
-_Avoid_: integration, OAuth app
-
-**Partner**:
-A reseller that creates and manages customer Organizations of its own.
-_Avoid_: reseller account, parent org
-
-**Grant**:
-One Organization's consent for one Partner app, carried by a Refresh token.
-_Avoid_: connection, authorization
-
 **Access token**:
-A short-lived bearer credential that authorizes requests for one Organization
-(or one Partner).
+A short-lived bearer credential that authorizes requests for one Organization.
 _Avoid_: session, JWT
-
-**Refresh token**:
-The long-lived secret of a Grant that is exchanged for Access tokens and is
-replaced on every exchange.
-_Avoid_: offline token
 
 **Scope**:
 A named permission an Access token carries, such as `learners:write`.
@@ -72,10 +53,6 @@ _Avoid_: registration, assignment
 **Seat**:
 A paid license allocation an Organization holds for one Learner at a time.
 _Avoid_: token, license key
-
-**Seat order**:
-A purchase of Seats charged to the Organization's saved payment method.
-_Avoid_: checkout, invoice
 
 **Certificate**:
 The document proving a Learner completed a Course, with issue and expiry

@@ -17,13 +17,6 @@ module Fixtures
   SECOND_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.second.sig"
   REQUEST_ID = "req_7f3c2a"
 
-  APP_ID = "app_01JD7Z3M1V4Q8T2K5N9R6W0XYZ"
-  APP_SECRET = "tmh_as_cGFydG5lci1zZWNyZXQ"
-  # base64("#{APP_ID}:#{APP_SECRET}"), computed outside the SDK.
-  APP_BASIC_CREDENTIALS = "YXBwXzAxSkQ3WjNNMVY0UThUMks1TjlSNlcwWFlaOnRtaF9hc19jR0Z5ZEc1bGNpMXpaV055WlhR"
-  REFRESH_TOKEN_1 = "tmh_rt_grt_01JD81QW3E4R5T6Y7U8I9O0PAS.first"
-  REFRESH_TOKEN_2 = "tmh_rt_grt_01JD81QW3E4R5T6Y7U8I9O0PAS.second"
-  REFRESH_TOKEN_3 = "tmh_rt_grt_01JD81QW3E4R5T6Y7U8I9O0PAS.third"
   ETAG = '"9b2f0c4e1d"'
 
   LEARNER_JSON = {
@@ -61,25 +54,6 @@ module Fixtures
       "expires_in" => expires_in,
       "scope" => "learners:read learners:write",
     }
-  end
-
-  # AuthorizationCodeTokenResponse from the developer spec.
-  def grant_token_reply(access_token, refresh_token, expires_in: 900)
-    FakeTransport::Reply.json(
-      {
-        "access_token" => access_token,
-        "token_type" => "Bearer",
-        "expires_in" => expires_in,
-        "refresh_token" => refresh_token,
-        "scope" => "learners:read learners:write",
-      },
-      headers: { "cache-control" => "no-store", "pragma" => "no-cache" },
-    )
-  end
-
-  # OAuthTokenError from the developer spec.
-  def oauth_error_reply(error, description, status: 400)
-    FakeTransport::Reply.json({ "error" => error, "error_description" => description }, status:)
   end
 
   def introspection_json(org_id: ORG_ID)
