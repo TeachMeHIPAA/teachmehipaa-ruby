@@ -51,8 +51,11 @@ module TeachMeHipaa
     end
 
     # A call's +request_options:+, checked, with the timeout as a Float.
+    # +request_id+ is sent as x-request-id, to correlate the caller's logs
+    # with TeachMeHIPAA support; the API replaces one that doesn't match
+    # /\A[A-Za-z0-9._-]{1,128}\z/.
     def self.check_request_options(options)
-      unknown = options.keys - %i[headers timeout max_retries idempotency_key]
+      unknown = options.keys - %i[headers timeout max_retries idempotency_key request_id]
       raise ArgumentError, "unknown request option(s): #{unknown.map(&:inspect).join(", ")}" unless unknown.empty?
 
       check_max_retries(options[:max_retries]) if options.key?(:max_retries)

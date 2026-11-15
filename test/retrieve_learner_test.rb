@@ -173,6 +173,20 @@ class RetrieveLearnerTest < Minitest::Test
     assert_in_delta 5.0, request.timeout
   end
 
+  def test_sends_a_custom_request_id_on_every_attempt
+    transport = FakeTransport.new
+    transport.on("POST", "/auth/token", FakeTransport::Reply.json(token_json))
+    transport.on("GET", LEARNER_PATH, Fixtures.problem(503, "temporarily_unavailable"))
+    transport.on("GET", LEARNER_PATH, FakeTransport::Reply.json(LEARNER_JSON))
+
+    build_client(transport, organization_id: ORG_ID, sleep: FakeSleep.new)
+      .learners.retrieve(LEARNER_ID, request_options: { request_id: "sync-job-42.attempt-1" })
+
+    sent = transport.requests_to("GET", LEARNER_PATH).map { |r| r.headers["x-request-id"] }
+
+    assert_equal ["sync-job-42.attempt-1"] * 2, sent
+  end
+
   def test_rejects_an_unknown_request_option
     error = assert_raises(ArgumentError) do
       build_client(@transport).learners.retrieve(LEARNER_ID, request_options: { retries: 3 })

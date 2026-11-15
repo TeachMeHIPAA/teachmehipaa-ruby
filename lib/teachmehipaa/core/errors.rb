@@ -141,6 +141,10 @@ module TeachMeHipaa
   # +detail+ its +error_description+.
   class OAuthError < Error; end
 
+  # A Partner Grant's token store failed to load or save a Refresh token.
+  # +cause+ is the store's own exception. Never carries the token.
+  class TokenStoreError < Error; end
+
   # No response arrived: DNS, connect, TLS or a dropped connection. +cause+
   # is the transport's own exception.
   class APIConnectionError < Error; end

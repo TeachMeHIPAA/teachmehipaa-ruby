@@ -65,28 +65,32 @@ module TeachMeHipaa
       end
 
       def mint_request
-        {
-          method: "POST",
-          path: "/auth/token",
-          headers: {
-            "authorization" => "Basic #{basic_credentials}",
-            "content-type" => "application/x-www-form-urlencoded",
-          },
-          body: URI.encode_www_form(form),
-        }
-      end
-
-      def form
         form = { "grant_type" => "client_credentials" }
         form["scope"] = @scopes.join(" ") unless @scopes.nil?
-        form
+        Core::GrantExchange.token_request(@client_id, @client_secret, form)
+      end
+    end
+
+    # Sends an Access token obtained elsewhere, as is. It is never renewed:
+    # once it expires or is revoked, calls raise AuthenticationError.
+    class Static
+      def initialize(access_token)
+        unless access_token.is_a?(String) && !access_token.strip.empty?
+          raise ArgumentError, "TokenProviders::Static needs a non-empty Access token"
+        end
+
+        @access_token = access_token
       end
 
-      # RFC 6749 §2.3.1: form-encode each half before base64.
-      def basic_credentials
-        pair = "#{URI.encode_www_form_component(@client_id)}:" \
-               "#{URI.encode_www_form_component(@client_secret)}"
-        [pair].pack("m0")
+      def access_token(_connection)
+        @access_token
+      end
+
+      # Nothing to drop: this provider can't get another token.
+      def invalidate(_access_token); end
+
+      def inspect
+        "#<#{self.class.name}>"
       end
     end
   end

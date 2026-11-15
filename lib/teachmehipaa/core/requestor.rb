@@ -60,7 +60,7 @@ module TeachMeHipaa
           method:,
           path: expand(path, path_params),
           query: Values.write(nil, query),
-          headers: request_headers(conditional, accept, encoded_type, key, options.fetch(:headers, {})),
+          headers: request_headers(conditional, accept, encoded_type, key, options),
           body: encoded,
           timeout: options[:timeout],
         }
@@ -72,9 +72,7 @@ module TeachMeHipaa
         Responses.read(authorized(request, policy, not_modified: !if_none_match.nil?), response, model, accept)
       end
 
-      def config
-        @connection.config
-      end
+      def config = @connection.config
 
       private
 
@@ -103,24 +101,28 @@ module TeachMeHipaa
 
       def authorized(request, policy, not_modified: false)
         Retries.call(@connection, policy, map_error: Error.method(:from_response),
-                                          replay: method(:invalidate_refused_token), not_modified:) do
+                                          replay: method(:replay_with_fresh_token?), not_modified:) do
           token = @token_provider.access_token(@connection)
           request.merge(headers: request[:headers].merge("authorization" => "Bearer #{token}"))
         end
       end
 
       # Only the token the API refused is dropped, so concurrent calls that
-      # were refused together share one fresh token.
-      def invalidate_refused_token(request)
-        @token_provider.invalidate(request[:headers]["authorization"].delete_prefix("Bearer "))
+      # were refused together share one fresh token. A provider that can't
+      # renew (a static token) hands back the same token, which the API would
+      # only refuse again, so that call isn't replayed.
+      def replay_with_fresh_token?(request)
+        refused = request[:headers]["authorization"].delete_prefix("Bearer ")
+        @token_provider.invalidate(refused)
+        @token_provider.access_token(@connection) != refused
       end
 
-      def request_headers(conditional, accept, content_type, idempotency_key, extra)
+      def request_headers(conditional, accept, content_type, idempotency_key, options)
         headers = conditional.dup
         headers["accept"] = "#{accept}, #{PROBLEM_JSON}" if accept
         headers["content-type"] = content_type if content_type
         headers["idempotency-key"] = idempotency_key if idempotency_key
-        headers.merge(extra)
+        headers.merge({ "x-request-id" => options[:request_id] }.compact, options.fetch(:headers, {}))
       end
 
       def retry_policy(method, retry_safe, idempotency_key, options)

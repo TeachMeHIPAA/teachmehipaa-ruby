@@ -25,7 +25,7 @@ module TeachMeHipaa
       # failed token mint, say) ends the call. +map_error+ turns a non-2xx
       # response into an Error. +replay+, when given, is called with the
       # refused request's arguments on the call's first 401 "unauthorized",
-      # and the request is sent again. With +not_modified+, a 304 (the
+      # and the request is sent again if it answers true. With +not_modified+, a 304 (the
       # answer to If-None-Match) is returned like a success.
       def call(connection, policy, map_error:, replay: nil, not_modified: false)
         retries = 0
@@ -38,9 +38,8 @@ module TeachMeHipaa
           # A token revoked mid-flight earns one fresh token and a replay,
           # outside the retry budget: it says nothing about the API's health.
           if replay && !replayed && unauthorized?(error)
-            replay.call(request)
             replayed = true
-            next
+            next if replay.call(request)
           end
           wait = next_delay(policy, retries, error)
           raise error if wait.nil?
