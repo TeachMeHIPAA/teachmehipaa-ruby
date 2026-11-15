@@ -4,7 +4,10 @@ module TeachMeHipaa
   # The HTTP seam. A transport is any object whose +call+ takes a
   # Transport::Request and returns a Transport::Response; pass one as
   # +transport:+ to add a proxy, mTLS or a test fake. The library owns
-  # retries, so a transport sends each request exactly once.
+  # retries, so a transport sends each request exactly once. When no
+  # response arrives it raises: Net::HTTP's own network and timeout errors
+  # are recognised, and any transport may raise TeachMeHipaa::APIConnectionError
+  # or TeachMeHipaa::APITimeoutError itself.
   module Transport
     # +http_method+ is an upper-case verb, +url+ is absolute, +headers+ is a Hash
     # with lower-case String keys, +body+ is a String or nil and +timeout+ is

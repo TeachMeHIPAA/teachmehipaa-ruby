@@ -7,7 +7,7 @@ module TeachMeHipaa
   }.freeze
 
   DEFAULT_MAX_RETRIES = 2
-  DEFAULT_TIMEOUT = 60.0
+  DEFAULT_TIMEOUT = 80.0
 
   # A client's settings, fixed at construction (ADR-0002). +clock+ returns
   # monotonic seconds and +sleep+ waits; both are injectable so tests run
@@ -60,6 +60,6 @@ module TeachMeHipaa
       "#{agent} #{app}".freeze
     end
 
-    private_class_method :check_environment, :check_max_retries, :check_timeout, :user_agent
+    private_class_method :check_environment, :user_agent
   end
 end

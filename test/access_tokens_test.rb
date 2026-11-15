@@ -79,7 +79,7 @@ class AccessTokensTest < Minitest::Test
                                         ))
     client = TeachMeHipaa::Client.new(client_id: CLIENT_ID, client_secret: "tmh_cs_wrong", transport:)
 
-    error = assert_raises(TeachMeHipaa::Error) { client.learners.retrieve(LEARNER_ID) }
+    error = assert_raises(TeachMeHipaa::OAuthError) { client.learners.retrieve(LEARNER_ID) }
 
     assert_equal 401, error.status
     assert_equal "invalid_client", error.code

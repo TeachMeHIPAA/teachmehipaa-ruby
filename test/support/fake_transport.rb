@@ -76,6 +76,19 @@ class FakeClock
   end
 end
 
+# Records each wait instead of waiting.
+class FakeSleep
+  attr_reader :waits
+
+  def initialize
+    @waits = []
+  end
+
+  def call(seconds)
+    @waits << seconds
+  end
+end
+
 class RecordingLogger
   attr_reader :lines
 

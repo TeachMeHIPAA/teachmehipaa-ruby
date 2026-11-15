@@ -52,7 +52,7 @@ class ClientConfigTest < Minitest::Test
     tuned = build_client(FakeTransport.new, max_retries: 5, timeout: 12.5)
 
     assert_equal 2, client.max_retries
-    assert_in_delta 60.0, client.timeout
+    assert_in_delta 80.0, client.timeout
     assert_equal 5, tuned.max_retries
     assert_in_delta 12.5, tuned.timeout
   end

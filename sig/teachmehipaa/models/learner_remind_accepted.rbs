@@ -1,0 +1,12 @@
+# Hand-written for the tracer; the generator replaces this file.
+module TeachMeHipaa
+  class LearnerRemindAccepted < Model
+    module Action
+      REMIND: String
+    end
+
+    def learner_id: () -> String
+    # One of Action, or a value newer than this library.
+    def action: () -> String
+  end
+end

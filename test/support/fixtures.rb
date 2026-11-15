@@ -40,6 +40,10 @@ module Fixtures
     "pdfUrl" => "/v1/organizations/org_acme/certificates/crt_01JD8Z4N3QX5V7W9Y2B4C6D8EH/pdf",
   }.freeze
 
+  # Transport failures as Net::HTTP raises them, before any response.
+  NETWORK_ERROR = ->(_request) { raise Errno::ECONNREFUSED, "connect(2) for api.tme.so port 443" }
+  READ_TIMEOUT = ->(_request) { raise Net::ReadTimeout }
+
   module_function
 
   def token_json(access_token = ACCESS_TOKEN, expires_in: 900)
@@ -61,6 +65,15 @@ module Fixtures
       "mode" => "test",
       "expiresAt" => "2026-11-15T12:15:00Z",
     }
+  end
+
+  # An RFC 9457 problem reply shaped like the API's problem() helper.
+  def problem(status, code, title: "Problem", detail: nil, errors: nil, headers: {})
+    body = { "title" => title, "status" => status, "code" => code }
+    body["detail"] = detail if detail
+    body["errors"] = errors if errors
+    FakeTransport::Reply.json(body, status:, content_type: "application/problem+json",
+                                    headers: { "x-request-id" => REQUEST_ID }.merge(headers))
   end
 
   def script_learner_retrieve(transport)

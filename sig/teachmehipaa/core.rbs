@@ -27,6 +27,14 @@ module TeachMeHipaa
 
   interface _TokenProvider
     def access_token: (Core::Connection connection) -> String
+    def invalidate: (String access_token) -> void
+  end
+
+  class FieldError < Data
+    attr_reader path: String
+    attr_reader message: String
+
+    def self.new: (path: String, message: String) -> instance
   end
 
   class Error < StandardError
@@ -34,14 +42,54 @@ module TeachMeHipaa
     attr_reader code: String?
     attr_reader title: String?
     attr_reader detail: String?
+    attr_reader errors: Array[FieldError]
     attr_reader request_id: String?
     attr_reader headers: headers
-    attr_reader body: untyped
+    attr_reader body: String?
 
     def initialize: (String message, ?status: Integer?, ?code: String?, ?title: String?, ?detail: String?,
-                     ?request_id: String?, ?headers: headers, ?body: untyped) -> void
+                     ?errors: Array[FieldError], ?request_id: String?, ?headers: headers, ?body: String?) -> void
 
     def self.from_response: (Transport::Response response) -> Error
+    def self.from_oauth_response: (Transport::Response response) -> Error
+  end
+
+  class AuthenticationError < Error
+  end
+
+  class PermissionDeniedError < Error
+  end
+
+  class NotFoundError < Error
+  end
+
+  class ConflictError < Error
+  end
+
+  class PreconditionFailedError < Error
+  end
+
+  class InvalidRequestError < Error
+  end
+
+  class IdempotencyError < InvalidRequestError
+  end
+
+  class RateLimitError < Error
+    def retry_after: () -> Float?
+  end
+
+  class APIError < Error
+    def self.unexpected: (Transport::Response response) -> APIError
+  end
+
+  class OAuthError < Error
+  end
+
+  class APIConnectionError < Error
+  end
+
+  class APITimeoutError < APIConnectionError
   end
 
   module Transport
@@ -82,6 +130,8 @@ module TeachMeHipaa
     def self.build: (environment: environment | String, base_url: String?, organization_id: String?,
                      max_retries: Integer, timeout: Numeric, app_info: app_info?, logger: _Logger?,
                      clock: _Clock?, sleep: _Sleep?) -> Config
+    def self.check_max_retries: (untyped max_retries) -> Integer
+    def self.check_timeout: (untyped timeout) -> Float
   end
 
   class LastResponse < Data
@@ -116,17 +166,59 @@ module TeachMeHipaa
     end
   end
 
-  type request_options = { ?headers: Hash[String, String], ?timeout: Numeric }
+  type request_options = {
+    ?headers: Hash[String, String],
+    ?timeout: Numeric,
+    ?max_retries: Integer,
+    ?idempotency_key: String
+  }
 
   # @api private
   module Core
     module Json
       def self.success_body: (Transport::Response response) -> untyped
-      def self.parse_body: (Transport::Response response) -> untyped
+      def self.object_body: (Transport::Response response) -> Hash[String, untyped]?
       def self.json?: (String? content_type) -> bool
+      def self.retry_after: (headers headers) -> Float?
+    end
+
+    # The keyword arguments of Connection#request.
+    type request = {
+      method: String,
+      path: String,
+      ?query: Hash[Symbol | String, untyped],
+      headers: Hash[String, String],
+      ?body: String?,
+      ?timeout: Numeric?
+    }
+
+    module Retries
+      INITIAL_DELAY: Float
+      MAX_DELAY: Float
+      MAX_RETRY_AFTER: Float
+
+      class Policy < Data
+        attr_reader retry_safe: bool
+        attr_reader max_retries: Integer
+
+        def self.new: (retry_safe: bool, max_retries: Integer) -> instance
+      end
+
+      interface _ErrorMapper
+        def call: (Transport::Response response) -> Error
+      end
+
+      interface _Replay
+        def call: (request refused) -> void
+      end
+
+      def self.call: (Connection connection, Policy policy, map_error: _ErrorMapper,
+                      ?replay: _Replay?) { () -> request } -> Transport::Response
     end
 
     class Connection
+      NETWORK_ERRORS: Array[singleton(StandardError)]
+
       attr_reader config: Config
 
       def initialize: (Config config, _Transport transport) -> void
@@ -135,10 +227,18 @@ module TeachMeHipaa
     end
 
     class Requestor
+      REQUEST_OPTIONS: Array[Symbol]
+      NEVER_RETRIED: Array[String]
+
       def initialize: (Connection connection, _TokenProvider token_provider) -> void
       def request: [M < Model] (method: String, path: String, model: _ModelClass[M],
                                 ?path_params: Hash[Symbol | String, String],
                                 ?query: Hash[Symbol | String, untyped],
+                                ?headers: Hash[String, String],
+                                ?body: Hash[String, untyped]?,
+                                ?content_type: String,
+                                ?retry_safe: bool,
+                                ?idempotency_key: (:required | nil),
                                 ?request_options: request_options) -> M
     end
 

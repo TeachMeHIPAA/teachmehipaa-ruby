@@ -9,6 +9,18 @@ module TeachMeHipaa
     #
     # @api private
     class Connection
+      # What Net::HTTP (and transports built on sockets) raise when no
+      # response arrives. Timeout::Error covers the open, read and write
+      # timeouts.
+      NETWORK_ERRORS = [
+        IOError,
+        SystemCallError,
+        SocketError,
+        OpenSSL::SSL::SSLError,
+        Net::ProtocolError,
+        Net::HTTPBadResponse,
+      ].freeze
+
       attr_reader :config
 
       def initialize(config, transport)
@@ -26,7 +38,7 @@ module TeachMeHipaa
           timeout: timeout || config.timeout,
         )
         started = config.clock.call
-        response = normalize(@transport.call(request))
+        response = normalize(send_once(request))
         log(request, response, started)
         response
       end
@@ -36,6 +48,16 @@ module TeachMeHipaa
       end
 
       private
+
+      def send_once(request)
+        @transport.call(request)
+      rescue APIConnectionError
+        raise
+      rescue Timeout::Error
+        raise APITimeoutError, "The request to the TeachMeHIPAA API timed out."
+      rescue *NETWORK_ERRORS => e
+        raise APIConnectionError, "Could not reach the TeachMeHIPAA API: #{e.message}"
+      end
 
       def url(path, query)
         present = query.compact

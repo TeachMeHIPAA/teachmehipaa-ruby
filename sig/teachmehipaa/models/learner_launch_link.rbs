@@ -1,0 +1,7 @@
+# Hand-written for the tracer; the generator replaces this file.
+module TeachMeHipaa
+  class LearnerLaunchLink < Model
+    def url: () -> String
+    def expires_at: () -> Time
+  end
+end
