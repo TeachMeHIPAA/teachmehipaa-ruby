@@ -8,7 +8,7 @@ class OAuthConsentTest < Minitest::Test
 
   UNRESERVED_43_TO_128 = /\A[A-Za-z0-9._~-]{43,128}\z/
   BASE64URL_43 = /\A[A-Za-z0-9_-]{43}\z/
-  REDIRECT_URI = "https://partner.example.com/oauth/callback?tenant=7"
+  REDIRECT_URI = "https://partner.example.com/oauth/callback?return_to=roster"
   # RFC 7636 appendix B: this verifier's S256 challenge.
   VERIFIER = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
   CHALLENGE = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
@@ -90,11 +90,11 @@ class OAuthConsentTest < Minitest::Test
   end
 
   def test_the_code_exchange_returns_the_grant_tokens
-    transport = FakeTransport.new.on("POST", "/auth/token", grant_token_reply("jwt-org", REFRESH_TOKEN_1))
+    transport = FakeTransport.new.on("POST", "/auth/token", grant_token_reply("access-token-org", REFRESH_TOKEN_1))
 
     grant = TeachMeHipaa::OAuth.exchange_code(**EXCHANGE, transport:)
 
-    assert_equal "jwt-org", grant.access_token
+    assert_equal "access-token-org", grant.access_token
     assert_equal REFRESH_TOKEN_1, grant.refresh_token
     assert_in_delta 900.0, grant.expires_in
     assert_equal %w[learners:read learners:write], grant.scopes
@@ -115,18 +115,18 @@ class OAuthConsentTest < Minitest::Test
   end
 
   def test_grant_tokens_keep_their_secrets_out_of_inspect
-    transport = FakeTransport.new.on("POST", "/auth/token", grant_token_reply("jwt-org", REFRESH_TOKEN_1))
+    transport = FakeTransport.new.on("POST", "/auth/token", grant_token_reply("access-token-org", REFRESH_TOKEN_1))
 
     grant = TeachMeHipaa::OAuth.exchange_code(**EXCHANGE, transport:)
 
-    refute_includes grant.inspect, "jwt-org"
+    refute_includes grant.inspect, "access-token-org"
     refute_includes grant.inspect, REFRESH_TOKEN_1
     refute_includes grant.to_s, REFRESH_TOKEN_1
   end
 
   def test_the_code_exchange_goes_to_the_sandbox_token_endpoint_when_asked
     transport = FakeTransport.new(SANDBOX_BASE)
-                             .on("POST", "/auth/token", grant_token_reply("jwt-org", REFRESH_TOKEN_1))
+                             .on("POST", "/auth/token", grant_token_reply("access-token-org", REFRESH_TOKEN_1))
 
     TeachMeHipaa::OAuth.exchange_code(**EXCHANGE, environment: :sandbox, transport:)
 
@@ -165,13 +165,13 @@ class OAuthConsentTest < Minitest::Test
   end
 
   def test_a_token_response_without_a_refresh_token_raises_an_api_error_without_the_body
-    transport = FakeTransport.new.on("POST", "/auth/token", FakeTransport::Reply.json(token_json("jwt-org")))
+    transport = FakeTransport.new.on("POST", "/auth/token", FakeTransport::Reply.json(token_json("access-token-org")))
 
     error = assert_raises(TeachMeHipaa::APIError) { TeachMeHipaa::OAuth.exchange_code(**EXCHANGE, transport:) }
 
     # The body holds a live Access token, which must not reach error reporters.
     assert_nil error.body
-    refute_includes error.message, "jwt-org"
+    refute_includes error.message, "access-token-org"
   end
 
   private

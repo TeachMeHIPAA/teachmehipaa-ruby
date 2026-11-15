@@ -22,11 +22,12 @@ module TeachMeHipaa
     # must persist durably before it returns.
     class PartnerGrant
       REFRESH_GUIDANCE = Core::GrantExchange::Guidance.new(
-        connection: "The Refresh token exchange was not retried, because replaying a Refresh token the " \
-                    "endpoint may already have rotated revokes the Grant. If the next call fails with " \
-                    "invalid_grant, re-run consent for this Organization.",
+        network_failure: "The Refresh token exchange was not retried, because replaying a Refresh token the " \
+                         "endpoint may already have rotated revokes the Grant. If the next call fails with " \
+                         "invalid_grant, re-run consent for this Organization.",
         invalid_grant: "The Grant was revoked, or its Refresh token was reused (presenting a superseded " \
-                       "Refresh token revokes the Grant). Re-run consent to connect the Organization again.",
+                       "Refresh token revokes the Grant). Re-run consent so the Organization authorizes the " \
+                       "Partner app again.",
       )
       private_constant :REFRESH_GUIDANCE
 
@@ -41,35 +42,32 @@ module TeachMeHipaa
       def initialize(client_id:, client_secret:, token_store:, refresh_token: nil, scopes: nil,
                      environment: :live, base_url: nil, timeout: DEFAULT_TIMEOUT, app_info: nil,
                      transport: nil, clock: nil)
-        @client_id = Core::GrantExchange.require_text(client_id, "client_id")
-        @client_secret = Core::GrantExchange.require_text(client_secret, "client_secret")
+        @client_id = Core::Arguments.require_text(client_id, "client_id")
+        @client_secret = Core::Arguments.require_text(client_secret, "client_secret")
         unless token_store.respond_to?(:load) && token_store.respond_to?(:save)
           raise ArgumentError, "token_store must respond to load and save(refresh_token)"
         end
 
         @token_store = token_store
-        @refresh_token = refresh_token && Core::GrantExchange.require_text(refresh_token, "refresh_token")
+        @refresh_token = refresh_token && Core::Arguments.require_text(refresh_token, "refresh_token")
         @scope = scopes&.join(" ")
         @connection = Core::GrantExchange.connection(environment:, base_url:, timeout:, app_info:, transport:,
                                                      clock:)
-        @lock = Mutex.new
-        @token = nil
-        @expires_at = nil
+        @cache = Core::AccessTokenCache.new
       end
+
+      # The API base URL of the token endpoint this provider exchanges at; a
+      # client must call the same one.
+      def base_url = @connection.config.base_url
 
       # The client's connection goes unused: exchanges go to this provider's
       # own token endpoint, so one provider can serve several clients.
       def access_token(_connection)
-        @lock.synchronize do
-          mint if @token.nil? || @connection.config.clock.call >= @expires_at - REFRESH_MARGIN_SECONDS
-          @token
-        end
+        @cache.fetch(@connection.config.clock) { mint }
       end
 
       def invalidate(access_token)
-        @lock.synchronize do
-          @token = nil if @token == access_token
-        end
+        @cache.invalidate(access_token)
       end
 
       def inspect
@@ -86,8 +84,7 @@ module TeachMeHipaa
         # this process must never present it again, even if the save fails.
         @refresh_token = tokens.refresh_token
         save(tokens.refresh_token)
-        @token = tokens.access_token
-        @expires_at = exchange.expires_at
+        [tokens.access_token, exchange.expires_at]
       end
 
       def refresh_form
@@ -100,7 +97,7 @@ module TeachMeHipaa
         return @refresh_token unless @refresh_token.nil?
 
         loaded = @token_store.load
-        return loaded if loaded.is_a?(String) && !loaded.empty?
+        return loaded if Core::Arguments.text?(loaded)
 
         raise TokenStoreError, "token_store.load returned no Refresh token."
       end

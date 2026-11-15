@@ -8,15 +8,19 @@ module TeachMeHipaa
     #
     # @api private
     class Requestor
-      INTROSPECTION_PATH = "/auth/introspection"
+      INTROSPECTION = { method: "GET", path: "/auth/introspection", headers: {} }.freeze
       ORG_PLACEHOLDER = "{orgId}"
-      # Never replayed once a response may have been received (grilling
-      # Q18): a lost success would apply twice or surface as a confusing
-      # 412 or 404.
-      NEVER_RETRIED = %w[PATCH DELETE].freeze
       # Errors come as RFC 9457 problems whatever a download's own type.
       PROBLEM_JSON = "application/problem+json"
+      NO_CREDENTIALS = "This client has no credentials; pass client_id and client_secret, or token_provider, " \
+                       "to call methods that need an Access token."
 
+      # One call as sent: the request (Connection#request's keyword
+      # arguments), its retry policy, and whether it carries an Access token.
+      Call = Data.define(:request, :policy, :authenticated)
+
+      # A nil +token_provider+ is a client built without credentials: only
+      # unauthenticated calls go out.
       def initialize(connection, token_provider)
         @connection = connection
         @token_provider = token_provider
@@ -32,24 +36,26 @@ module TeachMeHipaa
       # +body+ is a Hash of wire-named fields, sent as JSON with
       # +content_type+, or as multipart/form-data with +binary_parts+ (field
       # name => content type) sent as files. +retry_safe+ and
-      # +idempotency_key+ (:required or nil) come from the IR; a call that
-      # carries an Idempotency-Key is retry-safe either way.
+      # +idempotency_key+ (:required or nil) come from the IR; only
+      # +retry_safe+ makes a call retryable, whatever key it carries.
+      # +authenticated+ is false for the IR's +security: none+ operations,
+      # which send no Access token.
       #
       # +if_match+ and +if_none_match+ are ETags for the conditional headers:
       # a String, or an object the client returned (its last response's
       # ETag).
       #
-      # +response+ is the IR's response kind: :model (+model+ reads the
-      # body), :page (+model+ reads each item), :operation (+model+, an
-      # Operation class, reads the body and polls through this requestor),
-      # :write_result, :empty, or :binary (the body must be of media type
-      # +accept+). A :page also takes
-      # the IR's +pagination+: +{ style: :cursor | :after, cursor_param: }+.
-      # A :binary call given a block streams the body to it instead.
+      # +response+ is the IR's response kind (see Responses::READERS): :model
+      # (+model+ reads the body), :page (+model+ reads each item), :operation
+      # (+model+, an Operation class, reads the body and polls through this
+      # requestor), :write_result, :empty, or :binary (the body must be of
+      # media type +accept+). A :page also takes the IR's +pagination+:
+      # +{ style: :cursor | :after, cursor_param: }+. A :binary call given a
+      # block streams the body to it instead.
       def request(method:, path:, model: nil, path_params: {}, query: {}, body: nil,
                   content_type: "application/json", binary_parts: {}, retry_safe: false, idempotency_key: nil,
-                  if_match: nil, if_none_match: nil, response: :model, accept: nil, pagination: nil,
-                  request_options: {}, &on_chunk)
+                  authenticated: true, if_match: nil, if_none_match: nil, response: :model, accept: nil,
+                  pagination: nil, request_options: {}, &on_chunk)
         options = Config.check_request_options(request_options)
         conditional = Conditional.headers(if_match:, if_none_match:)
         # One key per call, not per attempt, so every retry and the 401
@@ -64,46 +70,50 @@ module TeachMeHipaa
           body: encoded,
           timeout: options[:timeout],
         }
-        policy = retry_policy(method, retry_safe, key, options)
-        return read_page(request, policy, model, pagination) if response == :page
-        return Responses.operation(authorized(request, policy), model, self) if response == :operation
-        return download(request, policy, accept, on_chunk) if on_chunk
+        policy = Retries::Policy.for(method, retry_safe:, max_retries: options.fetch(:max_retries, config.max_retries))
+        call = Call.new(request:, policy:, authenticated:)
+        reading = Responses::Reading.new(model:, accept:, fetch_next: nil, requestor: self)
+        return download(call, reading, on_chunk) if on_chunk
 
-        Responses.read(authorized(request, policy, not_modified: !if_none_match.nil?), response, model, accept)
+        read(call, response, reading, pagination, not_modified: !if_none_match.nil?)
       end
 
       def config = @connection.config
 
       private
 
-      # Each later page is this request again with only the cursor parameter
+      # A page's next page is this call again with only the cursor parameter
       # changed, so filters, the limit and request options carry over.
-      def read_page(request, policy, model, pagination)
+      def read(call, kind, reading, pagination, not_modified: false)
         fetch_next = pagination && lambda do |page|
           position = Pagination.position(pagination.fetch(:style), page)
-          query = request[:query].merge(pagination.fetch(:cursor_param) => position)
-          read_page(request.merge(query:), policy, model, pagination)
+          query = call.request[:query].merge(pagination.fetch(:cursor_param) => position)
+          read(call.with(request: call.request.merge(query:)), kind, reading, pagination)
         end
-        Responses.read(authorized(request, policy), :page, model, nil, fetch_next:)
+        Responses.read(authorized(call, not_modified:), kind, reading.with(fetch_next:))
       end
 
       # Only a success of the promised type reaches the block, so no retried
       # attempt hands it a byte twice; once bytes have reached it, the call
       # ends rather than retry.
-      def download(request, policy, accept, on_chunk)
+      def download(call, reading, on_chunk)
         stream = lambda do |status, headers|
-          on_chunk if (200..299).cover?(status) && Responses.media_type?(headers["content-type"], accept)
+          on_chunk if Responses.success?(status) && Responses.media_type?(headers["content-type"], reading.accept)
         end
-        Responses.read(authorized(request.merge(stream:), policy), :streamed, nil, accept)
+        Responses.read(authorized(call.with(request: call.request.merge(stream:))), :streamed, reading)
       rescue Connection::Interrupted => e
         raise e.error, cause: nil
       end
 
-      def authorized(request, policy, not_modified: false)
-        Retries.call(@connection, policy, map_error: Error.method(:from_response),
-                                          replay: method(:replay_with_fresh_token?), not_modified:) do
+      def authorized(call, not_modified: false)
+        raise AuthenticationError, NO_CREDENTIALS if call.authenticated && @token_provider.nil?
+
+        replay = method(:replay_with_fresh_token?) if call.authenticated
+        Retries.call(@connection, call.policy, map_error: Error.method(:from_response), replay:, not_modified:) do
+          next call.request unless call.authenticated
+
           token = @token_provider.access_token(@connection)
-          request.merge(headers: request[:headers].merge("authorization" => "Bearer #{token}"))
+          call.request.merge(headers: call.request[:headers].merge("authorization" => "Bearer #{token}"))
         end
       end
 
@@ -125,11 +135,6 @@ module TeachMeHipaa
         headers.merge({ "x-request-id" => options[:request_id] }.compact, options.fetch(:headers, {}))
       end
 
-      def retry_policy(method, retry_safe, idempotency_key, options)
-        Retries::Policy.new(retry_safe: !NEVER_RETRIED.include?(method) && (retry_safe || !idempotency_key.nil?),
-                            max_retries: options.fetch(:max_retries, @connection.config.max_retries))
-      end
-
       def organization_id
         @organization_lock.synchronize do
           @organization_id ||= introspect_organization_id
@@ -137,8 +142,8 @@ module TeachMeHipaa
       end
 
       def introspect_organization_id
-        policy = Retries::Policy.new(retry_safe: true, max_retries: @connection.config.max_retries)
-        response = authorized({ method: "GET", path: INTROSPECTION_PATH, headers: {} }, policy)
+        policy = Retries::Policy.new(retry_safe: true, max_retries: config.max_retries)
+        response = authorized(Call.new(request: INTROSPECTION, policy:, authenticated: true))
         organization_id = Json.success_body(response)["orgId"]
         return organization_id if organization_id.is_a?(String)
 

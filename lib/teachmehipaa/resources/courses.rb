@@ -9,12 +9,15 @@ module TeachMeHipaa
       # List all courses
       #
       # Returns a list of the courses in the public catalog. Needs no access token.
+      #
+      # Sends no Access token, so it also works on a client built without credentials.
       def list(limit: nil, cursor: nil, request_options: {})
         request(
           method: "GET",
           path: "/courses",
           query: { limit:, cursor: },
           retry_safe: true,
+          authenticated: false,
           response: :page,
           model: Course,
           pagination: { style: :cursor, cursor_param: "cursor" },
@@ -28,6 +31,8 @@ module TeachMeHipaa
       #
       # Given +if_none_match:+ (an ETag, or the copy you hold), returns NotModified when your copy
       # is current.
+      #
+      # Sends no Access token, so it also works on a client built without credentials.
       def retrieve(course_id, if_none_match: nil, request_options: {})
         request(
           method: "GET",
@@ -35,6 +40,7 @@ module TeachMeHipaa
           path_params: { courseId: course_id },
           if_none_match:,
           retry_safe: true,
+          authenticated: false,
           model: Course,
           request_options:,
         )

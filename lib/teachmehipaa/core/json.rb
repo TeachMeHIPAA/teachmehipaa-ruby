@@ -10,7 +10,7 @@ module TeachMeHipaa
       module_function
 
       def success_body(response)
-        raise Error.from_response(response) unless (200..299).cover?(response.status)
+        raise Error.from_response(response) unless Responses.success?(response.status)
         raise APIError.unexpected(response) unless json?(response.headers["content-type"])
 
         JSON.parse(response.body)
@@ -29,8 +29,13 @@ module TeachMeHipaa
       end
 
       def json?(content_type)
-        media_type = content_type.to_s.split(";").first.to_s.strip.downcase
-        media_type == "application/json" || media_type.end_with?("+json")
+        type = media_type(content_type)
+        type == "application/json" || type.end_with?("+json")
+      end
+
+      # A Content-Type's media type, lower-cased and without parameters.
+      def media_type(content_type)
+        content_type.to_s.split(";").first.to_s.strip.downcase
       end
 
       # The API only sends delta-seconds. An HTTP-date would need a wall

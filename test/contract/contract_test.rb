@@ -161,7 +161,7 @@ class ContractTest < Minitest::Test
     assert_kind_of String, @client.auth.introspect.actor_type
   end
 
-  def test_lists_a_partners_customer_organizations
+  def test_lists_a_partners_organizations
     page = @client.partners.organizations.list(PARTNER_ID, limit: 10)
 
     page.each { |organization| assert_kind_of String, organization.org_id }

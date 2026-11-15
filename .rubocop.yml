@@ -52,3 +52,7 @@ Metrics/ParameterLists:
 
 Minitest/MultipleAssertions:
   Max: 12
+
+# The generator's classes all take the parsed IR, the project's term for it.
+Naming/MethodParameterName:
+  AllowedNames: [as, at, by, cc, db, id, if, in, io, ip, ir, of, on, os, pp, to]

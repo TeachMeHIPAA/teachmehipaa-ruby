@@ -119,68 +119,37 @@ module TeachMeHipaa
     #
     # @api private
     module Responses
+      # What reading needs besides the response: +model+ reads the body (each
+      # item, for a page; an Operation class, for an operation), +accept+ is
+      # a binary's promised media type, +fetch_next+ is a page's means to
+      # fetch the page after it, and +requestor+ is what an Operation polls
+      # through.
+      Reading = Data.define(:model, :accept, :fetch_next, :requestor)
+
       module_function
 
-      # +fetch_next+ is the Page's means to fetch the page after it.
-      def read(response, kind, model, accept, fetch_next: nil)
+      def read(response, kind, reading)
         last_response = LastResponse.from(response)
         # Only a call that sent If-None-Match is handed a 304.
         return NotModified.new(last_response:) if response.status == 304
 
-        case kind
-        when :empty then empty(response, last_response)
-        when :binary then binary(response, accept, last_response)
-        when :streamed then streamed(response, accept, last_response)
-        when :page then page(response, model, last_response, fetch_next)
-        when :write_result
-          # Not on the wire: 201 created the Learner, 200 found it (grilling Q25).
-          model.new(Json.success_body(response).merge("created" => response.status == 201), last_response:)
-        else model.new(Json.success_body(response), last_response:)
-        end
+        READERS.fetch(kind).call(response, last_response, reading)
       end
 
-      # +model+, an Operation class, keeps +requestor+ to poll itself through.
-      def operation(response, model, requestor)
-        model.new(Json.success_body(response), last_response: LastResponse.from(response), requestor:)
+      def success?(status)
+        (200..299).cover?(status)
       end
 
-      def empty(response, last_response)
-        raise Error.from_response(response) unless success?(response)
-
-        EmptyResponse.new(last_response:)
+      def media_type?(content_type, accept)
+        Json.media_type(content_type) == accept.downcase
       end
 
       # A binary success must carry the type the IR promises: unknown paths
       # answer 200 with an HTML page, which must not be handed back as a PDF.
-      def binary(response, accept, last_response)
-        check_media_type(response, accept)
-        BinaryResponse.new(data: response.body.b, content_type: response.headers["content-type"],
-                           filename: filename(response.headers["content-disposition"]), last_response:)
-      end
-
-      # The block already has the bytes; a body read whole here was not the
-      # promised type.
-      def streamed(response, accept, last_response)
-        check_media_type(response, accept)
-        StreamedResponse.new(content_type: response.headers["content-type"],
-                             filename: filename(response.headers["content-disposition"]), last_response:)
-      end
-
       def check_media_type(response, accept)
-        raise Error.from_response(response) unless success?(response)
         return if media_type?(response.headers["content-type"], accept)
 
         raise APIError.unexpected(response, expected: accept)
-      end
-
-      def media_type?(content_type, accept)
-        content_type.to_s.split(";").first.to_s.strip.casecmp?(accept)
-      end
-
-      def page(response, model, last_response, fetch_next)
-        body = Json.success_body(response)
-        Page.new(items: Array(body["items"]).map { |item| model.new(item) }, next_cursor: body["nextCursor"],
-                 last_response:, fetch_next:)
       end
 
       # RFC 6266: the UTF-8 filename* when present, else the plain filename.
@@ -194,9 +163,39 @@ module TeachMeHipaa
         header[/filename="?([^";]+)"?/i, 1]
       end
 
-      def success?(response)
-        (200..299).cover?(response.status)
-      end
+      # By response kind (the IR's, plus :streamed for a download given a
+      # block), what a success reads into.
+      READERS = {
+        model: lambda do |response, last_response, reading|
+          reading.model.new(Json.success_body(response), last_response:)
+        end,
+        # +created+ is not on the wire: 201 created the Learner, 200 found it
+        # (grilling Q25).
+        write_result: lambda do |response, last_response, reading|
+          reading.model.new(Json.success_body(response).merge("created" => response.status == 201), last_response:)
+        end,
+        operation: lambda do |response, last_response, reading|
+          reading.model.new(Json.success_body(response), last_response:, requestor: reading.requestor)
+        end,
+        page: lambda do |response, last_response, reading|
+          body = Json.success_body(response)
+          Page.new(items: Array(body["items"]).map { |item| reading.model.new(item) },
+                   next_cursor: body["nextCursor"], last_response:, fetch_next: reading.fetch_next)
+        end,
+        empty: ->(_response, last_response, _reading) { EmptyResponse.new(last_response:) },
+        binary: lambda do |response, last_response, reading|
+          check_media_type(response, reading.accept)
+          BinaryResponse.new(data: response.body.b, content_type: response.headers["content-type"],
+                             filename: filename(response.headers["content-disposition"]), last_response:)
+        end,
+        # The block already has the bytes; a body read whole here was not the
+        # promised type.
+        streamed: lambda do |response, last_response, reading|
+          check_media_type(response, reading.accept)
+          StreamedResponse.new(content_type: response.headers["content-type"],
+                               filename: filename(response.headers["content-disposition"]), last_response:)
+        end,
+      }.freeze
     end
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module TeachMeHipaa
-  # Helpers for connecting Organizations to a Partner app: PKCE pairs, the
+  # Helpers for an Organization's consent to a Partner app: PKCE pairs, the
   # consent URL and the code exchange. They need no client.
   #
   #   pair = TeachMeHipaa::OAuth.create_pkce_pair
@@ -35,8 +35,8 @@ module TeachMeHipaa
     end
 
     CODE_EXCHANGE_GUIDANCE = Core::GrantExchange::Guidance.new(
-      connection: "The code exchange was not retried: the code may have been consumed, and a code works " \
-                  "only once. Re-run consent to get a new code.",
+      network_failure: "The code exchange was not retried: the code may have been consumed, and a code " \
+                       "works only once. Re-run consent to get a new code.",
       invalid_grant: nil,
     )
     private_constant :CODE_EXCHANGE_GUIDANCE
@@ -75,13 +75,13 @@ module TeachMeHipaa
                       authorization_url: nil)
       query = {
         "response_type" => "code",
-        "client_id" => Core::GrantExchange.require_text(client_id, "client_id"),
-        "redirect_uri" => Core::GrantExchange.require_text(redirect_uri, "redirect_uri"),
+        "client_id" => Core::Arguments.require_text(client_id, "client_id"),
+        "redirect_uri" => Core::Arguments.require_text(redirect_uri, "redirect_uri"),
         "scope" => scopes.join(" "),
         # Without state, a forged redirect could attach an attacker's Grant
         # to the partner's session (RFC 6749 §10.12).
-        "state" => Core::GrantExchange.require_text(state, "state"),
-        "code_challenge" => Core::GrantExchange.require_text(code_challenge, "code_challenge"),
+        "state" => Core::Arguments.require_text(state, "state"),
+        "code_challenge" => Core::Arguments.require_text(code_challenge, "code_challenge"),
         "code_challenge_method" => "S256",
       }
       # Percent-encoding writes spaces as %20; form encoding's "+" is only
@@ -108,15 +108,14 @@ module TeachMeHipaa
                       base_url: nil, timeout: DEFAULT_TIMEOUT, app_info: nil, transport: nil)
       form = {
         "grant_type" => "authorization_code",
-        "code" => Core::GrantExchange.require_text(code, "code"),
-        "redirect_uri" => Core::GrantExchange.require_text(redirect_uri, "redirect_uri"),
-        "code_verifier" => Core::GrantExchange.require_text(code_verifier, "code_verifier"),
+        "code" => Core::Arguments.require_text(code, "code"),
+        "redirect_uri" => Core::Arguments.require_text(redirect_uri, "redirect_uri"),
+        "code_verifier" => Core::Arguments.require_text(code_verifier, "code_verifier"),
       }
       connection = Core::GrantExchange.connection(environment:, base_url:, timeout:, app_info:, transport:,
                                                   clock: nil)
-      Core::GrantExchange.call(connection, client_id: Core::GrantExchange.require_text(client_id, "client_id"),
-                                           client_secret: Core::GrantExchange.require_text(client_secret,
-                                                                                           "client_secret"),
+      Core::GrantExchange.call(connection, client_id: Core::Arguments.require_text(client_id, "client_id"),
+                                           client_secret: Core::Arguments.require_text(client_secret, "client_secret"),
                                            form:, guidance: CODE_EXCHANGE_GUIDANCE).tokens
     end
 
@@ -137,11 +136,7 @@ module TeachMeHipaa
 
         return authorization_url
       end
-      environment = environment.to_sym
-      unless AUTHORIZATION_URLS.key?(environment)
-        raise ArgumentError, "environment must be :live or :sandbox, not #{environment.inspect}"
-      end
-
+      environment = Config.check_environment(environment)
       AUTHORIZATION_URLS.fetch(environment) or
         raise ArgumentError, "pass authorization_url: the #{environment} consent URL is not built in"
     end

@@ -15,8 +15,8 @@ module SdkGenerator
       EXTENDED_MODELS.include?(name) ? "#{name}Base" : name
     end
 
-    def initialize(context)
-      @ir = context
+    def initialize(ir)
+      @ir = ir
     end
 
     def files
@@ -108,8 +108,8 @@ module SdkGenerator
   class ModelSource
     include ModelDocs
 
-    def initialize(context)
-      @ir = context
+    def initialize(ir)
+      @ir = ir
     end
 
     def source(type)
@@ -179,8 +179,8 @@ module SdkGenerator
   class ModelSignature
     include ModelDocs
 
-    def initialize(context)
-      @ir = context
+    def initialize(ir)
+      @ir = ir
     end
 
     def source(type)

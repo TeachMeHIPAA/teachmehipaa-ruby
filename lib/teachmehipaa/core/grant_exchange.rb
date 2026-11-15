@@ -13,10 +13,10 @@ module TeachMeHipaa
       NEVER_RETRY = Retries::Policy.new(retry_safe: false, max_retries: 0)
 
       # What to tell the caller when an exchange fails in a way only they can
-      # fix: +connection+ for a network failure, whose outcome is unknown, and
-      # +invalid_grant+ for that OAuth error, or nil to keep the endpoint's
-      # words.
-      Guidance = Data.define(:connection, :invalid_grant)
+      # fix: +network_failure+ when no response arrived, so the outcome is
+      # unknown, and +invalid_grant+ for that OAuth error, or nil to keep the
+      # endpoint's words.
+      Guidance = Data.define(:network_failure, :invalid_grant)
 
       # +requested_at+ is when the request left, so expiry can't stretch past
       # the token's real lifetime.
@@ -57,12 +57,6 @@ module TeachMeHipaa
         }
       end
 
-      def require_text(value, name)
-        return value if value.is_a?(String) && !value.strip.empty?
-
-        raise ArgumentError, "#{name} must be a non-empty String"
-      end
-
       # RFC 6749 §2.3.1: form-encode each half before base64.
       def basic_credentials(client_id, client_secret)
         pair = "#{URI.encode_www_form_component(client_id)}:#{URI.encode_www_form_component(client_secret)}"
@@ -94,7 +88,7 @@ module TeachMeHipaa
       # The same error with what only the caller can do about it appended.
       def guided(error, guidance)
         if error.is_a?(APIConnectionError)
-          error.class.new(append(error.message, guidance.connection))
+          error.class.new(append(error.message, guidance.network_failure))
         elsif error.code == "invalid_grant" && guidance.invalid_grant
           OAuthError.new(append(error.detail || error.code, guidance.invalid_grant),
                          status: error.status, code: error.code, detail: error.detail,

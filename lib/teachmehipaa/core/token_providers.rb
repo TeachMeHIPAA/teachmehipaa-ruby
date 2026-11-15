@@ -11,7 +11,46 @@ module TeachMeHipaa
   module TokenProviders
     # Re-mint this long before expiry so a token never lapses mid-request.
     REFRESH_MARGIN_SECONDS = 60
+  end
 
+  module Core
+    # One cached Access token, renewed when it nears expiry. Minting holds
+    # the lock, so concurrent callers share a single mint.
+    #
+    # @api private
+    class AccessTokenCache
+      def initialize
+        @lock = Mutex.new
+        @token = nil
+        @expires_at = nil
+      end
+
+      # The cached token, or the one the block mints when there is none or
+      # it is stale by +clock+. The block returns the new token and its
+      # expiry in +clock+'s seconds; if it raises, nothing is cached.
+      def fetch(clock)
+        @lock.synchronize do
+          @token, @expires_at = yield if @token.nil? || stale?(clock.call)
+          @token
+        end
+      end
+
+      # Keeps a token minted since +access_token+ was handed out.
+      def invalidate(access_token)
+        @lock.synchronize do
+          @token = nil if @token == access_token
+        end
+      end
+
+      private
+
+      def stale?(now)
+        now >= @expires_at - TokenProviders::REFRESH_MARGIN_SECONDS
+      end
+    end
+  end
+
+  module TokenProviders
     # The OAuth client-credentials grant for an API client. Caches one Access
     # token and mints a new one when it nears expiry; concurrent callers
     # share a single mint.
@@ -20,22 +59,15 @@ module TeachMeHipaa
         @client_id = client_id
         @client_secret = client_secret
         @scopes = scopes&.map(&:to_s)&.freeze
-        @lock = Mutex.new
-        @token = nil
-        @expires_at = nil
+        @cache = Core::AccessTokenCache.new
       end
 
       def access_token(connection)
-        @lock.synchronize do
-          mint(connection) if @token.nil? || stale?(connection.config.clock.call)
-          @token
-        end
+        @cache.fetch(connection.config.clock) { mint(connection) }
       end
 
       def invalidate(access_token)
-        @lock.synchronize do
-          @token = nil if @token == access_token
-        end
+        @cache.invalidate(access_token)
       end
 
       def inspect
@@ -44,17 +76,12 @@ module TeachMeHipaa
 
       private
 
-      def stale?(now)
-        now >= @expires_at - REFRESH_MARGIN_SECONDS
-      end
-
       def mint(connection)
         minted_at = connection.config.clock.call
         response = Core::Retries.call(connection, mint_retry_policy(connection.config),
                                       map_error: Error.method(:from_oauth_response)) { mint_request }
         body = Core::Json.success_body(response)
-        @token = body.fetch("access_token")
-        @expires_at = minted_at + Float(body.fetch("expires_in"))
+        [body.fetch("access_token"), minted_at + Float(body.fetch("expires_in"))]
       end
 
       # A client-credentials grant mints a fresh token each time, so replaying
@@ -75,7 +102,7 @@ module TeachMeHipaa
     # once it expires or is revoked, calls raise AuthenticationError.
     class Static
       def initialize(access_token)
-        unless access_token.is_a?(String) && !access_token.strip.empty?
+        unless Core::Arguments.text?(access_token)
           raise ArgumentError, "TokenProviders::Static needs a non-empty Access token"
         end
 

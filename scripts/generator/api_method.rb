@@ -10,6 +10,7 @@ module SdkGenerator
     PATCH_NOTE = "Parameters you leave out are unchanged; pass nil to clear one."
     BINARY_NOTE = "Returns the whole file as a BinaryResponse. Given a block, yields the file's bytes in " \
                   "chunks as they arrive instead and returns a StreamedResponse."
+    PUBLIC_NOTE = "Sends no Access token, so it also works on a client built without credentials."
     CONDITIONAL_NOTE = "Given +if_none_match:+ (an ETag, or the copy you hold), returns NotModified when " \
                        "your copy is current."
     STRING = { "kind" => "primitive", "type" => "string" }.freeze
@@ -25,12 +26,12 @@ module SdkGenerator
     # +body+ is true for a request-body field.
     Param = Data.define(:ruby, :wire, :required, :nullable, :type, :body)
 
-    attr_reader :data, :where, :body, :ir
+    attr_reader :data, :qualified_name, :body, :ir
 
-    def initialize(context, resource_path, data)
-      @ir = context
+    def initialize(ir, resource_path, data)
+      @ir = ir
       @data = data
-      @where = [*resource_path, data.fetch("name")].join(".")
+      @qualified_name = [*resource_path, data.fetch("name")].join(".")
       @body = data["requestBody"]
       Checks.new(self).run
     end
@@ -41,7 +42,13 @@ module SdkGenerator
 
     def doc
       [data["summary"], data["description"], *constraint_notes, (PATCH_NOTE if merge_patch?),
-       (BINARY_NOTE if binary?), (CONDITIONAL_NOTE if if_none_match)]
+       (BINARY_NOTE if binary?), (CONDITIONAL_NOTE if if_none_match), (PUBLIC_NOTE if public?)]
+    end
+
+    # An operation the IR marks +security: none+, which the API serves to
+    # anyone.
+    def public?
+      data.dig("security", "kind") == "none"
     end
 
     def merge_patch?
@@ -65,12 +72,7 @@ module SdkGenerator
     end
 
     def body_type
-      return nil if @body.nil?
-
-      ref = @body.fetch("type")
-      raise ArgumentError, "#{where}: the body must reference an object type" unless @ir.kind_of(ref) == "object"
-
-      @ir.type(ref.fetch("name"))
+      @body && @ir.type(@body.dig("type", "name"))
     end
 
     # The body's fields, less those a const constraint fixes outright.
@@ -80,10 +82,6 @@ module SdkGenerator
       fixed = constraints("const").map { |constraint| constraint.fetch("path") }.select { |path| path.length == 1 }
       body_type.fetch("fields").reject { |field| fixed.include?([field.fetch("name")]) }
                .map { |field| param(field, @body.fetch("required") && field.fetch("required"), body: true) }
-    end
-
-    def keywords
-      [*query_params, *body_params]
     end
 
     def required_keywords
@@ -153,6 +151,8 @@ module SdkGenerator
 
       def run
         fail!("header parameters aren't supported") unless @data.fetch("headerParams").empty?
+        body = @data["requestBody"]
+        fail!("the body must reference an object type") if body && @method.ir.kind_of(body.fetch("type")) != "object"
         check_path
         check_names
         constraint = @method.constraints("const").find { |const| const.fetch("path").length > 2 }
@@ -162,7 +162,7 @@ module SdkGenerator
       private
 
       def fail!(message)
-        raise ArgumentError, "#{@method.where}: #{message}"
+        raise ArgumentError, "#{@method.qualified_name}: #{message}"
       end
 
       def check_path
@@ -175,7 +175,7 @@ module SdkGenerator
       end
 
       def check_names
-        names = [*@method.path_params, *@method.keywords].map(&:ruby)
+        names = [*@method.path_params, *@method.query_params, *@method.body_params].map(&:ruby)
         clash = names.find { |name| names.count(name) > 1 || RESERVED_PARAMS.include?(name) }
         fail!("parameter #{clash} clashes with another name") if clash
       end

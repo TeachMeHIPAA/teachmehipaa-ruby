@@ -54,7 +54,7 @@ class PartnerGrantsTest < Minitest::Test
   end
 
   def test_the_rotated_refresh_token_is_saved_before_the_api_request_is_sent
-    @transport.on("POST", TOKEN_PATH, grant_token_reply("jwt-org", REFRESH_TOKEN_2))
+    @transport.on("POST", TOKEN_PATH, grant_token_reply("access-token-org", REFRESH_TOKEN_2))
     @transport.on("GET", LEARNER_PATH, OK)
     store = MemoryStore.new(@transport)
 
@@ -66,11 +66,11 @@ class PartnerGrantsTest < Minitest::Test
 
     assert_equal "Basic #{APP_BASIC_CREDENTIALS}", exchange.headers["authorization"]
     assert_equal({ "grant_type" => "refresh_token", "refresh_token" => REFRESH_TOKEN_1 }, form_of(exchange))
-    assert_equal ["Bearer jwt-org"], bearers
+    assert_equal ["Bearer access-token-org"], bearers
   end
 
   def test_a_failed_save_aborts_the_call_without_using_the_access_token
-    @transport.on("POST", TOKEN_PATH, grant_token_reply("jwt-org", REFRESH_TOKEN_2))
+    @transport.on("POST", TOKEN_PATH, grant_token_reply("access-token-org", REFRESH_TOKEN_2))
 
     error = assert_raises(TeachMeHipaa::TokenStoreError) do
       grant_client(ReadOnlyStore.new).learners.retrieve(LEARNER_ID)
@@ -79,13 +79,13 @@ class PartnerGrantsTest < Minitest::Test
     assert_match(/token_store\.save failed/, error.message)
     assert_instance_of IOError, error.cause
     refute_includes error.message, REFRESH_TOKEN_2
-    refute_includes error.message, "jwt-org"
+    refute_includes error.message, "access-token-org"
     assert_empty @transport.requests_to("GET", LEARNER_PATH)
   end
 
   def test_after_a_failed_save_the_rotated_refresh_token_is_presented
-    @transport.on("POST", TOKEN_PATH, grant_token_reply("jwt-1", REFRESH_TOKEN_2))
-    @transport.on("POST", TOKEN_PATH, grant_token_reply("jwt-2", REFRESH_TOKEN_3))
+    @transport.on("POST", TOKEN_PATH, grant_token_reply("access-token-1", REFRESH_TOKEN_2))
+    @transport.on("POST", TOKEN_PATH, grant_token_reply("access-token-2", REFRESH_TOKEN_3))
     @transport.on("GET", LEARNER_PATH, OK)
     store = ReadOnlyStore.new(failures: 1)
     client = grant_client(store)
@@ -140,7 +140,7 @@ class PartnerGrantsTest < Minitest::Test
     slow_token_endpoint = lambda do |_request|
       exchanges << :exchange
       sleep 0.02 # hold the exchange open while the other callers arrive
-      grant_token_reply("jwt-org", REFRESH_TOKEN_2)
+      grant_token_reply("access-token-org", REFRESH_TOKEN_2)
     end
     @transport.on("POST", TOKEN_PATH, slow_token_endpoint)
     @transport.on("GET", LEARNER_PATH, OK)
@@ -151,13 +151,13 @@ class PartnerGrantsTest < Minitest::Test
 
     assert_equal 1, exchanges.size
     assert_equal [REFRESH_TOKEN_2], store.saved
-    assert_equal ["Bearer jwt-org"] * 5, bearers
+    assert_equal ["Bearer access-token-org"] * 5, bearers
   end
 
   def test_re_mints_60_seconds_before_expiry_with_the_rotated_refresh_token
     clock = FakeClock.new
-    @transport.on("POST", TOKEN_PATH, grant_token_reply("jwt-1", REFRESH_TOKEN_2, expires_in: 900))
-    @transport.on("POST", TOKEN_PATH, grant_token_reply("jwt-2", REFRESH_TOKEN_3, expires_in: 900))
+    @transport.on("POST", TOKEN_PATH, grant_token_reply("access-token-1", REFRESH_TOKEN_2, expires_in: 900))
+    @transport.on("POST", TOKEN_PATH, grant_token_reply("access-token-2", REFRESH_TOKEN_3, expires_in: 900))
     @transport.on("GET", LEARNER_PATH, OK)
     store = MemoryStore.new(@transport)
     client = grant_client(store, clock:)
@@ -170,23 +170,23 @@ class PartnerGrantsTest < Minitest::Test
 
     assert_equal [REFRESH_TOKEN_1, REFRESH_TOKEN_2], refresh_tokens_sent
     assert_equal [REFRESH_TOKEN_2, REFRESH_TOKEN_3], store.saved
-    assert_equal ["Bearer jwt-1", "Bearer jwt-1", "Bearer jwt-2"], bearers
+    assert_equal ["Bearer access-token-1", "Bearer access-token-1", "Bearer access-token-2"], bearers
   end
 
   def test_a_401_re_mints_once_and_replays_the_request
-    @transport.on("POST", TOKEN_PATH, grant_token_reply("jwt-1", REFRESH_TOKEN_2))
-    @transport.on("POST", TOKEN_PATH, grant_token_reply("jwt-2", REFRESH_TOKEN_3))
+    @transport.on("POST", TOKEN_PATH, grant_token_reply("access-token-1", REFRESH_TOKEN_2))
+    @transport.on("POST", TOKEN_PATH, grant_token_reply("access-token-2", REFRESH_TOKEN_3))
     @transport.on("GET", LEARNER_PATH, Fixtures.problem(401, "unauthorized"))
     @transport.on("GET", LEARNER_PATH, OK)
 
     grant_client(MemoryStore.new(@transport)).learners.retrieve(LEARNER_ID)
 
     assert_equal [REFRESH_TOKEN_1, REFRESH_TOKEN_2], refresh_tokens_sent
-    assert_equal ["Bearer jwt-1", "Bearer jwt-2"], bearers
+    assert_equal ["Bearer access-token-1", "Bearer access-token-2"], bearers
   end
 
   def test_a_refresh_token_passed_up_front_is_used_for_the_first_exchange
-    @transport.on("POST", TOKEN_PATH, grant_token_reply("jwt-org", REFRESH_TOKEN_3))
+    @transport.on("POST", TOKEN_PATH, grant_token_reply("access-token-org", REFRESH_TOKEN_3))
     @transport.on("GET", LEARNER_PATH, OK)
     store = MemoryStore.new(@transport, "tmh_rt_never_loaded")
 
@@ -197,7 +197,7 @@ class PartnerGrantsTest < Minitest::Test
   end
 
   def test_scopes_narrow_the_access_token
-    @transport.on("POST", TOKEN_PATH, grant_token_reply("jwt-org", REFRESH_TOKEN_2))
+    @transport.on("POST", TOKEN_PATH, grant_token_reply("access-token-org", REFRESH_TOKEN_2))
     @transport.on("GET", LEARNER_PATH, OK)
 
     grant_client(MemoryStore.new(@transport), scopes: ["learners:read"]).learners.retrieve(LEARNER_ID)
@@ -224,7 +224,42 @@ class PartnerGrantsTest < Minitest::Test
     refute_includes provider.inspect, REFRESH_TOKEN_1
   end
 
+  def test_a_client_refuses_a_provider_for_another_environment
+    error = assert_raises(ArgumentError) do
+      TeachMeHipaa::Client.new(environment: :sandbox, token_provider: provider(environment: :live))
+    end
+
+    assert_match(%r{https://api.tme.so/v1.*https://api-teachmehipaa-dev.web.app/v1}, error.message)
+  end
+
+  def test_a_client_accepts_a_provider_for_its_own_environment
+    client = TeachMeHipaa::Client.new(environment: :sandbox, token_provider: provider(environment: :sandbox))
+
+    assert_equal SANDBOX_BASE, provider(environment: :sandbox).base_url
+    assert_equal SANDBOX_BASE, client.base_url
+  end
+
+  def test_custom_base_urls_must_match_but_a_trailing_slash_does_not_matter
+    TeachMeHipaa::Client.new(base_url: "http://localhost:4010/", token_provider: provider(base_url: "http://localhost:4010"))
+
+    assert_raises(ArgumentError) do
+      TeachMeHipaa::Client.new(base_url: "http://localhost:4010", token_provider: provider(base_url: "http://localhost:4011"))
+    end
+  end
+
+  def test_a_static_token_is_accepted_whatever_the_environment
+    client = TeachMeHipaa::Client.new(environment: :sandbox,
+                                      token_provider: TeachMeHipaa::TokenProviders::Static.new("access-token-x"))
+
+    assert_equal :sandbox, client.environment
+  end
+
   private
+
+  def provider(**)
+    TeachMeHipaa::TokenProviders::PartnerGrant.new(client_id: APP_ID, client_secret: APP_SECRET,
+                                                   token_store: MemoryStore.new(@transport), **)
+  end
 
   def grant_client(store, clock: nil, **provider_options)
     provider = TeachMeHipaa::TokenProviders::PartnerGrant.new(

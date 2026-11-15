@@ -20,8 +20,8 @@ module SdkGenerator
       def generated_class = extended? ? "#{class_name}Base" : class_name
     end
 
-    def initialize(context)
-      @ir = context
+    def initialize(ir)
+      @ir = ir
     end
 
     def files

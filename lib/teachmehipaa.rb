@@ -10,6 +10,7 @@ require "uri"
 
 require_relative "teachmehipaa/version"
 require_relative "teachmehipaa/core/errors"
+require_relative "teachmehipaa/core/arguments"
 require_relative "teachmehipaa/core/json"
 require_relative "teachmehipaa/core/transport"
 require_relative "teachmehipaa/core/config"

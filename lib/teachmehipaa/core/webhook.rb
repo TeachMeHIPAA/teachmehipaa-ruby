@@ -50,7 +50,7 @@ module TeachMeHipaa
       end
 
       def check_secret(secret)
-        return if secret.is_a?(String) && !secret.empty?
+        return if Arguments.text?(secret)
 
         raise ArgumentError, "secret must be the Webhook subscription's Signing secret; got #{secret.inspect}"
       end
@@ -107,7 +107,7 @@ module TeachMeHipaa
 
     class << self
       # Verifies a Delivery and returns its Event, or a TeachMeHipaa::TestDelivery
-      # for a test ping.
+      # for a Test delivery.
       #
       # +payload+ is the raw request body exactly as received. +path+ is the
       # path, with its query string, the request arrived on (or the full

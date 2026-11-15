@@ -10,12 +10,15 @@ module TeachMeHipaa
       #
       # Verifies the certificate behind a `https://tme.so/{tinyId}` link. Needs no access token.
       # Limited to 60 requests a minute per IP address.
+      #
+      # Sends no Access token, so it also works on a client built without credentials.
       def retrieve(tiny_id, request_options: {})
         request(
           method: "GET",
           path: "/certificate-verifications/{tinyId}",
           path_params: { tinyId: tiny_id },
           retry_safe: true,
+          authenticated: false,
           model: CertificateVerification,
           request_options:,
         )

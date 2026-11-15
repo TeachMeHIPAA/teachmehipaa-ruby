@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "json"
 require_relative "generator/schema"
 require_relative "generator/naming"

@@ -6,6 +6,8 @@ module TeachMeHipaa
       # List all courses
       #
       # Returns a list of the courses in the public catalog. Needs no access token.
+      #
+      # Sends no Access token, so it also works on a client built without credentials.
       def list: (?limit: Integer?, ?cursor: String?, ?request_options: request_options) -> Page[Course]
 
       # Retrieve a course
@@ -14,6 +16,8 @@ module TeachMeHipaa
       #
       # Given +if_none_match:+ (an ETag, or the copy you hold), returns NotModified when your copy
       # is current.
+      #
+      # Sends no Access token, so it also works on a client built without credentials.
       def retrieve: (String course_id, ?request_options: request_options) -> Course
                   | (String course_id, if_none_match: etag?,
                      ?request_options: request_options) -> (Course | NotModified)

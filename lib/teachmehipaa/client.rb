@@ -20,7 +20,12 @@ module TeachMeHipaa
     # +token_provider+ such as a TokenProviders::PartnerGrant or a
     # TokenProviders::Static that supplies every Access token instead. A
     # Partner app's own id and secret mint a Partner-level token for
-    # +partners+, which needs no Organization.
+    # +partners+, which needs no Organization. A PartnerGrant must exchange
+    # in this client's Environment, or this raises ArgumentError.
+    #
+    # With none of them, the client can call only the methods that need no
+    # Access token (the course catalog and Certificate verification); any
+    # other call raises AuthenticationError before sending a request.
     #
     # +environment+ is :live or :sandbox; +base_url+ overrides it (for a mock
     # server, say). +scopes+ narrows the Access token to fewer Scopes than the
@@ -37,6 +42,7 @@ module TeachMeHipaa
       token_provider = token_provider_for(client_id, client_secret, token_provider, scopes)
       @config = Config.build(environment:, base_url:, organization_id:, max_retries:, timeout:,
                              app_info:, logger:, clock:, sleep:)
+      check_token_endpoint(token_provider)
       connection = Core::Connection.new(@config, transport || Transport::NetHttp.new)
       build_resources(Core::Requestor.new(connection, token_provider))
       freeze
@@ -57,21 +63,32 @@ module TeachMeHipaa
 
     private
 
-    # The provider that supplies every Access token: the one given, or a
-    # client-credentials provider for the id and secret.
+    # The provider that supplies every Access token: the one given, a
+    # client-credentials provider for the id and secret, or nil for a client
+    # with no credentials, which can call only the methods that need no
+    # Access token (spec story 27).
     def token_provider_for(client_id, client_secret, token_provider, scopes)
-      if token_provider.nil?
-        if client_id.nil? || client_secret.nil?
-          raise ArgumentError, "pass client_id and client_secret, or token_provider"
-        end
+      given = { client_id:, client_secret:, scopes: }.compact.keys
+      unless token_provider.nil?
+        return token_provider if given.empty?
 
-        return TokenProviders::ClientCredentials.new(client_id:, client_secret:, scopes:)
+        raise ArgumentError, "give either token_provider or client_id and client_secret, not both " \
+                             "(got #{given.join(", ")} too; scopes belong to the token provider)"
       end
-      conflicting = { client_id:, client_secret:, scopes: }.compact.keys
-      return token_provider if conflicting.empty?
+      return nil if given.empty?
+      return TokenProviders::ClientCredentials.new(client_id:, client_secret:, scopes:) if client_id && client_secret
 
-      raise ArgumentError, "give either token_provider or client_id and client_secret, not both " \
-                           "(got #{conflicting.join(", ")} too; scopes belong to the token provider)"
+      raise ArgumentError, "pass both client_id and client_secret, or token_provider (got only #{given.join(", ")})"
+    end
+
+    # A Grant's tokens are only good in the Environment that issued them, so
+    # a provider exchanging elsewhere would fail every call with a 401.
+    def check_token_endpoint(token_provider)
+      return unless token_provider.is_a?(TokenProviders::PartnerGrant)
+      return if token_provider.base_url == base_url
+
+      raise ArgumentError, "the token provider exchanges Refresh tokens at #{token_provider.base_url}, but this " \
+                           "client calls #{base_url}; give both the same environment (or base_url)"
     end
   end
 end

@@ -21,6 +21,7 @@ module SdkGenerator
         *body_arguments,
         *("retry_safe: true\n" if @data.fetch("retrySafe")),
         *("idempotency_key: :required\n" if @data.fetch("idempotencyKey") == "required"),
+        *("authenticated: false\n" if @method.public?),
         *response_arguments,
         "request_options:\n",
       ]

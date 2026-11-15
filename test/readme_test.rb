@@ -183,6 +183,20 @@ class ReadmeTest < Minitest::Test
     assert_empty fake.requests_to("GET", "/auth/introspection")
   end
 
+  runs "no-credentials", "calls_the_catalog_and_verifications_without_a_token" do
+    course = { "courseId" => "hipaa-2026", "title" => "HIPAA Essentials", "courseVersion" => "2026.1",
+               "passingThreshold" => 0.8 }
+    verification = { "status" => "valid", "learnerName" => "Ana Lima", "courseTitle" => "HIPAA Essentials",
+                     "issuedAt" => "2026-11-10T15:00:00Z", "expiresAt" => "2027-11-10T15:00:00Z",
+                     "issuer" => "TeachMeHIPAA" }
+    fake = FakeTransport.new(SANDBOX_BASE)
+                        .on("GET", "/courses", FakeTransport::Reply.json({ "items" => [course], "nextCursor" => nil }))
+                        .on("GET", "/certificate-verifications/x7Kq2p", FakeTransport::Reply.json(verification))
+
+    assert_equal ["HIPAA Essentials", "valid"], run_sample("no-credentials", fake)
+    assert_equal([nil, nil], fake.requests.map { |request| request.headers["authorization"] })
+  end
+
   runs "learner-writes", "says_whether_each_write_created_the_learner" do
     fake = sandbox_api
     fake.on("POST", LEARNERS_PATH, FakeTransport::Reply.json(LEARNER_JSON, status: 201))

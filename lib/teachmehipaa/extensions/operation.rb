@@ -27,8 +27,6 @@ module TeachMeHipaa
     DEFAULT_WAIT_TIMEOUT = 300.0
     DEFAULT_WAIT_INTERVAL = 1.0
     MAX_WAIT_INTERVAL = 10.0
-    # The same call as the generated operations.retrieve.
-    POLL_PATH = "/organizations/{orgId}/operations/{operationId}"
     NAME_PATTERN = %r{\Aorganizations/[^/\s]+/operations/([^/\s]+)\z}
 
     # The operation id in an Operation's +name+, which is
@@ -48,10 +46,7 @@ module TeachMeHipaa
     #
     # @api private
     def self.poll_delay(interval, poll_number)
-      cap = [MAX_WAIT_INTERVAL, interval].max
-      ceiling = [interval * (2**(poll_number - 1)), cap].min
-      # Jitter spreads waiters out; it is not security.
-      [ceiling * (0.5 + (Random.rand / 2)), interval].max
+      Core::Retries.backoff(interval, poll_number - 1, [MAX_WAIT_INTERVAL, interval].max)
     end
 
     # @api private
@@ -122,6 +117,11 @@ module TeachMeHipaa
       self
     end
 
+    # This Operation read into +model+, an Operation subclass.
+    def read_as(model)
+      model.new(@data, last_response:, requestor: @requestor)
+    end
+
     private
 
     def check_wait(timeout, interval)
@@ -141,11 +141,12 @@ module TeachMeHipaa
       requestor.config.clock
     end
 
-    # Read into this Operation's own class, so a typed +response+ stays typed.
+    # Polls with the generated operations.retrieve, then reads the result
+    # into this Operation's own class, so a typed +response+ stays typed.
     def poll_after(seconds)
       requestor.config.sleep.call(seconds)
-      requestor.request(method: "GET", path: POLL_PATH, path_params: { operationId: operation_id },
-                        retry_safe: true, response: :operation, model: self.class)
+      polled = Resources::Operations.new(requestor).retrieve(operation_id)
+      polled.instance_of?(self.class) ? polled : polled.read_as(self.class)
     end
 
     def operation_id

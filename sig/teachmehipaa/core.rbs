@@ -135,7 +135,7 @@ module TeachMeHipaa
 
     def initialize: (String message, operation: Operation, **untyped fields) -> void
     def self.from_operation: (Operation operation) -> OperationFailedError
-    private def self.response_fields: (LastResponse? last_response) -> { ?request_id: String?, ?headers: headers }
+    private def self.last_response_fields: (LastResponse? last_response) -> { ?request_id: String?, ?headers: headers }
   end
 
   class OperationTimeoutError < Error
@@ -208,6 +208,7 @@ module TeachMeHipaa
     def self.build: (environment: environment | String, base_url: String?, organization_id: String?,
                      max_retries: Integer, timeout: Numeric, app_info: app_info?, logger: _Logger?,
                      clock: _Clock?, sleep: _Sleep?) -> Config
+    def self.check_environment: (environment | String environment) -> environment
     def self.check_max_retries: (untyped max_retries) -> Integer
     def self.check_timeout: (untyped timeout) -> Float
     def self.check_request_options: (request_options options) -> request_options
@@ -318,6 +319,8 @@ module TeachMeHipaa
     class PartnerGrant
       include _TokenProvider
 
+      def base_url: () -> String
+
       def initialize: (client_id: String, client_secret: String, token_store: _TokenStore,
                        ?refresh_token: String?, ?scopes: Array[String | Symbol]?,
                        ?environment: environment | String, ?base_url: String?, ?timeout: Numeric,
@@ -366,6 +369,11 @@ module TeachMeHipaa
 
   # @api private
   module Core
+    module Arguments
+      def self.text?: (untyped value) -> bool
+      def self.require_text: (untyped value, String name) -> String
+    end
+
     module Values
       def self.read: (untyped type, untyped value) -> untyped
       def self.read_collection: (untyped type, untyped value) -> untyped
@@ -374,18 +382,24 @@ module TeachMeHipaa
     end
 
     module Responses
-      def self.read: (Transport::Response response, Symbol kind, _ModelClass[untyped]? model, String? accept,
-                      ?fetch_next: (^(Page[untyped]) -> Page[untyped])?) -> untyped
-      def self.operation: (Transport::Response response, singleton(Operation) model, Requestor requestor) -> Operation
-      def self.empty: (Transport::Response response, LastResponse last_response) -> EmptyResponse
-      def self.binary: (Transport::Response response, String accept, LastResponse last_response) -> BinaryResponse
-      def self.streamed: (Transport::Response response, String accept, LastResponse last_response) -> StreamedResponse
-      def self.check_media_type: (Transport::Response response, String accept) -> void
+      class Reading < Data
+        attr_reader model: untyped
+        attr_reader accept: String?
+        attr_reader fetch_next: (^(Page[untyped]) -> Page[untyped])?
+        attr_reader requestor: Requestor
+
+        def self.new: (model: untyped, accept: String?, fetch_next: (^(Page[untyped]) -> Page[untyped])?,
+                       requestor: Requestor) -> instance
+        def with: (?fetch_next: (^(Page[untyped]) -> Page[untyped])?) -> instance
+      end
+
+      READERS: Hash[Symbol, ^(Transport::Response, LastResponse, Reading) -> untyped]
+
+      def self.read: (Transport::Response response, Symbol kind, Reading reading) -> untyped
+      def self.success?: (Integer status) -> bool
       def self.media_type?: (String? content_type, String accept) -> bool
+      def self.check_media_type: (Transport::Response response, String accept) -> void
       def self.filename: (String? content_disposition) -> String?
-      def self.success?: (Transport::Response response) -> bool
-      def self.page: (Transport::Response response, _ModelClass[untyped] model, LastResponse last_response,
-                      (^(Page[untyped]) -> Page[untyped])? fetch_next) -> Page[untyped]
     end
 
     type pagination_style = :cursor | :after
@@ -428,6 +442,7 @@ module TeachMeHipaa
       def self.success_body: (Transport::Response response) -> untyped
       def self.object_body: (Transport::Response response) -> Hash[String, untyped]?
       def self.json?: (String? content_type) -> bool
+      def self.media_type: (String? content_type) -> String
       def self.retry_after: (headers headers) -> Float?
     end
 
@@ -466,7 +481,10 @@ module TeachMeHipaa
         attr_reader max_retries: Integer
 
         def self.new: (retry_safe: bool, max_retries: Integer) -> instance
+        def self.for: (String method, retry_safe: bool, max_retries: Integer) -> Policy
       end
+
+      NEVER_RETRIED: Array[String]
 
       interface _ErrorMapper
         def call: (Transport::Response response) -> Error
@@ -478,6 +496,7 @@ module TeachMeHipaa
 
       def self.call: (Connection connection, Policy policy, map_error: _ErrorMapper,
                       ?replay: _Replay?, ?not_modified: bool) { () -> request } -> Transport::Response
+      def self.backoff: (Numeric base, Integer attempt, Numeric cap) -> Numeric
     end
 
     module GrantExchange
@@ -485,10 +504,10 @@ module TeachMeHipaa
       NEVER_RETRY: Retries::Policy
 
       class Guidance < Data
-        attr_reader connection: String
+        attr_reader network_failure: String
         attr_reader invalid_grant: String?
 
-        def self.new: (connection: String, invalid_grant: String?) -> instance
+        def self.new: (network_failure: String, invalid_grant: String?) -> instance
       end
 
       class Exchange < Data
@@ -504,7 +523,12 @@ module TeachMeHipaa
       def self.call: (Connection connection, client_id: String, client_secret: String,
                       form: Hash[String, String], guidance: Guidance) -> Exchange
       def self.token_request: (String client_id, String client_secret, Hash[String, String] form) -> request
-      def self.require_text: (untyped value, String name) -> String
+    end
+
+    class AccessTokenCache
+      def initialize: () -> void
+      def fetch: (_Clock clock) { () -> [String, Float] } -> String
+      def invalidate: (String access_token) -> void
     end
 
     class Connection
@@ -525,10 +549,19 @@ module TeachMeHipaa
     end
 
     class Requestor
-      NEVER_RETRIED: Array[String]
       PROBLEM_JSON: String
+      NO_CREDENTIALS: String
 
-      def initialize: (Connection connection, _TokenProvider token_provider) -> void
+      class Call < Data
+        attr_reader request: request
+        attr_reader policy: Retries::Policy
+        attr_reader authenticated: bool
+
+        def self.new: (request: request, policy: Retries::Policy, authenticated: bool) -> instance
+        def with: (?request: request) -> instance
+      end
+
+      def initialize: (Connection connection, _TokenProvider? token_provider) -> void
       def request: (method: String, path: String, ?model: (_ModelClass[untyped] | singleton(Operation))?,
                     ?path_params: Hash[Symbol | String, String],
                     ?query: Hash[Symbol | String, untyped],
@@ -537,6 +570,7 @@ module TeachMeHipaa
                     ?binary_parts: Hash[String, String],
                     ?retry_safe: bool,
                     ?idempotency_key: (:required | nil),
+                    ?authenticated: bool,
                     ?if_match: etag?,
                     ?if_none_match: etag?,
                     ?response: (:model | :page | :operation | :write_result | :empty | :binary),

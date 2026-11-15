@@ -85,10 +85,13 @@ module TeachMeHipaa
       }
     end
 
-    def self.field_errors(value)
-      return [] unless value.is_a?(Array)
+    # A problem's +errors+ items: Hashes in a response body, or
+    # ProblemErrorsItem models in an Operation's +error+.
+    def self.field_errors(items)
+      return [] unless items.is_a?(Array)
 
-      value.grep(Hash).map { |item| FieldError.new(path: item["path"].to_s, message: item["message"].to_s) }
+      items.select { |item| item.is_a?(Hash) || item.is_a?(Model) }
+           .map { |item| FieldError.new(path: item["path"].to_s, message: item["message"].to_s) }
     end
 
     def self.string(value)
@@ -168,17 +171,16 @@ module TeachMeHipaa
       problem = operation.error
       new(problem.detail || problem.title || problem.code || "Operation #{operation.name} failed",
           operation:, status: problem.status, code: problem.code, title: problem.title, detail: problem.detail,
-          errors: Array(problem.errors).map { |item| FieldError.new(path: item.path.to_s, message: item.message.to_s) },
-          **response_fields(operation.last_response))
+          errors: field_errors(problem.errors), **last_response_fields(operation.last_response))
     end
 
     # An Operation built by hand has no response.
-    def self.response_fields(last_response)
+    def self.last_response_fields(last_response)
       return {} if last_response.nil?
 
       { request_id: last_response.request_id, headers: last_response.headers }
     end
-    private_class_method :response_fields
+    private_class_method :last_response_fields
   end
 
   # Operation#wait ran out of time. +operation+ is the last state seen; it

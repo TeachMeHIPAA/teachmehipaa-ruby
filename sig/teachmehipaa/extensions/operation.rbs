@@ -13,7 +13,6 @@ module TeachMeHipaa
     DEFAULT_WAIT_TIMEOUT: Float
     DEFAULT_WAIT_INTERVAL: Float
     MAX_WAIT_INTERVAL: Float
-    POLL_PATH: String
     NAME_PATTERN: Regexp
 
     def self.operation_id_from_name: (String name) -> String
@@ -25,6 +24,7 @@ module TeachMeHipaa
 
     # Protected in Ruby; RBS has no protected.
     def settled: () -> instance
+    def read_as: (singleton(Operation) model) -> Operation
 
     private
 

@@ -20,6 +20,9 @@ the Developer API document release `waggish-wombat`.
   renewed 60 s before expiry, and one renewal and replay on a 401.
 - Live and Sandbox Environments, a `base_url:` override, narrower `scopes:`,
   and `TokenProviders::Static` for Access tokens obtained elsewhere.
+- A client without credentials for the public methods (the course catalog
+  and Certificate verification), which never send an Access token; other
+  calls on it raise `AuthenticationError` before sending.
 - The Organization binding: discovered once through `auth.introspect`, or
   given as `organization_id:`.
 - Typed errors under `TeachMeHipaa::Error` by status (`InvalidRequestError`,

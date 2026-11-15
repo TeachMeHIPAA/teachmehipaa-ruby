@@ -18,9 +18,9 @@ module TeachMeHipaa
   ) do
     def self.build(environment:, base_url:, organization_id:, max_retries:, timeout:,
                    app_info:, logger:, clock:, sleep:)
-      environment = environment.to_sym
+      environment = check_environment(environment)
       new(
-        environment: check_environment(environment),
+        environment:,
         base_url: (base_url || ENVIRONMENTS.fetch(environment)).chomp("/").freeze,
         organization_id: organization_id&.dup&.freeze,
         max_retries: check_max_retries(max_retries),
@@ -32,7 +32,9 @@ module TeachMeHipaa
       )
     end
 
+    # +environment+ as a Symbol, if it names one.
     def self.check_environment(environment)
+      environment = environment.to_sym
       return environment if ENVIRONMENTS.key?(environment)
 
       raise ArgumentError, "environment must be :live or :sandbox, not #{environment.inspect}"
@@ -74,6 +76,6 @@ module TeachMeHipaa
       "#{agent} #{app}".freeze
     end
 
-    private_class_method :check_environment, :user_agent
+    private_class_method :user_agent
   end
 end

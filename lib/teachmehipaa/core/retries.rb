@@ -14,7 +14,18 @@ module TeachMeHipaa
       # Whether and how often one call may be retried. Only retry-safe calls
       # retry: replaying anything else after a lost response could apply it
       # twice.
-      Policy = Data.define(:retry_safe, :max_retries)
+      Policy = Data.define(:retry_safe, :max_retries) do
+        # The policy for an API call: only the IR's +retry_safe+ allows
+        # retries, since the server ignores an Idempotency-Key elsewhere, and
+        # never for a PATCH or DELETE, whatever the IR says.
+        def self.for(method, retry_safe:, max_retries:)
+          new(retry_safe: retry_safe && !NEVER_RETRIED.include?(method), max_retries:)
+        end
+      end
+      # Never replayed once a response may have been received (grilling
+      # Q18): a lost success would apply twice or surface as a confusing
+      # 412 or 404.
+      NEVER_RETRIED = %w[PATCH DELETE].freeze
 
       module_function
 
@@ -51,7 +62,7 @@ module TeachMeHipaa
 
       def attempt(connection, request, map_error, not_modified)
         response = connection.request(**request)
-        return [response, nil] if (200..299).cover?(response.status) || (not_modified && response.status == 304)
+        return [response, nil] if Responses.success?(response.status) || (not_modified && response.status == 304)
 
         [nil, map_error.call(response)]
       rescue APIConnectionError => e
@@ -77,9 +88,16 @@ module TeachMeHipaa
         retry_after = Json.retry_after(error.headers)
         return [retry_after, MAX_RETRY_AFTER].min unless retry_after.nil?
 
-        nominal = [INITIAL_DELAY * (2**retries), MAX_DELAY].min
-        # Jitter spreads out clients that failed together.
-        [nominal * (0.5 + (Random.rand / 2)), INITIAL_DELAY].max
+        backoff(INITIAL_DELAY, retries, MAX_DELAY)
+      end
+
+      # Seconds to wait before retry (or poll) number +attempt+, from 0:
+      # +base+ doubled each time up to +cap+, of which jitter picks 50-100%,
+      # and never less than +base+.
+      def backoff(base, attempt, cap)
+        nominal = [base * (2**attempt), cap].min
+        # Jitter spreads out clients that failed together; it is not security.
+        [nominal * (0.5 + (Random.rand / 2)), base].max
       end
 
       def unauthorized?(error)

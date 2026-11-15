@@ -14,6 +14,7 @@ ETags, Operations and webhook verification, so your code only calls methods.
 - [Installation](#installation)
 - [Quickstart](#quickstart)
 - [The Organization binding](#the-organization-binding)
+- [Calls without credentials](#calls-without-credentials)
 - [Creating Learners](#creating-learners)
 - [Pagination](#pagination)
 - [Errors](#errors)
@@ -107,6 +108,26 @@ A client's configuration is fixed when you create it. To act for another
 Organization, create another client. Partner-level calls (`partners.*`) are
 not Organization-scoped and take the `partner_id` as their first argument.
 
+## Calls without credentials
+
+The course catalog and Certificate verification need no Access token, so the
+client sends none for them, even when it has credentials. A client built
+with neither credentials nor a token provider can make only these calls:
+
+<!-- sample: no-credentials -->
+```ruby
+catalog = TeachMeHipaa::Client.new(environment: :sandbox)
+
+catalog.courses.list.auto_paging_each { |course| puts course.title }
+puts catalog.certificate_verifications.retrieve("x7Kq2p").status
+```
+
+Any other method on such a client raises `AuthenticationError` before it
+sends a request: the call can't be authenticated, just as if the API had
+answered 401. Passing only one of `client_id:` and `client_secret:` is a
+mistake in the code, so it raises `ArgumentError` when the client is
+created.
+
 ## Creating Learners
 
 `create` and `upsert_by_external_id` say whether they created the Learner
@@ -167,7 +188,7 @@ chosen by HTTP status:
 | ------------------------- | ---------------------------------------------------------- |
 | `InvalidRequestError`     | 400, 405, 406, 415 and 422                                 |
 | `IdempotencyError`        | 422 `idempotency_key_reuse` (an `InvalidRequestError`)     |
-| `AuthenticationError`     | 401                                                        |
+| `AuthenticationError`     | 401, or a client without credentials calling a method that needs them |
 | `PermissionDeniedError`   | 403, such as a missing Scope                               |
 | `NotFoundError`           | 404                                                        |
 | `ConflictError`           | 409                                                        |
@@ -336,7 +357,7 @@ end
 ## Webhooks
 
 `TeachMeHipaa::Webhook.construct_event` verifies a Delivery and returns its
-Event, or a `TeachMeHipaa::TestDelivery` for a test ping. It needs three
+Event, or a `TeachMeHipaa::TestDelivery` for a Test delivery. It needs three
 things exactly as they arrived:
 
 1. **The raw body.** Parsed and re-serialized JSON never verifies, so read
@@ -440,8 +461,8 @@ puts event.event_type, event.data.learner_id
 
 ## Partner apps
 
-A Partner app acts for many Organizations, each connected through a Grant
-that an admin approves on the TeachMeHIPAA consent screen.
+A Partner app acts for many Organizations, each through a Grant: the
+consent an admin gives on the TeachMeHIPAA consent screen.
 `TeachMeHipaa::OAuth` builds the consent URL with a PKCE challenge and
 exchanges the returned code. Keep the `state` and `code_verifier` in the
 admin's server-side session between the two steps. `OrganizationGrant`
@@ -484,11 +505,13 @@ A code works once, within 10 minutes, so the exchange is never retried. The
 Sandbox has no built-in consent URL yet: pass `authorization_url:` to
 `authorize_url` there.
 
-Then create a client per connected Organization with a
+Then create a client per consenting Organization with a
 `TokenProviders::PartnerGrant` and a token store: any object with `load` and
 `save(refresh_token)`. Every token exchange rotates the Grant's Refresh
 token, and the provider saves each new one to the store before it uses the
-Access token that came with it.
+Access token that came with it. The provider exchanges tokens in its own
+`environment:` (or at its `base_url:`), and a client given a provider for
+another Environment raises `ArgumentError`.
 
 <!-- sample: partner-grant -->
 ```ruby
@@ -594,11 +617,11 @@ Every option is a keyword:
 
 | Option            | Default                               | Description                                                                         |
 | ----------------- | ------------------------------------- | ----------------------------------------------------------------------------------- |
-| `client_id`       | Required, or `token_provider`         | Your API client's id (`cli_…`), or a Partner app's (`app_…`)                        |
+| `client_id`       | None: public methods only             | Your API client's id (`cli_…`), or a Partner app's (`app_…`)                        |
 | `client_secret`   | Required with `client_id`             | The matching secret (`tmh_cs_…` or `tmh_as_…`)                                      |
 | `scopes`          | Every Scope the API client holds      | Narrows the Access token's Scopes                                                   |
 | `token_provider`  | Client credentials                    | Supplies Access tokens instead: `TokenProviders::PartnerGrant`, `TokenProviders::Static` |
-| `environment`     | `:live`                               | `:live` or `:sandbox`; credentials work only in their own Environment               |
+| `environment`     | `:live`                               | `:live` or `:sandbox`; credentials, and a `PartnerGrant`, only work in their own    |
 | `base_url`        | The Environment's URL                 | Overrides it, e.g. to point at a mock server                                        |
 | `organization_id` | Looked up once with `auth.introspect` | The Organization to act for                                                         |
 | `max_retries`     | `2`                                   | Retries of a failed call that is safe to replay                                     |
@@ -609,7 +632,8 @@ Every option is a keyword:
 | `clock`, `sleep`  | Monotonic clock, `Kernel#sleep`       | Supply the time and waits, for tests                                                |
 
 Pass either `client_id:` and `client_secret:`, or `token_provider:`, not
-both; `scopes:` then belong to the token provider. Base URLs: Live is
+both (or neither, for [calls without credentials](#calls-without-credentials));
+`scopes:` then belong to the token provider. Base URLs: Live is
 `https://api.tme.so/v1`; Sandbox is `https://api-teachmehipaa-dev.web.app/v1`.
 `environment`, `base_url`, `max_retries` and `timeout` can be read back from
 the client. The configuration is frozen when the client is created; there is
