@@ -1,0 +1,8 @@
+# Hand-written for the tracer; the generator replaces this file.
+module TeachMeHipaa
+  module Resources
+    module Root
+      attr_reader learners: Learners
+    end
+  end
+end

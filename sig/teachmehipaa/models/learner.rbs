@@ -1,0 +1,40 @@
+# Hand-written for the tracer; the generator replaces this file.
+module TeachMeHipaa
+  class Learner < Model
+    module Status
+      NOT_STARTED: String
+      INVITE_BOUNCED: String
+      IN_PROGRESS: String
+      COMPLIANT: String
+      EXPIRING_SOON: String
+      EXPIRED: String
+      REMOVED: String
+    end
+
+    class Course < Model
+      def course_id: () -> String
+      def title: () -> String
+    end
+
+    class Certificate < Model
+      def certificate_id: () -> String
+      def issued_at: () -> Time
+      def expires_at: () -> Time
+      def verify_url: () -> String?
+      def pdf_url: () -> String
+    end
+
+    def learner_id: () -> String
+    def email: () -> String
+    def name: () -> String?
+    def external_id: () -> String?
+    # One of Status, or a value newer than this library.
+    def status: () -> String
+    def course: () -> Course
+    def invited_at: () -> Time?
+    def started_at: () -> Time?
+    def completed_at: () -> Time?
+    def due_at: () -> Time?
+    def certificate: () -> Certificate?
+  end
+end

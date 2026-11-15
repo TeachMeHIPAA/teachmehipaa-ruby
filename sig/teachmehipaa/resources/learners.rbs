@@ -1,0 +1,8 @@
+# Hand-written for the tracer; the generator replaces this file.
+module TeachMeHipaa
+  module Resources
+    class Learners < Core::Resource
+      def retrieve: (String learner_id, ?course_id: String?, ?request_options: request_options) -> Learner
+    end
+  end
+end
