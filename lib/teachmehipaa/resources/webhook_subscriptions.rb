@@ -65,7 +65,8 @@ module TeachMeHipaa
           path_params: { subscriptionId: subscription_id },
           retry_safe: true,
           idempotency_key: :required,
-          model: Operation,
+          response: :operation,
+          model: WebhookDeliveryOperation,
           request_options:,
         )
       end
@@ -99,7 +100,8 @@ module TeachMeHipaa
           path_params: { subscriptionId: subscription_id },
           retry_safe: true,
           idempotency_key: :required,
-          model: Operation,
+          response: :operation,
+          model: WebhookDeliveryOperation,
           request_options:,
         )
       end

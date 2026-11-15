@@ -42,10 +42,12 @@ module SdkGenerator
     Models.new(ir).files.merge(Resources.new(ir).files).sort.to_h
   end
 
-  # The hand-written files each of Resources::EXTENDED_RESOURCES needs.
+  # The hand-written files each of Resources::EXTENDED_RESOURCES and
+  # Models::EXTENDED_MODELS needs.
   def extension_files(root)
-    Resources::EXTENDED_RESOURCES.flat_map do |path|
-      file = Naming.snake(Naming.resource_class(path.split(".")))
+    resources = Resources::EXTENDED_RESOURCES.map { |path| Naming.snake(Naming.resource_class(path.split("."))) }
+    models = Models::EXTENDED_MODELS.map { |name| Naming.snake(name) }
+    (resources + models).flat_map do |file|
       EXTENSIONS.map { |directory, extension| File.join(root, directory, "#{file}.#{extension}") }
     end
   end

@@ -17,6 +17,7 @@ module TeachMeHipaa
           body: LearnerBatchUpsertRequest.to_wire({ items:, delivery:, seat_policy: }.compact),
           retry_safe: true,
           idempotency_key: :required,
+          response: :operation,
           model: Operation,
           request_options:,
         )
@@ -72,6 +73,7 @@ module TeachMeHipaa
           body: LearnersExportRequest.to_wire({ format:, course_id:, status: }.compact),
           retry_safe: true,
           idempotency_key: :required,
+          response: :operation,
           model: Operation,
           request_options:,
         )

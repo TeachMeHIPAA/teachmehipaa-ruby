@@ -93,6 +93,7 @@ module SdkGenerator
       case response.fetch("kind")
       when "page" then ["response: :page\n", "model: #{@data.dig("pagination", "itemType", "name")}\n", pagination]
       when "writeResult" then ["response: :write_result\n", "model: #{response.dig("type", "name")}\n"]
+      when "operation" then ["response: :operation\n", "model: #{@method.operation_model}\n"]
       when "empty" then ["response: :empty\n"]
       when "binary" then ["response: :binary\n", "accept: #{Text.literal(response.fetch("contentType"))}\n"]
       else ["model: #{response.dig("type", "name")}\n"]

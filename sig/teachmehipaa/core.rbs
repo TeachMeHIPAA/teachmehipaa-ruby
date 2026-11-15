@@ -121,6 +121,20 @@ module TeachMeHipaa
   class APITimeoutError < APIConnectionError
   end
 
+  class OperationFailedError < Error
+    attr_reader operation: Operation
+
+    def initialize: (String message, operation: Operation, **untyped fields) -> void
+    def self.from_operation: (Operation operation) -> OperationFailedError
+    private def self.response_fields: (LastResponse? last_response) -> { ?request_id: String?, ?headers: headers }
+  end
+
+  class OperationTimeoutError < Error
+    attr_reader operation: Operation
+
+    def initialize: (String message, operation: Operation) -> void
+  end
+
   class WebhookSignatureError < Error
     def initialize: (String code, String message) -> void
   end
@@ -306,6 +320,7 @@ module TeachMeHipaa
     module Responses
       def self.read: (Transport::Response response, Symbol kind, _ModelClass[untyped]? model, String? accept,
                       ?fetch_next: (^(Page[untyped]) -> Page[untyped])?) -> untyped
+      def self.operation: (Transport::Response response, singleton(Operation) model, Requestor requestor) -> Operation
       def self.empty: (Transport::Response response, LastResponse last_response) -> EmptyResponse
       def self.binary: (Transport::Response response, String accept, LastResponse last_response) -> BinaryResponse
       def self.streamed: (Transport::Response response, String accept, LastResponse last_response) -> StreamedResponse
@@ -431,7 +446,7 @@ module TeachMeHipaa
       PROBLEM_JSON: String
 
       def initialize: (Connection connection, _TokenProvider token_provider) -> void
-      def request: (method: String, path: String, ?model: _ModelClass[untyped]?,
+      def request: (method: String, path: String, ?model: (_ModelClass[untyped] | singleton(Operation))?,
                     ?path_params: Hash[Symbol | String, String],
                     ?query: Hash[Symbol | String, untyped],
                     ?body: Hash[String, untyped]?,
@@ -441,7 +456,7 @@ module TeachMeHipaa
                     ?idempotency_key: (:required | nil),
                     ?if_match: etag?,
                     ?if_none_match: etag?,
-                    ?response: (:model | :page | :write_result | :empty | :binary),
+                    ?response: (:model | :page | :operation | :write_result | :empty | :binary),
                     ?accept: String?,
                     ?pagination: pagination?,
                     ?request_options: request_options) ?{ (String chunk) -> void } -> untyped

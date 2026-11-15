@@ -5,6 +5,15 @@ module SdkGenerator
   class Models
     LIB = "lib/teachmehipaa/models"
     SIG = "sig/teachmehipaa/models"
+    # Object types with hand-written methods, by IR name. Their generated
+    # class is <Name>Base; extensions/<file>.rb subclasses it under the plain
+    # name, which every reference to the type means, and
+    # sig/teachmehipaa/extensions/<file>.rbs signs it.
+    EXTENDED_MODELS = %w[Operation].freeze
+
+    def self.generated_class(name)
+      EXTENDED_MODELS.include?(name) ? "#{name}Base" : name
+    end
 
     def initialize(context)
       @ir = context
@@ -20,8 +29,21 @@ module SdkGenerator
         all["#{LIB}/#{file}.rb"] = ruby.source(type)
         all["#{SIG}/#{file}.rbs"] = rbs.source(type)
       end
-      index = Text.require_lines(@ir.types.map { |type| "models/#{Naming.snake(type.fetch("name"))}" })
       files.merge("lib/teachmehipaa/models.rb" => Text::RUBY_HEADER + index)
+    end
+
+    private
+
+    # The extensions load after every generated class they may build on.
+    def index
+      check_extended
+      models = @ir.types.map { |type| "models/#{Naming.snake(type.fetch("name"))}" }
+      Text.require_lines(models + EXTENDED_MODELS.map { |name| "extensions/#{Naming.snake(name)}" })
+    end
+
+    def check_extended
+      missing = EXTENDED_MODELS.reject { |name| @ir.types.any? { |type| type.fetch("name") == name } }
+      raise ArgumentError, "extended model(s) not in the IR: #{missing.join(", ")}" if missing.any?
     end
   end
 
@@ -34,8 +56,15 @@ module SdkGenerator
 
     def type_doc(type)
       name = type.fetch("name")
+      return extended_doc(name) if Models::EXTENDED_MODELS.include?(name)
+
       fallback = type.fetch("kind") == "object" ? "#{Text.article(name)} #{name} object." : nil
       Text.comment([type["description"] || fallback, (MERGE_PATCH_NOTE if type["mergePatch"]), *kind_note(type)], 2)
+    end
+
+    def extended_doc(name)
+      Text.comment(["The generated fields of #{name}. The library returns the hand-written subclass #{name} in " \
+                    "lib/teachmehipaa/extensions/#{Naming.snake(name)}.rb."], 2)
     end
 
     def kind_note(type)
@@ -108,7 +137,7 @@ module SdkGenerator
       name = type.fetch("name")
       fields = @ir.object_fields(type).map { |field| field(field) }.join
       created = @ir.write_result?(name) ? "\n#{created_doc}def created? = created\n" : ""
-      type_doc(type) + Text.block("class #{name} < Model", includes(name) + fields + created)
+      type_doc(type) + Text.block("class #{Models.generated_class(name)} < Model", includes(name) + fields + created)
     end
 
     def field(field)
@@ -169,7 +198,7 @@ module SdkGenerator
       name = type.fetch("name")
       readers = @ir.object_fields(type).select { |field| Ir.reader?(field) }.map { |field| reader(field) }
       readers << "#{created_doc}def created?: () -> bool\n" if @ir.write_result?(name)
-      type_doc(type) + Text.block("class #{name} < Model", includes(name) + readers.join)
+      type_doc(type) + Text.block("class #{Models.generated_class(name)} < Model", includes(name) + readers.join)
     end
 
     def reader(field)

@@ -44,6 +44,7 @@ module SdkGenerator
       response = @data.fetch("response")
       case response.fetch("kind")
       when "page" then "Page[#{@ir.rbs(@data.dig("pagination", "itemType"))}]"
+      when "operation" then @method.operation_model
       when "empty" then "EmptyResponse"
       when "binary" then "BinaryResponse"
       else @ir.rbs(response.fetch("type"))

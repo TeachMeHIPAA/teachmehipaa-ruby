@@ -139,6 +139,11 @@ module TeachMeHipaa
         end
       end
 
+      # +model+, an Operation class, keeps +requestor+ to poll itself through.
+      def operation(response, model, requestor)
+        model.new(Json.success_body(response), last_response: LastResponse.from(response), requestor:)
+      end
+
       def empty(response, last_response)
         raise Error.from_response(response) unless success?(response)
 

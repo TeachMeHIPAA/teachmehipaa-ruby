@@ -5,8 +5,9 @@
 require_relative "problem"
 
 module TeachMeHipaa
-  # An Operation object.
-  class Operation < Model
+  # The generated fields of Operation. The library returns the hand-written subclass Operation in
+  # lib/teachmehipaa/extensions/operation.rb.
+  class OperationBase < Model
     # Unique identifier for the operation.
     field :name, "name"
     # Whether the operation has finished.

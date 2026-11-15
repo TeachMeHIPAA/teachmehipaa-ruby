@@ -13,6 +13,14 @@ module SdkGenerator
     CONDITIONAL_NOTE = "Given +if_none_match:+ (an ETag, or the copy you hold), returns NotModified when " \
                        "your copy is current."
     STRING = { "kind" => "primitive", "type" => "string" }.freeze
+    # The spec leaves an Operation's +response+ untyped; these settle with a
+    # known shape (research api-sdk-surface.md §8). By operationId, the
+    # Operation subclass in lib/teachmehipaa/extensions/operation.rb that
+    # reads it.
+    OPERATION_MODELS = {
+      "redriveWebhookSubscription" => "WebhookDeliveryOperation",
+      "testWebhookSubscription" => "WebhookDeliveryOperation",
+    }.freeze
 
     # +body+ is true for a request-body field.
     Param = Data.define(:ruby, :wire, :required, :nullable, :type, :body)
@@ -94,6 +102,11 @@ module SdkGenerator
       [*path_params.map(&:ruby), *required_keywords.map { |param| "#{param.ruby}:" },
        *optional_keywords.map { |param| "#{param.ruby}: #{merge_patch? && param.body ? "OMIT" : "nil"}" },
        "request_options: {}", *("&" if binary?)]
+    end
+
+    # The class an Operation-returning method reads its response into.
+    def operation_model
+      OPERATION_MODELS.fetch(data.fetch("operationId")) { data.dig("response", "type", "name") }
     end
 
     # A binary download streams to a block when given one.

@@ -39,6 +39,7 @@ module TeachMeHipaa
           body: EnrollmentsBatchRequest.to_wire({ operation:, select: }),
           retry_safe: true,
           idempotency_key: :required,
+          response: :operation,
           model: Operation,
           request_options:,
         )
@@ -88,6 +89,7 @@ module TeachMeHipaa
           body: EnrollmentsExportRequest.to_wire({ format: }),
           retry_safe: true,
           idempotency_key: :required,
+          response: :operation,
           model: Operation,
           request_options:,
         )
@@ -109,6 +111,7 @@ module TeachMeHipaa
           binary_parts: { "file" => "text/csv" },
           retry_safe: true,
           idempotency_key: :required,
+          response: :operation,
           model: Operation,
           request_options:,
         )

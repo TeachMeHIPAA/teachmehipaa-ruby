@@ -40,8 +40,10 @@ module TeachMeHipaa
       # ETag).
       #
       # +response+ is the IR's response kind: :model (+model+ reads the
-      # body), :page (+model+ reads each item), :write_result, :empty, or
-      # :binary (the body must be of media type +accept+). A :page also takes
+      # body), :page (+model+ reads each item), :operation (+model+, an
+      # Operation class, reads the body and polls through this requestor),
+      # :write_result, :empty, or :binary (the body must be of media type
+      # +accept+). A :page also takes
       # the IR's +pagination+: +{ style: :cursor | :after, cursor_param: }+.
       # A :binary call given a block streams the body to it instead.
       def request(method:, path:, model: nil, path_params: {}, query: {}, body: nil,
@@ -62,9 +64,9 @@ module TeachMeHipaa
           body: encoded,
           timeout: options[:timeout],
         }
-        policy = Retries::Policy.new(retry_safe: retry_safe?(method, retry_safe, key),
-                                     max_retries: options.fetch(:max_retries, @connection.config.max_retries))
+        policy = retry_policy(method, retry_safe, key, options)
         return read_page(request, policy, model, pagination) if response == :page
+        return Responses.operation(authorized(request, policy), model, self) if response == :operation
         return download(request, policy, accept, on_chunk) if on_chunk
 
         Responses.read(authorized(request, policy, not_modified: !if_none_match.nil?), response, model, accept)
@@ -121,8 +123,9 @@ module TeachMeHipaa
         headers.merge(extra)
       end
 
-      def retry_safe?(method, retry_safe, idempotency_key)
-        !NEVER_RETRIED.include?(method) && (retry_safe || !idempotency_key.nil?)
+      def retry_policy(method, retry_safe, idempotency_key, options)
+        Retries::Policy.new(retry_safe: !NEVER_RETRIED.include?(method) && (retry_safe || !idempotency_key.nil?),
+                            max_retries: options.fetch(:max_retries, @connection.config.max_retries))
       end
 
       def organization_id

@@ -26,7 +26,7 @@ module TeachMeHipaa
       #
       # Delivers the subscription's failed events again. Requires the `webhooks:manage` or
       # `org:admin` scope.
-      def redrive: (String subscription_id, ?request_options: request_options) -> Operation
+      def redrive: (String subscription_id, ?request_options: request_options) -> WebhookDeliveryOperation
 
       # Retrieve a webhook subscription
       #
@@ -42,7 +42,7 @@ module TeachMeHipaa
       #
       # Sends a signed test delivery to the subscription's endpoint, so you can check your verifier.
       # Requires the `webhooks:manage` or `org:admin` scope.
-      def test: (String subscription_id, ?request_options: request_options) -> Operation
+      def test: (String subscription_id, ?request_options: request_options) -> WebhookDeliveryOperation
 
       # Update a webhook subscription
       #

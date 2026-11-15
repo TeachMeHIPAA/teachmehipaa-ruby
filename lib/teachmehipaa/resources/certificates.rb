@@ -37,6 +37,7 @@ module TeachMeHipaa
           body: CertificatesExportRequest.to_wire({ format: }),
           retry_safe: true,
           idempotency_key: :required,
+          response: :operation,
           model: Operation,
           request_options:,
         )

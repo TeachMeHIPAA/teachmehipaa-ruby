@@ -160,6 +160,15 @@ class GeneratedSurfaceTest < Minitest::Test
     refute(files.keys.any? { |path| path.include?("/extensions/") })
   end
 
+  def test_extended_models_are_generated_as_a_base_the_hand_written_extension_subclasses
+    files = SdkGenerator.generate(SdkGenerator.load_ir(ROOT))
+
+    assert_includes files.fetch("lib/teachmehipaa/models/operation.rb"), "class OperationBase < Model"
+    assert_includes files.fetch("lib/teachmehipaa/models.rb"), %(require_relative "extensions/operation"\n)
+    assert_equal TeachMeHipaa::OperationBase, TeachMeHipaa::Operation.superclass
+    assert_equal TeachMeHipaa::OperationBase.fields.keys, TeachMeHipaa::Operation.fields.keys
+  end
+
   private
 
   def ir

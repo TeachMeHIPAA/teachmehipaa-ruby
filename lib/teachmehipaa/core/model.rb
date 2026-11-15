@@ -43,8 +43,10 @@ module TeachMeHipaa
     private_constant :Field
 
     class << self
+      # A subclass starts with its superclass's fields, so a hand-written
+      # model (an Operation) keeps the generated ones it extends.
       def fields
-        @fields ||= {}
+        @fields ||= superclass < Model ? superclass.fields.dup : {}
       end
 
       # The API's JSON for +params+, a Hash keyed by snake_case field names

@@ -102,16 +102,19 @@ class FakeClock
   end
 end
 
-# Records each wait instead of waiting.
+# Records each wait instead of waiting, and moves +clock+ (a FakeClock)
+# forward by it when given one.
 class FakeSleep
   attr_reader :waits
 
-  def initialize
+  def initialize(clock = nil)
     @waits = []
+    @clock = clock
   end
 
   def call(seconds)
     @waits << seconds
+    @clock&.advance(seconds)
   end
 end
 

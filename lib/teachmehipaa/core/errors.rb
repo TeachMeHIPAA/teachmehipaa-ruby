@@ -148,6 +148,47 @@ module TeachMeHipaa
   # No response arrived within the timeout.
   class APITimeoutError < APIConnectionError; end
 
+  # An Operation finished with an error: the problem's fields are on this
+  # error, the request id is the response that reported it, and +operation+
+  # is the failed Operation.
+  class OperationFailedError < Error
+    attr_reader :operation
+
+    def initialize(message, operation:, **fields)
+      @operation = operation
+      super(message, **fields)
+    end
+
+    # The error a done Operation with an +error+ finished with.
+    def self.from_operation(operation)
+      problem = operation.error
+      new(problem.detail || problem.title || problem.code || "Operation #{operation.name} failed",
+          operation:, status: problem.status, code: problem.code, title: problem.title, detail: problem.detail,
+          errors: Array(problem.errors).map { |item| FieldError.new(path: item.path.to_s, message: item.message.to_s) },
+          **response_fields(operation.last_response))
+    end
+
+    # An Operation built by hand has no response.
+    def self.response_fields(last_response)
+      return {} if last_response.nil?
+
+      { request_id: last_response.request_id, headers: last_response.headers }
+    end
+    private_class_method :response_fields
+  end
+
+  # Operation#wait ran out of time. +operation+ is the last state seen; it
+  # may still finish, so it can be waited on again.
+  class OperationTimeoutError < Error
+    attr_reader :operation
+
+    def initialize(message, operation:)
+      @operation = operation
+      last_response = operation.last_response
+      super(message, request_id: last_response&.request_id, headers: last_response&.headers || {})
+    end
+  end
+
   # A webhook Delivery failed verification. +code+ says why:
   # "missing_header", "invalid_timestamp", "timestamp_outside_tolerance",
   # "body_hash_mismatch" or "signature_mismatch". Carries neither the body

@@ -15,6 +15,7 @@ module TeachMeHipaa
           path: "/organizations/{orgId}/operations/{operationId}",
           path_params: { operationId: operation_id },
           retry_safe: true,
+          response: :operation,
           model: Operation,
           request_options:,
         )
