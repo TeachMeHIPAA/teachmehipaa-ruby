@@ -203,11 +203,15 @@ module TeachMeHipaa
       # Retrieve an enrollment
       #
       # Retrieves an enrollment. Requires the `enrollments:read` scope.
-      def retrieve(enrollment_id, request_options: {})
+      #
+      # Given +if_none_match:+ (an ETag, or the copy you hold), returns NotModified when your copy
+      # is current.
+      def retrieve(enrollment_id, if_none_match: nil, request_options: {})
         request(
           method: "GET",
           path: "/organizations/{orgId}/enrollments/{enrollmentId}",
           path_params: { enrollmentId: enrollment_id },
+          if_none_match:,
           retry_safe: true,
           model: Enrollment,
           request_options:,

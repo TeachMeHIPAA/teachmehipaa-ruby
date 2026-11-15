@@ -61,11 +61,15 @@ module TeachMeHipaa
       #
       # Retrieves a seat order, its status and the seats it granted. Requires the `seats:purchase`
       # or `billing:write` scope.
-      def retrieve(seat_order_id, request_options: {})
+      #
+      # Given +if_none_match:+ (an ETag, or the copy you hold), returns NotModified when your copy
+      # is current.
+      def retrieve(seat_order_id, if_none_match: nil, request_options: {})
         request(
           method: "GET",
           path: "/organizations/{orgId}/seat-orders/{seatOrderId}",
           path_params: { seatOrderId: seat_order_id },
+          if_none_match:,
           retry_safe: true,
           model: SeatOrder,
           request_options:,

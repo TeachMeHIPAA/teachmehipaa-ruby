@@ -104,10 +104,7 @@ module SdkGenerator
 
     def rbs_resource(node, methods)
       readers = node.children.map { |child| "attr_reader #{child.accessor}: #{child.class_name}\n" }
-      signatures = methods.map do |method|
-        Text.comment(method.doc, 6) +
-          Text.pack("def #{method.ruby_name}: (", method.rbs_parameters, ") -> #{method.rbs_return}", 6)
-      end
+      signatures = methods.map { |method| RbsSignature.new(method).source }
       sections = [*(readers.join unless readers.empty?), *signatures]
       wrap_rbs(class_doc(node) + Text.block("class #{node.generated_class} < Core::Resource", sections.join("\n")))
     end

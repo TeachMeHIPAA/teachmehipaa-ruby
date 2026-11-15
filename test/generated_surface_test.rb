@@ -118,7 +118,19 @@ class GeneratedSurfaceTest < Minitest::Test
 
       assert_equal method["pathParams"].map { |param| SdkGenerator::Naming.snake(param["name"]) }, positional, name
       refute(parameters.any? { |_, param| param.to_s.start_with?("org") }, name)
-      assert_equal %i[key request_options], parameters.last, name
+      assert_equal %i[key request_options], parameters.take_while { |kind, _| kind != :block }.last, name
+    end
+  end
+
+  def test_conditional_headers_are_keywords_exactly_as_required_as_the_ir_says
+    methods = public_methods_of(build_client(FakeTransport.new))
+    kinds = { "required" => :keyreq, "optional" => :key, "none" => :absent }
+
+    ir_methods.each do |name, method|
+      parameters = methods.fetch(name).parameters.to_h { |kind, param| [param, kind] }
+
+      assert_equal kinds.fetch(method["ifMatch"]), parameters.fetch(:if_match, :absent), name
+      assert_equal kinds.fetch(method["ifNoneMatch"]), parameters.fetch(:if_none_match, :absent), name
     end
   end
 

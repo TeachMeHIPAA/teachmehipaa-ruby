@@ -10,7 +10,10 @@ module TeachMeHipaa
       #
       # Downloads the certificate as a PDF. Revoked and expired certificates are watermarked.
       # Requires the `certificates:read` scope.
-      def download_pdf(cert_id, request_options: {})
+      #
+      # Returns the whole file as a BinaryResponse. Given a block, yields the file's bytes in chunks
+      # as they arrive instead and returns a StreamedResponse.
+      def download_pdf(cert_id, request_options: {}, &)
         request(
           method: "GET",
           path: "/organizations/{orgId}/certificates/{certId}/content",
@@ -19,6 +22,7 @@ module TeachMeHipaa
           response: :binary,
           accept: "application/pdf",
           request_options:,
+          &
         )
       end
 

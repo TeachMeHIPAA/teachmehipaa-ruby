@@ -6,8 +6,17 @@ require "uri"
 # A scripted stand-in for the API, plugged in through the client's transport
 # seam so tests drive the public client end to end. Replies are scripted per
 # (method, path) and served in order; the last one repeats. Every request is
-# recorded for wire assertions.
+# recorded for wire assertions. Called with a block, it streams the body to
+# the block in +chunk_size+ pieces, as Transport::NetHttp does.
 class FakeTransport
+  # A body whose connection drops after +sent+ has been read.
+  Dropped = Data.define(:sent) do
+    def each
+      yield sent
+      raise Errno::ECONNRESET, "connection reset by peer"
+    end
+  end
+
   Reply = Data.define(:status, :body, :headers, :content_type) do
     def self.json(body, status: 200, headers: {}, content_type: "application/json")
       new(status:, body: JSON.generate(body), headers:, content_type:)
@@ -18,7 +27,7 @@ class FakeTransport
       new(status:, body: "", headers:, content_type: nil)
     end
 
-    def to_response
+    def to_response(body = self.body)
       TeachMeHipaa::Transport::Response.new(
         status:,
         headers: { "content-type" => content_type }.compact.merge(headers),
@@ -29,8 +38,9 @@ class FakeTransport
 
   attr_reader :requests
 
-  def initialize(base_url = Fixtures::LIVE_BASE)
+  def initialize(base_url = Fixtures::LIVE_BASE, chunk_size: 16_384)
     @base_path = URI(base_url).path.chomp("/")
+    @chunk_size = chunk_size
     @routes = Hash.new { |routes, key| routes[key] = [] }
     @requests = []
     @lock = Mutex.new
@@ -52,7 +62,7 @@ class FakeTransport
     @lock.synchronize { @requests.select { |r| r.http_method == method && URI(r.url).path == full } }
   end
 
-  def call(request)
+  def call(request, &stream)
     reply = @lock.synchronize do
       @requests << request
       queue = @routes[[request.http_method, URI(request.url).path]]
@@ -61,7 +71,18 @@ class FakeTransport
       queue.length > 1 ? queue.shift : queue.first
     end
     reply = reply.call(request) if reply.respond_to?(:call)
+    return stream.call(reply.to_response(chunks(reply.body))) if stream
+    raise Errno::ECONNRESET, "connection reset by peer" if reply.body.is_a?(Dropped)
+
     reply.to_response
+  end
+
+  private
+
+  def chunks(body)
+    return body unless body.is_a?(String)
+
+    (0...body.bytesize).step(@chunk_size).map { |offset| body.byteslice(offset, @chunk_size).b }
   end
 end
 

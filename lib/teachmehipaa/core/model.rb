@@ -1,10 +1,17 @@
 # frozen_string_literal: true
 
 module TeachMeHipaa
+  # The class of OMIT, its only instance; named so signatures can admit it.
+  class Omit
+    def inspect = "TeachMeHipaa::OMIT"
+  end
+
   # The default of an optional parameter on a merge-patch method (an
   # update), meaning "leave this field unchanged". Passing +nil+ instead
-  # clears the field.
-  OMIT = Object.new.tap { |omit| omit.define_singleton_method(:inspect) { "TeachMeHipaa::OMIT" } }.freeze
+  # clears the field. Pass OMIT yourself to forward "unchanged":
+  #
+  #   client.learners.update(id, if_match: learner, name: changes.fetch(:name, TeachMeHipaa::OMIT))
+  OMIT = Omit.new.freeze
 
   # The HTTP response a returned object was read from. +headers+ has
   # lower-case String keys.
@@ -46,7 +53,7 @@ module TeachMeHipaa
       # OMIT values are left out.
       def to_wire(params)
         params.each_with_object({}) do |(key, value), wire|
-          next if OMIT.equal?(value)
+          next if value.is_a?(Omit)
 
           field = field_for(key)
           wire[field ? field.wire_name : key.to_s] = field ? field.write(value) : Core::Values.write(nil, value)
@@ -79,6 +86,10 @@ module TeachMeHipaa
       @last_response = last_response
       freeze
     end
+
+    # False: a model is the object itself. A conditional retrieve returns a
+    # NotModified instead when your copy is current.
+    def not_modified? = false
 
     # Reads a field by its snake_case name or by the API's own name. Fields
     # the library doesn't know are returned as raw JSON values.

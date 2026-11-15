@@ -50,6 +50,17 @@ module TeachMeHipaa
       raise ArgumentError, "timeout must be a positive number of seconds"
     end
 
+    # A call's +request_options:+, checked, with the timeout as a Float.
+    def self.check_request_options(options)
+      unknown = options.keys - %i[headers timeout max_retries idempotency_key]
+      raise ArgumentError, "unknown request option(s): #{unknown.map(&:inspect).join(", ")}" unless unknown.empty?
+
+      check_max_retries(options[:max_retries]) if options.key?(:max_retries)
+      return options unless options.key?(:timeout)
+
+      options.merge(timeout: check_timeout(options[:timeout]))
+    end
+
     def self.user_agent(app_info)
       agent = "teachmehipaa-ruby/#{VERSION} ruby/#{RUBY_VERSION}"
       return agent.freeze if app_info.nil?

@@ -82,6 +82,17 @@ module TeachMeHipaa
   # A success with no body, such as a delete's 204.
   EmptyResponse = Data.define(:last_response)
 
+  # The 304 a retrieve returns when given +if_none_match:+ and the object
+  # still has that ETag: keep using the copy you hold.
+  #
+  #   result = client.courses.retrieve(id, if_none_match: cached)
+  #   course = result.not_modified? ? cached : result
+  #
+  # Every returned model answers +not_modified?+ with false.
+  NotModified = Data.define(:last_response) do
+    def not_modified? = true
+  end
+
   # A file the API sent, such as a Certificate PDF. +data+ is the bytes as a
   # binary String; +content_type+ and +filename+ come from the response
   # headers (+filename+ is nil when the API names none).
@@ -94,6 +105,14 @@ module TeachMeHipaa
     end
   end
 
+  # What a download given a block returns once the block has every chunk:
+  # the file's +content_type+ and +filename+ (nil when the API names none).
+  #
+  #   File.open("certificate.pdf", "wb") do |file|
+  #     client.certificates.download_pdf(certificate_id) { |chunk| file.write(chunk) }
+  #   end
+  StreamedResponse = Data.define(:content_type, :filename, :last_response)
+
   module Core
     # Reads a success into what a resource method returns, by the IR's
     # response kind.
@@ -105,9 +124,13 @@ module TeachMeHipaa
       # +fetch_next+ is the Page's means to fetch the page after it.
       def read(response, kind, model, accept, fetch_next: nil)
         last_response = LastResponse.from(response)
+        # Only a call that sent If-None-Match is handed a 304.
+        return NotModified.new(last_response:) if response.status == 304
+
         case kind
         when :empty then empty(response, last_response)
         when :binary then binary(response, accept, last_response)
+        when :streamed then streamed(response, accept, last_response)
         when :page then page(response, model, last_response, fetch_next)
         when :write_result
           # Not on the wire: 201 created the Learner, 200 found it (grilling Q25).
@@ -125,15 +148,28 @@ module TeachMeHipaa
       # A binary success must carry the type the IR promises: unknown paths
       # answer 200 with an HTML page, which must not be handed back as a PDF.
       def binary(response, accept, last_response)
-        raise Error.from_response(response) unless success?(response)
-
-        content_type = response.headers["content-type"]
-        unless content_type.to_s.split(";").first.to_s.strip.casecmp?(accept)
-          raise APIError.unexpected(response, expected: accept)
-        end
-
-        BinaryResponse.new(data: response.body.b, content_type:,
+        check_media_type(response, accept)
+        BinaryResponse.new(data: response.body.b, content_type: response.headers["content-type"],
                            filename: filename(response.headers["content-disposition"]), last_response:)
+      end
+
+      # The block already has the bytes; a body read whole here was not the
+      # promised type.
+      def streamed(response, accept, last_response)
+        check_media_type(response, accept)
+        StreamedResponse.new(content_type: response.headers["content-type"],
+                             filename: filename(response.headers["content-disposition"]), last_response:)
+      end
+
+      def check_media_type(response, accept)
+        raise Error.from_response(response) unless success?(response)
+        return if media_type?(response.headers["content-type"], accept)
+
+        raise APIError.unexpected(response, expected: accept)
+      end
+
+      def media_type?(content_type, accept)
+        content_type.to_s.split(";").first.to_s.strip.casecmp?(accept)
       end
 
       def page(response, model, last_response, fetch_next)

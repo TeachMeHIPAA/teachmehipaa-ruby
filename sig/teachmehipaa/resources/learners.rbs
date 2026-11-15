@@ -49,7 +49,7 @@ module TeachMeHipaa
       # Removes a learner from the organization. A learner who hasn't started has their invite
       # cancelled and the seat returned; a learner who has started keeps their training history and
       # certificates. Releases the learner's `externalId`.
-      def offboard: (String learner_id, ?if_match: String?, ?course_id: String?,
+      def offboard: (String learner_id, ?if_match: etag?, ?course_id: String?,
                      ?request_options: request_options) -> Learner
 
       # Remind a learner
@@ -70,8 +70,8 @@ module TeachMeHipaa
       # `If-Match`.
       #
       # Parameters you leave out are unchanged; pass nil to clear one.
-      def update: (String learner_id, if_match: String, ?name: String, ?external_id: String?, ?course_id: String?,
-                   ?request_options: request_options) -> Learner
+      def update: (String learner_id, if_match: etag, ?name: String | Omit, ?external_id: String? | Omit,
+                   ?course_id: String?, ?request_options: request_options) -> Learner
 
       # Create or retrieve a learner by your id
       #

@@ -25,13 +25,14 @@ module TeachMeHipaa
       # failed token mint, say) ends the call. +map_error+ turns a non-2xx
       # response into an Error. +replay+, when given, is called with the
       # refused request's arguments on the call's first 401 "unauthorized",
-      # and the request is sent again.
-      def call(connection, policy, map_error:, replay: nil)
+      # and the request is sent again. With +not_modified+, a 304 (the
+      # answer to If-None-Match) is returned like a success.
+      def call(connection, policy, map_error:, replay: nil, not_modified: false)
         retries = 0
         replayed = false
         loop do
           request = yield
-          response, error = attempt(connection, request, map_error)
+          response, error = attempt(connection, request, map_error, not_modified)
           return response if error.nil?
 
           # A token revoked mid-flight earns one fresh token and a replay,
@@ -49,9 +50,9 @@ module TeachMeHipaa
         end
       end
 
-      def attempt(connection, request, map_error)
+      def attempt(connection, request, map_error, not_modified)
         response = connection.request(**request)
-        return [response, nil] if (200..299).cover?(response.status)
+        return [response, nil] if (200..299).cover?(response.status) || (not_modified && response.status == 304)
 
         [nil, map_error.call(response)]
       rescue APIConnectionError => e

@@ -11,7 +11,12 @@ module TeachMeHipaa
       # Retrieve a course
       #
       # Retrieves a course from the public catalog.
+      #
+      # Given +if_none_match:+ (an ETag, or the copy you hold), returns NotModified when your copy
+      # is current.
       def retrieve: (String course_id, ?request_options: request_options) -> Course
+                  | (String course_id, if_none_match: etag?,
+                     ?request_options: request_options) -> (Course | NotModified)
     end
   end
 end

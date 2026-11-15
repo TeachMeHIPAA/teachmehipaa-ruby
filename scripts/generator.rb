@@ -9,6 +9,7 @@ require_relative "generator/ir"
 require_relative "generator/models"
 require_relative "generator/api_method"
 require_relative "generator/request_call"
+require_relative "generator/rbs_signature"
 require_relative "generator/resources"
 
 # Generates the resource and model layer from openapi/sdk-ir.json, the only

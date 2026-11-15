@@ -6,14 +6,33 @@ module TeachMeHipaa
   type app_info = { name: String, ?version: String, ?url: String }
   # A nested object parameter: snake_case (or API) field names to values.
   type params = Hash[Symbol | String, untyped]
-  # File content for a multipart part: bytes, or anything that reads them.
-  type upload = String | _Reader
+  # File content for a multipart part: a path, anything that reads the
+  # bytes, or the bytes in a FilePart.
+  type upload = String | Pathname | _Reader | FilePart
+
+  class FilePart
+    attr_reader data: String
+    attr_reader filename: String?
+
+    def initialize: (String data, ?filename: String?) -> void
+  end
 
   interface _Reader
     def read: () -> String
   end
 
-  OMIT: Object
+  # An ETag for If-Match or If-None-Match: the String, or an object the
+  # client returned.
+  type etag = String | _ReadFromResponse
+
+  interface _ReadFromResponse
+    def last_response: () -> LastResponse?
+  end
+
+  class Omit
+  end
+
+  OMIT: Omit
 
   ENVIRONMENTS: Hash[environment, String]
   DEFAULT_MAX_RETRIES: Integer
@@ -32,7 +51,7 @@ module TeachMeHipaa
   end
 
   interface _Transport
-    def call: (Transport::Request request) -> Transport::Response
+    def call: (Transport::Request request) ?{ (Transport::Response streaming) -> Transport::Response } -> Transport::Response
   end
 
   interface _TokenProvider
@@ -134,12 +153,17 @@ module TeachMeHipaa
       def self.new: (http_method: String, url: String, headers: headers, body: String?, timeout: Float) -> instance
     end
 
+    # A body's chunks, while a transport streams it.
+    interface _Chunks
+      def each: () { (String chunk) -> void } -> untyped
+    end
+
     class Response < Data
       attr_reader status: Integer
       attr_reader headers: headers
-      attr_reader body: String
+      attr_reader body: String | _Chunks
 
-      def self.new: (status: Integer, headers: headers, body: String) -> instance
+      def self.new: (status: Integer, headers: headers, body: String | _Chunks) -> instance
     end
 
     class NetHttp
@@ -163,6 +187,7 @@ module TeachMeHipaa
                      clock: _Clock?, sleep: _Sleep?) -> Config
     def self.check_max_retries: (untyped max_retries) -> Integer
     def self.check_timeout: (untyped timeout) -> Float
+    def self.check_request_options: (request_options options) -> request_options
   end
 
   class LastResponse < Data
@@ -182,6 +207,7 @@ module TeachMeHipaa
     attr_reader last_response: LastResponse?
 
     def initialize: (Hash[String, untyped] data, ?last_response: LastResponse?) -> void
+    def not_modified?: () -> false
     def []: (String | Symbol key) -> untyped
     def to_h: () -> Hash[Symbol, untyped]
     def ==: (untyped other) -> bool
@@ -227,6 +253,13 @@ module TeachMeHipaa
     def self.new: (last_response: LastResponse) -> instance
   end
 
+  class NotModified < Data
+    attr_reader last_response: LastResponse
+
+    def self.new: (last_response: LastResponse) -> instance
+    def not_modified?: () -> true
+  end
+
   class BinaryResponse < Data
     attr_reader data: String
     attr_reader content_type: String?
@@ -234,6 +267,14 @@ module TeachMeHipaa
     attr_reader last_response: LastResponse
 
     def self.new: (data: String, content_type: String?, filename: String?, last_response: LastResponse) -> instance
+  end
+
+  class StreamedResponse < Data
+    attr_reader content_type: String?
+    attr_reader filename: String?
+    attr_reader last_response: LastResponse
+
+    def self.new: (content_type: String?, filename: String?, last_response: LastResponse) -> instance
   end
 
   module TokenProviders
@@ -267,6 +308,11 @@ module TeachMeHipaa
                       ?fetch_next: (^(Page[untyped]) -> Page[untyped])?) -> untyped
       def self.empty: (Transport::Response response, LastResponse last_response) -> EmptyResponse
       def self.binary: (Transport::Response response, String accept, LastResponse last_response) -> BinaryResponse
+      def self.streamed: (Transport::Response response, String accept, LastResponse last_response) -> StreamedResponse
+      def self.check_media_type: (Transport::Response response, String accept) -> void
+      def self.media_type?: (String? content_type, String accept) -> bool
+      def self.filename: (String? content_disposition) -> String?
+      def self.success?: (Transport::Response response) -> bool
       def self.page: (Transport::Response response, _ModelClass[untyped] model, LastResponse last_response,
                       (^(Page[untyped]) -> Page[untyped])? fetch_next) -> Page[untyped]
     end
@@ -278,8 +324,6 @@ module TeachMeHipaa
 
     module Pagination
       def self.position: (pagination_style style, Page[untyped] page) -> String?
-      def self.filename: (String? content_disposition) -> String?
-      def self.success?: (Transport::Response response) -> bool
     end
 
     module WebhookInput
@@ -293,9 +337,19 @@ module TeachMeHipaa
       def self.parse: (String payload) -> (Event | TestDelivery)
     end
 
+    module Conditional
+      def self.headers: (if_match: etag?, if_none_match: etag?) -> Hash[String, String]
+      def self.etag: (etag? value, Symbol name) -> String?
+    end
+
     module Multipart
+      EXTENSIONS: Hash[String, String]
+
       def self.encode: (Hash[String, untyped] body, Hash[String, String] binary_parts) -> [String, String]
       def self.file_part: (String name, upload value, String content_type) -> String
+      def self.read_file: (String name, upload value, String default_filename) -> [String, String]
+      def self.read_path: (String name, String path) -> [String, String]
+      def self.read_io: (String name, _Reader io, String default_filename) -> [String, String]
       def self.json_part: (String name, untyped value) -> String
     end
 
@@ -313,8 +367,23 @@ module TeachMeHipaa
       ?query: Hash[Symbol | String, untyped],
       headers: Hash[String, String],
       ?body: String?,
-      ?timeout: Numeric?
+      ?timeout: Numeric?,
+      ?stream: _Stream
     }
+
+    # Picks the block for a response's chunks, or nil to read it whole.
+    interface _Stream
+      def call: (Integer status, headers headers) -> (^(String chunk) -> void)?
+    end
+
+    class BodyReader
+      attr_reader response: Transport::Response?
+
+      def initialize: (_Stream stream) -> void
+      def started?: () -> bool
+      def block_failed?: () -> bool
+      def read: (Transport::Response response) -> Transport::Response
+    end
 
     module Retries
       INITIAL_DELAY: Float
@@ -337,7 +406,7 @@ module TeachMeHipaa
       end
 
       def self.call: (Connection connection, Policy policy, map_error: _ErrorMapper,
-                      ?replay: _Replay?) { () -> request } -> Transport::Response
+                      ?replay: _Replay?, ?not_modified: bool) { () -> request } -> Transport::Response
     end
 
     class Connection
@@ -346,28 +415,36 @@ module TeachMeHipaa
       attr_reader config: Config
 
       def initialize: (Config config, _Transport transport) -> void
+      class Interrupted < StandardError
+        attr_reader error: APIConnectionError
+
+        def initialize: (APIConnectionError error) -> void
+      end
+
       def request: (method: String, path: String, ?query: Hash[Symbol | String, untyped],
-                    ?headers: Hash[String, String], ?body: String?, ?timeout: Numeric?) -> Transport::Response
+                    ?headers: Hash[String, String], ?body: String?, ?timeout: Numeric?,
+                    ?stream: _Stream?) -> Transport::Response
     end
 
     class Requestor
-      REQUEST_OPTIONS: Array[Symbol]
       NEVER_RETRIED: Array[String]
+      PROBLEM_JSON: String
 
       def initialize: (Connection connection, _TokenProvider token_provider) -> void
       def request: (method: String, path: String, ?model: _ModelClass[untyped]?,
                     ?path_params: Hash[Symbol | String, String],
                     ?query: Hash[Symbol | String, untyped],
-                    ?headers: Hash[String, String],
                     ?body: Hash[String, untyped]?,
                     ?content_type: String,
                     ?binary_parts: Hash[String, String],
                     ?retry_safe: bool,
                     ?idempotency_key: (:required | nil),
+                    ?if_match: etag?,
+                    ?if_none_match: etag?,
                     ?response: (:model | :page | :write_result | :empty | :binary),
                     ?accept: String?,
                     ?pagination: pagination?,
-                    ?request_options: request_options) -> untyped
+                    ?request_options: request_options) ?{ (String chunk) -> void } -> untyped
       def config: () -> Config
     end
 
@@ -380,7 +457,7 @@ module TeachMeHipaa
 
       private
 
-      def request: (**untyped) -> untyped
+      def request: (**untyped) ?{ (String chunk) -> void } -> untyped
       def config: () -> Config
       def fixed: (Hash[String, untyped] body, Array[String] path, untyped value) -> Hash[String, untyped]
     end

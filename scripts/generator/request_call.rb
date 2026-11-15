@@ -17,14 +17,15 @@ module SdkGenerator
         "path: #{Text.literal(path)}\n",
         *hash_argument("path_params", @method.path_params),
         *hash_argument("query", @method.query_params),
-        *headers_argument,
+        *conditional_arguments,
         *body_arguments,
         *("retry_safe: true\n" if @data.fetch("retrySafe")),
         *("idempotency_key: :required\n" if @data.fetch("idempotencyKey") == "required"),
         *response_arguments,
         "request_options:\n",
       ]
-      "request(\n#{Text.indent(arguments.map { |argument| argument.sub(/\n\z/, ",\n") }.join, 2)})\n"
+      listed = arguments.map { |argument| argument.sub(/\n\z/, ",\n") }.join + ("&\n" if @method.binary?).to_s
+      "request(\n#{Text.indent(listed, 2)})\n"
     end
 
     private
@@ -45,11 +46,8 @@ module SdkGenerator
       [Text.pack("#{name}: { ", items, " }", COLUMN)]
     end
 
-    def headers_argument
-      header = @method.if_match
-      return [] if header.nil?
-
-      ["headers: { \"if-match\" => if_match }#{".compact" unless header.required}\n"]
+    def conditional_arguments
+      [@method.if_match, @method.if_none_match].compact.map { |param| "#{param.ruby}:\n" }
     end
 
     def body_arguments

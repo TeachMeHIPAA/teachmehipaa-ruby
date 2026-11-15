@@ -31,7 +31,12 @@ module TeachMeHipaa
       # Retrieve a webhook subscription
       #
       # Retrieves a webhook subscription. Requires the `webhooks:manage` or `org:admin` scope.
+      #
+      # Given +if_none_match:+ (an ETag, or the copy you hold), returns NotModified when your copy
+      # is current.
       def retrieve: (String subscription_id, ?request_options: request_options) -> WebhookSubscription
+                  | (String subscription_id, if_none_match: etag?,
+                     ?request_options: request_options) -> (WebhookSubscription | NotModified)
 
       # Send a test event
       #
@@ -46,9 +51,9 @@ module TeachMeHipaa
       # `webhooks:manage` or `org:admin` scope.
       #
       # Parameters you leave out are unchanged; pass nil to clear one.
-      def update: (String subscription_id, if_match: String, ?endpoint_url: String,
-                   ?event_types: Array[String | Symbol], ?enabled: bool, ?description: String?,
-                   ?seats_low_threshold: Integer, ?request_options: request_options) -> WebhookSubscription
+      def update: (String subscription_id, if_match: etag, ?endpoint_url: String | Omit,
+                   ?event_types: Array[String | Symbol] | Omit, ?enabled: bool | Omit, ?description: String? | Omit,
+                   ?seats_low_threshold: Integer | Omit, ?request_options: request_options) -> WebhookSubscription
     end
   end
 end

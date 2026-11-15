@@ -2,17 +2,22 @@
 
 module SdkGenerator
   # One IR method's parameters: path params positional, query and body
-  # fields as keywords, and If-Match as +if_match:+ where the IR asks for it.
+  # fields as keywords, and If-Match and If-None-Match as +if_match:+ and
+  # +if_none_match:+ where the IR offers them.
   class ApiMethod
     MERGE_PATCH = "application/merge-patch+json"
-    RESERVED_PARAMS = %w[request_options if_match].freeze
+    RESERVED_PARAMS = %w[request_options if_match if_none_match].freeze
     PATCH_NOTE = "Parameters you leave out are unchanged; pass nil to clear one."
+    BINARY_NOTE = "Returns the whole file as a BinaryResponse. Given a block, yields the file's bytes in " \
+                  "chunks as they arrive instead and returns a StreamedResponse."
+    CONDITIONAL_NOTE = "Given +if_none_match:+ (an ETag, or the copy you hold), returns NotModified when " \
+                       "your copy is current."
     STRING = { "kind" => "primitive", "type" => "string" }.freeze
 
     # +body+ is true for a request-body field.
     Param = Data.define(:ruby, :wire, :required, :nullable, :type, :body)
 
-    attr_reader :data, :where, :body
+    attr_reader :data, :where, :body, :ir
 
     def initialize(context, resource_path, data)
       @ir = context
@@ -27,7 +32,8 @@ module SdkGenerator
     end
 
     def doc
-      [data["summary"], data["description"], *constraint_notes, (PATCH_NOTE if merge_patch?)]
+      [data["summary"], data["description"], *constraint_notes, (PATCH_NOTE if merge_patch?),
+       (BINARY_NOTE if binary?), (CONDITIONAL_NOTE if if_none_match)]
     end
 
     def merge_patch?
@@ -43,11 +49,11 @@ module SdkGenerator
     end
 
     def if_match
-      requirement = data.fetch("ifMatch")
-      return nil if requirement == "none"
+      conditional("ifMatch", "if_match")
+    end
 
-      Param.new(ruby: "if_match", wire: "If-Match", required: requirement == "required", nullable: false,
-                type: STRING, body: false)
+    def if_none_match
+      conditional("ifNoneMatch", "if_none_match")
     end
 
     def body_type
@@ -73,11 +79,11 @@ module SdkGenerator
     end
 
     def required_keywords
-      [if_match, *body_params, *query_params].compact.select(&:required)
+      [if_match, if_none_match, *body_params, *query_params].compact.select(&:required)
     end
 
     def optional_keywords
-      [*body_params, if_match, *query_params].compact.reject(&:required)
+      [*body_params, if_match, if_none_match, *query_params].compact.reject(&:required)
     end
 
     def constraints(kind)
@@ -87,36 +93,28 @@ module SdkGenerator
     def ruby_parameters
       [*path_params.map(&:ruby), *required_keywords.map { |param| "#{param.ruby}:" },
        *optional_keywords.map { |param| "#{param.ruby}: #{merge_patch? && param.body ? "OMIT" : "nil"}" },
-       "request_options: {}"]
+       "request_options: {}", *("&" if binary?)]
     end
 
-    def rbs_parameters
-      [*path_params.map { |param| "String #{param.ruby}" },
-       *required_keywords.map { |param| "#{param.ruby}: #{param_rbs(param)}" },
-       *optional_keywords.map { |param| "?#{param.ruby}: #{param_rbs(param, optional: true)}" },
-       "?request_options: request_options"]
-    end
-
-    def rbs_return
-      response = data.fetch("response")
-      case response.fetch("kind")
-      when "page" then "Page[#{@ir.rbs(data.dig("pagination", "itemType"))}]"
-      when "empty" then "EmptyResponse"
-      when "binary" then "BinaryResponse"
-      else @ir.rbs(response.fetch("type"))
-      end
+    # A binary download streams to a block when given one.
+    def binary?
+      data.dig("response", "kind") == "binary"
     end
 
     private
 
+    # The header's value is an ETag: a String, or a returned object whose
+    # last response carries one.
+    def conditional(ir_key, ruby)
+      requirement = data.fetch(ir_key)
+      return nil if requirement == "none"
+
+      Param.new(ruby:, wire: nil, required: requirement == "required", nullable: false, type: nil, body: false)
+    end
+
     def param(field, required, body: false)
       Param.new(ruby: Naming.snake(field.fetch("name")), wire: field.fetch("name"), required:,
                 nullable: field.fetch("nullable", false), type: field.fetch("type"), body:)
-    end
-
-    def param_rbs(param, optional: false)
-      rbs = param.wire == "If-Match" ? "String" : @ir.param_rbs(param.type)
-      param.nullable || (optional && !(merge_patch? && param.body)) ? Ir.optional(rbs) : rbs
     end
 
     def constraint_notes

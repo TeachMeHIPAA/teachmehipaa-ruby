@@ -73,11 +73,15 @@ module TeachMeHipaa
       # Retrieve a webhook subscription
       #
       # Retrieves a webhook subscription. Requires the `webhooks:manage` or `org:admin` scope.
-      def retrieve(subscription_id, request_options: {})
+      #
+      # Given +if_none_match:+ (an ETag, or the copy you hold), returns NotModified when your copy
+      # is current.
+      def retrieve(subscription_id, if_none_match: nil, request_options: {})
         request(
           method: "GET",
           path: "/organizations/{orgId}/webhook-subscriptions/{subscriptionId}",
           path_params: { subscriptionId: subscription_id },
+          if_none_match:,
           retry_safe: true,
           model: WebhookSubscription,
           request_options:,
@@ -113,7 +117,7 @@ module TeachMeHipaa
           method: "PATCH",
           path: "/organizations/{orgId}/webhook-subscriptions/{subscriptionId}",
           path_params: { subscriptionId: subscription_id },
-          headers: { "if-match" => if_match },
+          if_match:,
           body: WebhookSubscriptionPatch.to_wire({ endpoint_url:, event_types:, enabled:, description:,
                                                    seats_low_threshold: }),
           content_type: "application/merge-patch+json",

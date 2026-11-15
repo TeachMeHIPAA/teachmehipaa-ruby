@@ -10,11 +10,12 @@ module TeachMeHipaa
     class Requestor
       INTROSPECTION_PATH = "/auth/introspection"
       ORG_PLACEHOLDER = "{orgId}"
-      REQUEST_OPTIONS = %i[headers timeout max_retries idempotency_key].freeze
       # Never replayed once a response may have been received (grilling
       # Q18): a lost success would apply twice or surface as a confusing
       # 412 or 404.
       NEVER_RETRIED = %w[PATCH DELETE].freeze
+      # Errors come as RFC 9457 problems whatever a download's own type.
+      PROBLEM_JSON = "application/problem+json"
 
       def initialize(connection, token_provider)
         @connection = connection
@@ -34,14 +35,21 @@ module TeachMeHipaa
       # +idempotency_key+ (:required or nil) come from the IR; a call that
       # carries an Idempotency-Key is retry-safe either way.
       #
+      # +if_match+ and +if_none_match+ are ETags for the conditional headers:
+      # a String, or an object the client returned (its last response's
+      # ETag).
+      #
       # +response+ is the IR's response kind: :model (+model+ reads the
       # body), :page (+model+ reads each item), :write_result, :empty, or
       # :binary (the body must be of media type +accept+). A :page also takes
       # the IR's +pagination+: +{ style: :cursor | :after, cursor_param: }+.
-      def request(method:, path:, model: nil, path_params: {}, query: {}, headers: {}, body: nil,
+      # A :binary call given a block streams the body to it instead.
+      def request(method:, path:, model: nil, path_params: {}, query: {}, body: nil,
                   content_type: "application/json", binary_parts: {}, retry_safe: false, idempotency_key: nil,
-                  response: :model, accept: nil, pagination: nil, request_options: {})
-        options = check_request_options(request_options)
+                  if_match: nil, if_none_match: nil, response: :model, accept: nil, pagination: nil,
+                  request_options: {}, &on_chunk)
+        options = Config.check_request_options(request_options)
+        conditional = Conditional.headers(if_match:, if_none_match:)
         # One key per call, not per attempt, so every retry and the 401
         # replay is recognised as the same request.
         key = options.fetch(:idempotency_key) { SecureRandom.uuid if idempotency_key == :required }
@@ -50,16 +58,16 @@ module TeachMeHipaa
           method:,
           path: expand(path, path_params),
           query: Values.write(nil, query),
-          headers: request_headers(headers.merge(accept ? { "accept" => accept } : {}), encoded_type, key,
-                                   options.fetch(:headers, {})),
+          headers: request_headers(conditional, accept, encoded_type, key, options.fetch(:headers, {})),
           body: encoded,
           timeout: options[:timeout],
         }
         policy = Retries::Policy.new(retry_safe: retry_safe?(method, retry_safe, key),
                                      max_retries: options.fetch(:max_retries, @connection.config.max_retries))
         return read_page(request, policy, model, pagination) if response == :page
+        return download(request, policy, accept, on_chunk) if on_chunk
 
-        Responses.read(authorized(request, policy), response, model, accept)
+        Responses.read(authorized(request, policy, not_modified: !if_none_match.nil?), response, model, accept)
       end
 
       def config
@@ -79,9 +87,21 @@ module TeachMeHipaa
         Responses.read(authorized(request, policy), :page, model, nil, fetch_next:)
       end
 
-      def authorized(request, policy)
+      # Only a success of the promised type reaches the block, so no retried
+      # attempt hands it a byte twice; once bytes have reached it, the call
+      # ends rather than retry.
+      def download(request, policy, accept, on_chunk)
+        stream = lambda do |status, headers|
+          on_chunk if (200..299).cover?(status) && Responses.media_type?(headers["content-type"], accept)
+        end
+        Responses.read(authorized(request.merge(stream:), policy), :streamed, nil, accept)
+      rescue Connection::Interrupted => e
+        raise e.error, cause: nil
+      end
+
+      def authorized(request, policy, not_modified: false)
         Retries.call(@connection, policy, map_error: Error.method(:from_response),
-                                          replay: method(:invalidate_refused_token)) do
+                                          replay: method(:invalidate_refused_token), not_modified:) do
           token = @token_provider.access_token(@connection)
           request.merge(headers: request[:headers].merge("authorization" => "Bearer #{token}"))
         end
@@ -93,8 +113,9 @@ module TeachMeHipaa
         @token_provider.invalidate(request[:headers]["authorization"].delete_prefix("Bearer "))
       end
 
-      def request_headers(headers, content_type, idempotency_key, extra)
-        headers = headers.dup
+      def request_headers(conditional, accept, content_type, idempotency_key, extra)
+        headers = conditional.dup
+        headers["accept"] = "#{accept}, #{PROBLEM_JSON}" if accept
         headers["content-type"] = content_type if content_type
         headers["idempotency-key"] = idempotency_key if idempotency_key
         headers.merge(extra)
@@ -137,16 +158,6 @@ module TeachMeHipaa
         return Multipart.encode(body, binary_parts) if content_type == "multipart/form-data"
 
         [JSON.generate(body), content_type]
-      end
-
-      def check_request_options(options)
-        unknown = options.keys - REQUEST_OPTIONS
-        raise ArgumentError, "unknown request option(s): #{unknown.map(&:inspect).join(", ")}" unless unknown.empty?
-
-        Config.check_max_retries(options[:max_retries]) if options.key?(:max_retries)
-        return options unless options.key?(:timeout)
-
-        options.merge(timeout: Config.check_timeout(options[:timeout]))
       end
     end
   end
