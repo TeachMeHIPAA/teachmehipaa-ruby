@@ -1,0 +1,192 @@
+# frozen_string_literal: true
+
+module SdkGenerator
+  # One Ruby file and one RBS file per IR type, plus the models.rb index.
+  class Models
+    LIB = "lib/teachmehipaa/models"
+    SIG = "sig/teachmehipaa/models"
+
+    def initialize(context)
+      @ir = context
+    end
+
+    def files
+      ruby = ModelSource.new(@ir)
+      rbs = ModelSignature.new(@ir)
+      files = @ir.types.each_with_object({}) do |type, all|
+        file = Naming.snake(type.fetch("name"))
+        raise ArgumentError, "two IR types map to #{file}.rb" if all.key?("#{LIB}/#{file}.rb")
+
+        all["#{LIB}/#{file}.rb"] = ruby.source(type)
+        all["#{SIG}/#{file}.rbs"] = rbs.source(type)
+      end
+      index = Text.require_lines(@ir.types.map { |type| "models/#{Naming.snake(type.fetch("name"))}" })
+      files.merge("lib/teachmehipaa/models.rb" => Text::RUBY_HEADER + index)
+    end
+  end
+
+  # Doc comments shared by a model's Ruby and RBS.
+  module ModelDocs
+    MERGE_PATCH_NOTE = "Sent as a JSON merge patch: leave a field out to keep it; nil clears a nullable field."
+    ENUM_NOTE = "Known values; the API may add more at any time, so handle values you don't recognize."
+
+    private
+
+    def type_doc(type)
+      name = type.fetch("name")
+      fallback = type.fetch("kind") == "object" ? "#{Text.article(name)} #{name} object." : nil
+      Text.comment([type["description"] || fallback, (MERGE_PATCH_NOTE if type["mergePatch"]), *kind_note(type)], 2)
+    end
+
+    def kind_note(type)
+      case type.fetch("kind")
+      when "enum" then ENUM_NOTE
+      when "union" then union_note(type.fetch("discriminator"))
+      end
+    end
+
+    def union_note(discriminator)
+      return "The variant is picked by which field is present." unless discriminator.fetch("kind") == "property"
+
+      "Tell the variants apart by +#{Naming.snake(discriminator.fetch("property"))}+ or by class. " \
+        "New variants may be added; handle ones you don't recognize."
+    end
+
+    def unknown_class?(type)
+      @ir.union_fallback(type) == "#{type.fetch("name")}::Unknown"
+    end
+
+    def unknown_doc(name)
+      Text.comment(["#{Text.article(name)} #{name} this library doesn't know yet. Its fields are all kept; " \
+                    "read them with #[] or #to_h."], 4)
+    end
+
+    def includes(name)
+      lines = @ir.unions_of(name).map { |union| "include #{union}\n" }.join
+      lines.empty? ? "" : "#{lines}\n"
+    end
+
+    def unknown_class(name)
+      Text.block("class Unknown < Model", "include #{name}\n")
+    end
+
+    def created_doc
+      Text.comment(["True when this call created the Learner (201), false when it already existed (200)."], 4)
+    end
+  end
+
+  # A model's Ruby source.
+  class ModelSource
+    include ModelDocs
+
+    def initialize(context)
+      @ir = context
+    end
+
+    def source(type)
+      body = case type.fetch("kind")
+             when "object" then object(type)
+             when "enum" then enum(type)
+             when "union" then union(type)
+             end
+      requires = Text.require_lines(dependencies(type).map { |name| Naming.snake(name) })
+      Text::RUBY_HEADER + (requires.empty? ? "" : "#{requires}\n") + Text.block("module TeachMeHipaa", body)
+    end
+
+    private
+
+    # Variant classes require their union module (to include it); union
+    # modules name their variants lazily, so the require graph has no cycle.
+    def dependencies(type)
+      return [] unless type.fetch("kind") == "object"
+
+      referenced = @ir.object_fields(type).flat_map { |field| @ir.referenced_types(field.fetch("type")) }
+      (referenced + @ir.unions_of(type.fetch("name"))).uniq.sort - [type.fetch("name")]
+    end
+
+    def object(type)
+      name = type.fetch("name")
+      fields = @ir.object_fields(type).map { |field| field(field) }.join
+      created = @ir.write_result?(name) ? "\n#{created_doc}def created? = created\n" : ""
+      type_doc(type) + Text.block("class #{name} < Model", includes(name) + fields + created)
+    end
+
+    def field(field)
+      args = [":#{Ir.reader_name(field)}", Text.literal(field.fetch("name"))]
+      @ir.ruby_type(field.fetch("type"))&.then { |type| args << "type: #{type}" }
+      args << "reader: false" unless Ir.reader?(field)
+      "#{Text.comment(@ir.field_doc(field) + [*no_reader_note(field)], 4)}field #{args.join(", ")}\n"
+    end
+
+    def no_reader_note(field)
+      return nil if Ir.reader?(field)
+
+      "No reader: +#{Ir.reader_name(field)}+ is already a Ruby method. Read it with #[]."
+    end
+
+    def enum(type)
+      constants = @ir.enum_constants(type).map { |constant, value| "#{constant} = #{Text.literal(value)}\n" }
+      type_doc(type) + Text.block("module #{type.fetch("name")}", constants.join)
+    end
+
+    def union(type)
+      name = type.fetch("name")
+      unknown = unknown_class?(type) ? "#{unknown_doc(name)}#{unknown_class(name)}\n" : ""
+      type_doc(type) + Text.block("module #{name}", "extend Union\n\n#{unknown}#{variants(type)}")
+    end
+
+    def variants(type)
+      discriminator = type.fetch("discriminator")
+      mapping = discriminator.fetch("mapping").sort.map do |key, member|
+        "#{Text.literal(key)} => #{Text.literal(member)},\n"
+      end
+      options = [*("property: #{Text.literal(discriminator["property"])}" if discriminator["property"]),
+                 "fallback: #{Text.literal(@ir.union_fallback(type))}"].map { |option| "#{option},\n" }
+      "variants(\n#{Text.indent("{\n#{Text.indent(mapping.join, 2)}},\n#{options.join}", 2)})\n"
+    end
+  end
+
+  # A model's RBS signature.
+  class ModelSignature
+    include ModelDocs
+
+    def initialize(context)
+      @ir = context
+    end
+
+    def source(type)
+      body = case type.fetch("kind")
+             when "object" then object(type)
+             when "enum" then enum(type)
+             when "union" then union(type)
+             end
+      "#{Text::BANNER}\n#{Text.block("module TeachMeHipaa", body)}"
+    end
+
+    private
+
+    def object(type)
+      name = type.fetch("name")
+      readers = @ir.object_fields(type).select { |field| Ir.reader?(field) }.map { |field| reader(field) }
+      readers << "#{created_doc}def created?: () -> bool\n" if @ir.write_result?(name)
+      type_doc(type) + Text.block("class #{name} < Model", includes(name) + readers.join)
+    end
+
+    def reader(field)
+      type = @ir.rbs(field.fetch("type"))
+      type = Ir.optional(type) if field.fetch("nullable") || !field.fetch("required")
+      "#{Text.comment(@ir.field_doc(field), 4)}def #{Ir.reader_name(field)}: () -> #{type}\n"
+    end
+
+    def enum(type)
+      constants = @ir.enum_constants(type).keys.map { |constant| "#{constant}: String\n" }
+      type_doc(type) + Text.block("module #{type.fetch("name")}", constants.join)
+    end
+
+    def union(type)
+      name = type.fetch("name")
+      unknown = unknown_class?(type) ? "\n#{unknown_class(name)}" : ""
+      type_doc(type) + Text.block("module #{name}", "extend Union\n#{unknown}")
+    end
+  end
+end

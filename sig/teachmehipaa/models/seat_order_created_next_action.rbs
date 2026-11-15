@@ -1,0 +1,14 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # Where to send the buyer next: a checkout `url` to redirect to, or a hosted invoice.
+  #
+  # Tell the variants apart by +type+ or by class. New variants may be added; handle ones you don't
+  # recognize.
+  module SeatOrderCreatedNextAction
+    extend Union
+
+    class Unknown < Model
+      include SeatOrderCreatedNextAction
+    end
+  end
+end

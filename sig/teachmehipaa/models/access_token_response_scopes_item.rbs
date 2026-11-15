@@ -1,0 +1,25 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # Known values; the API may add more at any time, so handle values you don't recognize.
+  module AccessTokenResponseScopesItem
+    ME: String
+    ENROLLMENTS_READ: String
+    ENROLLMENTS_WRITE: String
+    MEMBERS_READ: String
+    MEMBERS_ADMIN: String
+    CERTIFICATES_READ: String
+    CERTIFICATES_WRITE: String
+    BILLING_WRITE: String
+    ORG_ADMIN: String
+    AUDIT_READ: String
+    SCIM: String
+    SUPPORT_WRITE: String
+    LEARNERS_READ: String
+    LEARNERS_WRITE: String
+    COMPLIANCE_READ: String
+    SEATS_PURCHASE: String
+    WEBHOOKS_MANAGE: String
+    PARTNER_ORGS_READ: String
+    PARTNER_ORGS_WRITE: String
+  end
+end

@@ -1,0 +1,12 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A PaymentMethodPrepare object.
+  class PaymentMethodPrepare < Model
+    # The Stripe SetupIntent.
+    def setup_intent_id: () -> String
+    # Confirm the SetupIntent with Stripe.js using this secret.
+    def client_secret: () -> String
+    # The Stripe publishable key to load Stripe.js with.
+    def publishable_key: () -> String
+  end
+end

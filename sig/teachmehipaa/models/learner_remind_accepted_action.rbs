@@ -1,0 +1,9 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # Always `remind`.
+  #
+  # Known values; the API may add more at any time, so handle values you don't recognize.
+  module LearnerRemindAcceptedAction
+    REMIND: String
+  end
+end

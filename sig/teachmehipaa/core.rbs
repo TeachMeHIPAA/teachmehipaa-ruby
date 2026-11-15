@@ -4,6 +4,16 @@ module TeachMeHipaa
   type environment = :live | :sandbox
   type headers = Hash[String, String]
   type app_info = { name: String, ?version: String, ?url: String }
+  # A nested object parameter: snake_case (or API) field names to values.
+  type params = Hash[Symbol | String, untyped]
+  # File content for a multipart part: bytes, or anything that reads them.
+  type upload = String | _Reader
+
+  interface _Reader
+    def read: () -> String
+  end
+
+  OMIT: Object
 
   ENVIRONMENTS: Hash[environment, String]
   DEFAULT_MAX_RETRIES: Integer
@@ -80,7 +90,7 @@ module TeachMeHipaa
   end
 
   class APIError < Error
-    def self.unexpected: (Transport::Response response) -> APIError
+    def self.unexpected: (Transport::Response response, ?expected: String) -> APIError
   end
 
   class OAuthError < Error
@@ -145,6 +155,8 @@ module TeachMeHipaa
 
   class Model
     def self.fields: () -> Hash[Symbol, untyped]
+    def self.to_wire: (params params) -> Hash[String, untyped]
+    private def self.field: (Symbol name, String wire_name, ?type: untyped, ?reader: bool) -> void
 
     attr_reader last_response: LastResponse?
 
@@ -154,6 +166,38 @@ module TeachMeHipaa
     def ==: (untyped other) -> bool
     def eql?: (untyped other) -> bool
     def hash: () -> Integer
+  end
+
+  module Union
+    def new: (Hash[String, untyped] data, ?last_response: LastResponse?) -> Model
+    def to_wire: (params params) -> Hash[String, untyped]
+
+    private
+
+    def variants: (Hash[String, String] variants, fallback: String, ?property: String?) -> void
+  end
+
+  class Page[T]
+    attr_reader items: Array[T]
+    attr_reader next_cursor: String?
+    attr_reader last_response: LastResponse
+
+    def initialize: (items: Array[T], next_cursor: String?, last_response: LastResponse) -> void
+  end
+
+  class EmptyResponse < Data
+    attr_reader last_response: LastResponse
+
+    def self.new: (last_response: LastResponse) -> instance
+  end
+
+  class BinaryResponse < Data
+    attr_reader data: String
+    attr_reader content_type: String?
+    attr_reader filename: String?
+    attr_reader last_response: LastResponse
+
+    def self.new: (data: String, content_type: String?, filename: String?, last_response: LastResponse) -> instance
   end
 
   module TokenProviders
@@ -175,6 +219,29 @@ module TeachMeHipaa
 
   # @api private
   module Core
+    module Values
+      def self.read: (untyped type, untyped value) -> untyped
+      def self.read_collection: (untyped type, untyped value) -> untyped
+      def self.write: (untyped type, untyped value) -> untyped
+      def self.write_object: (untyped type, Hash[untyped, untyped] value) -> Hash[String, untyped]
+    end
+
+    module Responses
+      def self.read: (Transport::Response response, Symbol kind, _ModelClass[untyped]? model, String? accept) -> untyped
+      def self.empty: (Transport::Response response, LastResponse last_response) -> EmptyResponse
+      def self.binary: (Transport::Response response, String accept, LastResponse last_response) -> BinaryResponse
+      def self.page: (Transport::Response response, _ModelClass[untyped] model, LastResponse last_response)
+                   -> Page[untyped]
+      def self.filename: (String? content_disposition) -> String?
+      def self.success?: (Transport::Response response) -> bool
+    end
+
+    module Multipart
+      def self.encode: (Hash[String, untyped] body, Hash[String, String] binary_parts) -> [String, String]
+      def self.file_part: (String name, upload value, String content_type) -> String
+      def self.json_part: (String name, untyped value) -> String
+    end
+
     module Json
       def self.success_body: (Transport::Response response) -> untyped
       def self.object_body: (Transport::Response response) -> Hash[String, untyped]?
@@ -231,15 +298,18 @@ module TeachMeHipaa
       NEVER_RETRIED: Array[String]
 
       def initialize: (Connection connection, _TokenProvider token_provider) -> void
-      def request: [M < Model] (method: String, path: String, model: _ModelClass[M],
-                                ?path_params: Hash[Symbol | String, String],
-                                ?query: Hash[Symbol | String, untyped],
-                                ?headers: Hash[String, String],
-                                ?body: Hash[String, untyped]?,
-                                ?content_type: String,
-                                ?retry_safe: bool,
-                                ?idempotency_key: (:required | nil),
-                                ?request_options: request_options) -> M
+      def request: (method: String, path: String, ?model: _ModelClass[untyped]?,
+                    ?path_params: Hash[Symbol | String, String],
+                    ?query: Hash[Symbol | String, untyped],
+                    ?headers: Hash[String, String],
+                    ?body: Hash[String, untyped]?,
+                    ?content_type: String,
+                    ?binary_parts: Hash[String, String],
+                    ?retry_safe: bool,
+                    ?idempotency_key: (:required | nil),
+                    ?response: (:model | :page | :write_result | :empty | :binary),
+                    ?accept: String?,
+                    ?request_options: request_options) -> untyped
     end
 
     interface _ModelClass[M]
@@ -248,6 +318,11 @@ module TeachMeHipaa
 
     class Resource
       def initialize: (Requestor requestor) -> void
+
+      private
+
+      def request: (**untyped) -> untyped
+      def fixed: (Hash[String, untyped] body, Array[String] path, untyped value) -> Hash[String, untyped]
     end
   end
 

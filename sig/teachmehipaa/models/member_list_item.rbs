@@ -1,0 +1,14 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A MemberListItem object.
+  class MemberListItem < Model
+    def subject_id: () -> String?
+    def email: () -> String
+    def name: () -> String?
+    # See MemberListItemRole for known values; the API may send newer ones.
+    def role: () -> String
+    def is_disabled: () -> bool
+    def enrollment_subject_id: () -> String?
+    def holds_invitation: () -> bool?
+  end
+end

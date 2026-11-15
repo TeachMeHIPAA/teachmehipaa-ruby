@@ -1,0 +1,12 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  module Resources
+    # The methods under +client.compliance+.
+    class Compliance < Core::Resource
+      # Retrieve the compliance summary
+      #
+      # Counts the organization's learners in one course by status. Removed learners aren't counted.
+      def retrieve: (?course_id: String?, ?request_options: request_options) -> ComplianceSummary
+    end
+  end
+end

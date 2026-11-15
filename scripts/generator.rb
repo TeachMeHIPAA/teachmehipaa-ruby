@@ -1,0 +1,63 @@
+# frozen_string_literal: true
+
+require "json"
+require_relative "generator/schema"
+require_relative "generator/naming"
+require_relative "generator/text"
+require_relative "generator/type_refs"
+require_relative "generator/ir"
+require_relative "generator/models"
+require_relative "generator/api_method"
+require_relative "generator/request_call"
+require_relative "generator/resources"
+
+# Generates the resource and model layer from openapi/sdk-ir.json, the only
+# input it reads (ADR-0001). Run it with `bundle exec rake generate`.
+module SdkGenerator
+  # Directories the generator owns outright: anything else in them is stale.
+  DIRECTORIES = %w[
+    lib/teachmehipaa/models lib/teachmehipaa/resources sig/teachmehipaa/models sig/teachmehipaa/resources
+  ].freeze
+  INDEXES = %w[lib/teachmehipaa/models.rb lib/teachmehipaa/resources.rb].freeze
+
+  module_function
+
+  # The vendored IR, checked against its vendored schema.
+  def load_ir(root)
+    ir = JSON.parse(File.read(File.join(root, "openapi/sdk-ir.json"), encoding: "UTF-8"))
+    schema = Schema.new(JSON.parse(File.read(File.join(root, "openapi/sdk-ir.schema.json"), encoding: "UTF-8")))
+    problems = schema.errors(ir)
+    raise ArgumentError, "openapi/sdk-ir.json does not match its schema:\n  #{problems.join("\n  ")}" if problems.any?
+
+    ir
+  end
+
+  # Every generated file: path relative to the repo root => source. The
+  # same IR always yields the same Hash.
+  def generate(data)
+    ir = Ir.new(data)
+    Models.new(ir).files.merge(Resources.new(ir).files).sort.to_h
+  end
+
+  # The generated files currently in the repo.
+  def committed_paths(root)
+    owned = DIRECTORIES.flat_map do |directory|
+      path = File.join(root, directory)
+      Dir.exist?(path) ? Dir.children(path).map { |name| "#{directory}/#{name}" } : []
+    end
+    owned + INDEXES.select { |index| File.exist?(File.join(root, index)) }
+  end
+
+  # Rewrites the generated files under +root+ and deletes stale ones.
+  def write(root)
+    ir = load_ir(root)
+    files = generate(ir)
+    stale = committed_paths(root) - files.keys
+    stale.each { |path| File.delete(File.join(root, path)) }
+    files.each do |path, source|
+      FileUtils.mkdir_p(File.dirname(File.join(root, path)))
+      File.write(File.join(root, path), source, encoding: "UTF-8")
+    end
+    "Generated #{files.size} files from IR #{ir.dig("source", "release")}; removed #{stale.size} stale."
+  end
+end

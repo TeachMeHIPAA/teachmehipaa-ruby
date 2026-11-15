@@ -1,0 +1,12 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A SeatOrderCreateRequestPaymentSavedPaymentMethod object.
+  class SeatOrderCreateRequestPaymentSavedPaymentMethod < Model
+    include SeatOrderCreateRequestPayment
+
+    def return_url: () -> String?
+    def payment_method_id: () -> String?
+    def expected_total: () -> Integer?
+    def currency: () -> String?
+  end
+end

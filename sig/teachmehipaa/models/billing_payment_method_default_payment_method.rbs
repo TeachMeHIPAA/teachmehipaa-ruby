@@ -1,0 +1,14 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A BillingPaymentMethodDefaultPaymentMethod object.
+  class BillingPaymentMethodDefaultPaymentMethod < Model
+    def brand: () -> String
+    def last4: () -> String
+    def exp_month: () -> Integer
+    def exp_year: () -> Integer
+    def payment_method_id: () -> String?
+    def saved_by: () -> PaymentMethodSavedBy?
+    def saved_at: () -> Time?
+    def expired: () -> bool
+  end
+end

@@ -1,0 +1,10 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A LearnerBatchUpsertRequestItemsItem object.
+  class LearnerBatchUpsertRequestItemsItem < Model
+    def email: () -> String
+    def name: () -> String?
+    def external_id: () -> String?
+    def course_id: () -> String?
+  end
+end

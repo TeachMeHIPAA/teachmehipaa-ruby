@@ -1,0 +1,16 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A WebhookSubscriptionCreate object.
+  class WebhookSubscriptionCreate < Model
+    # The HTTPS URL to deliver events to.
+    def endpoint_url: () -> String
+    # The event types to deliver.
+    #
+    # See EventType for known values; the API may send newer ones.
+    def event_types: () -> Array[String]
+    # A description for your own reference.
+    def description: () -> String?
+    # Send `seats.low` when available seats drop to this number. Defaults to 5.
+    def seats_low_threshold: () -> Integer?
+  end
+end

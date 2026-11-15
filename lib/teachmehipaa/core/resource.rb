@@ -19,6 +19,12 @@ module TeachMeHipaa
       def request(...)
         @requestor.request(...)
       end
+
+      # +body+ with a value the method sets itself (an IR const constraint,
+      # such as previewImport's validateOnly) written at +path+.
+      def fixed(body, (key, *rest), value)
+        body.merge(key => rest.empty? ? value : fixed(body[key] || {}, rest, value))
+      end
     end
   end
 end

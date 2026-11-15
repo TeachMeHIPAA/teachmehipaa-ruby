@@ -1,0 +1,17 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  module Resources
+    # The methods under +client.courses+.
+    class Courses < Core::Resource
+      # List all courses
+      #
+      # Returns a list of the courses in the public catalog. Needs no access token.
+      def list: (?limit: Integer?, ?cursor: String?, ?request_options: request_options) -> Page[Course]
+
+      # Retrieve a course
+      #
+      # Retrieves a course from the public catalog.
+      def retrieve: (String course_id, ?request_options: request_options) -> Course
+    end
+  end
+end

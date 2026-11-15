@@ -1,0 +1,8 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A SeatOrderCreatedFailure object.
+  class SeatOrderCreatedFailure < Model
+    def code: () -> String
+    def message: () -> String
+  end
+end

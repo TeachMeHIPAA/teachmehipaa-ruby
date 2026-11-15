@@ -1,0 +1,54 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  module Resources
+    # The methods under +client.webhook_subscriptions+.
+    class WebhookSubscriptions < Core::Resource
+      # Create a webhook subscription
+      #
+      # Subscribes an HTTPS endpoint to event types and creates its signing secret. Requires the
+      # `webhooks:manage` or `org:admin` scope.
+      def create: (endpoint_url: String, event_types: Array[String | Symbol], ?description: String?,
+                   ?seats_low_threshold: Integer?, ?request_options: request_options) -> WebhookSubscriptionCreated
+
+      # Delete a webhook subscription
+      #
+      # Deletes a webhook subscription and its signing secret. Requires the `webhooks:manage` or
+      # `org:admin` scope.
+      def delete: (String subscription_id, ?request_options: request_options) -> EmptyResponse
+
+      # List all webhook subscriptions
+      #
+      # Returns a list of the organization's webhook subscriptions. Signing secrets are never
+      # returned. Requires the `webhooks:manage` or `org:admin` scope.
+      def list: (?limit: Integer?, ?cursor: String?, ?request_options: request_options) -> Page[WebhookSubscription]
+
+      # Retry failed deliveries
+      #
+      # Delivers the subscription's failed events again. Requires the `webhooks:manage` or
+      # `org:admin` scope.
+      def redrive: (String subscription_id, ?request_options: request_options) -> Operation
+
+      # Retrieve a webhook subscription
+      #
+      # Retrieves a webhook subscription. Requires the `webhooks:manage` or `org:admin` scope.
+      def retrieve: (String subscription_id, ?request_options: request_options) -> WebhookSubscription
+
+      # Send a test event
+      #
+      # Sends a signed test delivery to the subscription's endpoint, so you can check your verifier.
+      # Requires the `webhooks:manage` or `org:admin` scope.
+      def test: (String subscription_id, ?request_options: request_options) -> Operation
+
+      # Update a webhook subscription
+      #
+      # Updates a webhook subscription; parameters you don't send are left unchanged. Send its
+      # current `ETag` in `If-Match`. The signing secret doesn't change. Requires the
+      # `webhooks:manage` or `org:admin` scope.
+      #
+      # Parameters you leave out are unchanged; pass nil to clear one.
+      def update: (String subscription_id, if_match: String, ?endpoint_url: String,
+                   ?event_types: Array[String | Symbol], ?enabled: bool, ?description: String?,
+                   ?seats_low_threshold: Integer, ?request_options: request_options) -> WebhookSubscription
+    end
+  end
+end

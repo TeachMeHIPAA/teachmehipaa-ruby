@@ -1,0 +1,15 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # The stored lifecycle state: `INVITED`, `EMAIL_BOUNCED`, `STARTED`, `ASSESSMENT_IN_PROGRESS`,
+  # `CERTIFIED` or `CANCELLED`.
+  #
+  # Known values; the API may add more at any time, so handle values you don't recognize.
+  module EnrollmentStatus
+    INVITED: String
+    EMAIL_BOUNCED: String
+    STARTED: String
+    ASSESSMENT_IN_PROGRESS: String
+    CERTIFIED: String
+    CANCELLED: String
+  end
+end

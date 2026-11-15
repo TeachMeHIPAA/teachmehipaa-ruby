@@ -1,0 +1,13 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  module Resources
+    # The methods under +client.seats+.
+    class Seats < Core::Resource
+      # Retrieve the seat inventory
+      #
+      # Retrieves how many seats the organization has, how many are assigned and how many are
+      # available for new invites. Requires the `enrollments:read` scope.
+      def retrieve: (?request_options: request_options) -> SeatsInventory
+    end
+  end
+end

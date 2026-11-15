@@ -1,0 +1,16 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # Known values; the API may add more at any time, so handle values you don't recognize.
+  module ListAuditEventsTransition
+    BOUNCE: String
+    START: String
+    BEGIN_ASSESSMENT: String
+    SUBMIT_ASSESSMENT: String
+    CERTIFY: String
+    REVOKE_CERT: String
+    ARCHIVE: String
+    UNARCHIVE: String
+    REINVITE: String
+    CANCEL_INVITE: String
+  end
+end

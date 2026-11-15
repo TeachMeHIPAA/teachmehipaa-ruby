@@ -1,0 +1,9 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An OAuthTokenError object.
+  class OAuthTokenError < Model
+    # See OAuthErrorCode for known values; the API may send newer ones.
+    def error: () -> String
+    def error_description: () -> String?
+  end
+end

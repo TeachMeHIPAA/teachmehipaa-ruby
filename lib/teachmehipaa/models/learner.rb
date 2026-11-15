@@ -1,45 +1,38 @@
 # frozen_string_literal: true
 
-# Hand-written for the tracer; the generator replaces this file.
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+
+require_relative "learner_certificate"
+require_relative "learner_course"
+
 module TeachMeHipaa
-  # A Member taking a Training, seen from the Organization's side.
+  # A Learner object.
   class Learner < Model
-    # Known values of #status. The API may add more.
-    module Status
-      NOT_STARTED = "not_started"
-      INVITE_BOUNCED = "invite_bounced"
-      IN_PROGRESS = "in_progress"
-      COMPLIANT = "compliant"
-      EXPIRING_SOON = "expiring_soon"
-      EXPIRED = "expired"
-      REMOVED = "removed"
-    end
-
-    # The Course this Learner record is for.
-    class Course < Model
-      field :course_id, "courseId"
-      field :title, "title"
-    end
-
-    # The Learner's current Certificate, with its verification and PDF links.
-    class Certificate < Model
-      field :certificate_id, "certificateId"
-      field :issued_at, "issuedAt", type: :time
-      field :expires_at, "expiresAt", type: :time
-      field :verify_url, "verifyUrl"
-      field :pdf_url, "pdfUrl"
-    end
-
+    # Unique identifier for the learner. The same as the member's `subjectId`.
     field :learner_id, "learnerId"
+    # The learner's email address.
     field :email, "email"
+    # The learner's full name.
     field :name, "name"
+    # Your own id for the learner, unique within the organization.
     field :external_id, "externalId"
+    # The learner's training status in this course. One of `not_started` (invited),
+    # `invite_bounced`, `in_progress`, `compliant`, `expiring_soon` (within 60 days of expiry),
+    # `expired` or `removed`.
+    #
+    # See LearnerStatus for known values; the API may send newer ones.
     field :status, "status"
-    field :course, "course", type: Course
+    # The course this learner record is for.
+    field :course, "course", type: LearnerCourse
+    # When the learner was invited (ISO 8601).
     field :invited_at, "invitedAt", type: :time
+    # When the learner started training.
     field :started_at, "startedAt", type: :time
+    # When the learner completed the course.
     field :completed_at, "completedAt", type: :time
+    # When the learner's training is due.
     field :due_at, "dueAt", type: :time
-    field :certificate, "certificate", type: Certificate
+    # The learner's current certificate, with its verification and PDF links.
+    field :certificate, "certificate", type: LearnerCertificate
   end
 end

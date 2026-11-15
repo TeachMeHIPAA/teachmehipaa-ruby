@@ -1,0 +1,11 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # Known values; the API may add more at any time, so handle values you don't recognize.
+  module ImportPreviewRowsItemStatus
+    VALID: String
+    INVALID_EMAIL: String
+    DUPLICATE_IN_FILE: String
+    ALREADY_ENROLLED: String
+    ALREADY_INVITED: String
+  end
+end

@@ -1,0 +1,15 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A CertificateLinks object.
+  class CertificateLinks < Model
+    # The certificate.
+    def certificate_id: () -> String
+    # Adds the certificate to the holder's LinkedIn profile.
+    def linked_in_url: () -> String
+    # The public `tme.so` verification link.
+    def short_link: () -> String
+    # The verification link's id.
+    def tiny_id: () -> String
+    def paywalled: () -> bool?
+  end
+end

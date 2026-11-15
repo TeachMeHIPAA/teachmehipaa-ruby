@@ -1,0 +1,20 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A SeatOrderQuote object.
+  class SeatOrderQuote < Model
+    # Seats quoted.
+    def quantity: () -> Integer
+    # Price per seat, in the currency's smallest unit.
+    def unit_amount: () -> Integer
+    # Three-letter ISO currency code, lowercase.
+    def currency: () -> String
+    # Price before tax.
+    def subtotal: () -> Integer
+    # Always `null`: tax is calculated at payment.
+    def tax: () -> untyped
+    # The quoted total.
+    def total: () -> Integer
+    # When the quote expires, 15 minutes after it was made.
+    def quote_expires_at: () -> Time
+  end
+end

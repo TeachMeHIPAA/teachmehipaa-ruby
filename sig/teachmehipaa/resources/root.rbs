@@ -1,8 +1,23 @@
-# Hand-written for the tracer; the generator replaces this file.
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
 module TeachMeHipaa
   module Resources
     module Root
+      attr_reader audit_events: AuditEvents
+      attr_reader auth: Auth
+      attr_reader certificate_verifications: CertificateVerifications
+      attr_reader certificates: Certificates
+      attr_reader compliance: Compliance
+      attr_reader courses: Courses
+      attr_reader enrollments: Enrollments
+      attr_reader events: Events
       attr_reader learners: Learners
+      attr_reader members: Members
+      attr_reader operations: Operations
+      attr_reader partners: Partners
+      attr_reader payment_method: PaymentMethod
+      attr_reader seat_orders: SeatOrders
+      attr_reader seats: Seats
+      attr_reader webhook_subscriptions: WebhookSubscriptions
     end
   end
 end

@@ -1,40 +1,32 @@
-# Hand-written for the tracer; the generator replaces this file.
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
 module TeachMeHipaa
+  # A Learner object.
   class Learner < Model
-    module Status
-      NOT_STARTED: String
-      INVITE_BOUNCED: String
-      IN_PROGRESS: String
-      COMPLIANT: String
-      EXPIRING_SOON: String
-      EXPIRED: String
-      REMOVED: String
-    end
-
-    class Course < Model
-      def course_id: () -> String
-      def title: () -> String
-    end
-
-    class Certificate < Model
-      def certificate_id: () -> String
-      def issued_at: () -> Time
-      def expires_at: () -> Time
-      def verify_url: () -> String?
-      def pdf_url: () -> String
-    end
-
+    # Unique identifier for the learner. The same as the member's `subjectId`.
     def learner_id: () -> String
+    # The learner's email address.
     def email: () -> String
+    # The learner's full name.
     def name: () -> String?
+    # Your own id for the learner, unique within the organization.
     def external_id: () -> String?
-    # One of Status, or a value newer than this library.
+    # The learner's training status in this course. One of `not_started` (invited),
+    # `invite_bounced`, `in_progress`, `compliant`, `expiring_soon` (within 60 days of expiry),
+    # `expired` or `removed`.
+    #
+    # See LearnerStatus for known values; the API may send newer ones.
     def status: () -> String
-    def course: () -> Course
+    # The course this learner record is for.
+    def course: () -> LearnerCourse
+    # When the learner was invited (ISO 8601).
     def invited_at: () -> Time?
+    # When the learner started training.
     def started_at: () -> Time?
+    # When the learner completed the course.
     def completed_at: () -> Time?
+    # When the learner's training is due.
     def due_at: () -> Time?
-    def certificate: () -> Certificate?
+    # The learner's current certificate, with its verification and PDF links.
+    def certificate: () -> LearnerCertificate?
   end
 end

@@ -1,0 +1,18 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An AuditEventSeatOrderFailed object.
+  class AuditEventSeatOrderFailed < Model
+    include AuditEvent
+
+    def event_id: () -> String
+    def at: () -> String
+    def actor_subject_id: () -> String
+    def actor: () -> AuditEventActor
+    def seat_order_id: () -> String
+    def quantity: () -> Integer
+    # See AuditEventPaymentMethod for known values; the API may send newer ones.
+    def payment_method: () -> String
+    def type: () -> String
+    def failure_code: () -> String?
+  end
+end

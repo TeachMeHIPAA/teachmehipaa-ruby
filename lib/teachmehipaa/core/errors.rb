@@ -130,9 +130,9 @@ module TeachMeHipaa
   # 5xx, an unlisted status, or a response the API should never send, such
   # as an HTML page where JSON was expected.
   class APIError < Error
-    def self.unexpected(response)
+    def self.unexpected(response, expected: "JSON")
       content_type = response.headers["content-type"] || "no content type"
-      new("The API answered HTTP #{response.status} with #{content_type} instead of JSON. " \
+      new("The API answered HTTP #{response.status} with #{content_type} instead of #{expected}. " \
           "Check that base_url points at the TeachMeHIPAA API.", **response_fields(response))
     end
   end

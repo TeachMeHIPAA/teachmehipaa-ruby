@@ -1,0 +1,15 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  module Resources
+    # The methods under +client.audit_events+.
+    class AuditEvents < Core::Resource
+      # List all audit events
+      #
+      # Returns a list of the organization's audit events, newest first. Filter by `type`,
+      # `transition`, `subjectId`, or a `since` and `until` range.
+      def list: (?limit: Integer?, ?cursor: String?, ?type: (String | Symbol)?, ?transition: (String | Symbol)?,
+                 ?subject_id: String?, ?since: (Time | String)?, ?until: (Time | String)?,
+                 ?request_options: request_options) -> Page[AuditEvent]
+    end
+  end
+end

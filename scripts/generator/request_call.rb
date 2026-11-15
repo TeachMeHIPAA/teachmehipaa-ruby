@@ -1,0 +1,104 @@
+# frozen_string_literal: true
+
+module SdkGenerator
+  # The Core::Requestor#request call a resource method makes.
+  class RequestCall
+    JSON_TYPE = "application/json"
+    COLUMN = 10
+
+    def initialize(method)
+      @method = method
+      @data = method.data
+    end
+
+    def source
+      arguments = [
+        "method: #{Text.literal(@data.fetch("httpMethod"))}\n",
+        "path: #{Text.literal(path)}\n",
+        *hash_argument("path_params", @method.path_params),
+        *hash_argument("query", @method.query_params),
+        *headers_argument,
+        *body_arguments,
+        *("retry_safe: true\n" if @data.fetch("retrySafe")),
+        *("idempotency_key: :required\n" if @data.fetch("idempotencyKey") == "required"),
+        *response_arguments,
+        "request_options:\n",
+      ]
+      "request(\n#{Text.indent(arguments.map { |argument| argument.sub(/\n\z/, ",\n") }.join, 2)})\n"
+    end
+
+    private
+
+    def path
+      verb = @data.dig("path", "customVerb")
+      template = @data.dig("path", "template")
+      verb ? "#{template}:#{verb}" : template
+    end
+
+    def hash_argument(name, params)
+      return [] if params.empty?
+
+      items = params.map do |param|
+        value = Naming.read_parameter(param.ruby)
+        param.wire == value ? "#{value}:" : "#{param.wire}: #{value}"
+      end
+      [Text.pack("#{name}: { ", items, " }", COLUMN)]
+    end
+
+    def headers_argument
+      header = @method.if_match
+      return [] if header.nil?
+
+      ["headers: { \"if-match\" => if_match }#{".compact" unless header.required}\n"]
+    end
+
+    def body_arguments
+      body = @method.body
+      return [] if body.nil?
+
+      [body_argument,
+       *("content_type: #{Text.literal(body.fetch("contentType"))}\n" unless body.fetch("contentType") == JSON_TYPE),
+       *binary_parts_argument(body.fetch("binaryParts"))]
+    end
+
+    # Merge-patch bodies keep explicit nils (to_wire drops OMIT); other
+    # bodies drop the nil defaults of parameters left out.
+    def body_argument
+      params = @method.body_params
+      compact = @method.merge_patch? || params.all?(&:required) ? "" : ".compact"
+      head, tail = @method.constraints("const").reduce(["#{@method.body_type.fetch("name")}.to_wire({ ",
+                                                        " }#{compact})"]) do |(before, after), constraint|
+        ["fixed(#{before}", "#{after}, #{path_literal(constraint.fetch("path"))}, " \
+                            "#{Text.literal(constraint.fetch("value"))})"]
+      end
+      Text.pack("body: #{head}", params.map { |param| shorthand(param) }, tail, COLUMN)
+    end
+
+    def shorthand(param)
+      value = Naming.read_parameter(param.ruby)
+      value == param.ruby ? "#{value}:" : "#{param.ruby}: #{value}"
+    end
+
+    def path_literal(path)
+      path.length > 1 ? "%w[#{path.join(" ")}]" : Text.literal(path)
+    end
+
+    def binary_parts_argument(parts)
+      return [] if parts.empty?
+
+      pairs = parts.map { |part| "#{Text.literal(part.fetch("name"))} => #{Text.literal(part.fetch("contentType"))}" }
+      ["binary_parts: { #{pairs.join(", ")} }\n"]
+    end
+
+    def response_arguments
+      response = @data.fetch("response")
+      case response.fetch("kind")
+      when "page" then ["response: :page\n", "model: #{@data.dig("pagination", "itemType", "name")}\n"]
+      when "writeResult" then ["response: :write_result\n", "model: #{response.dig("type", "name")}\n"]
+      when "empty" then ["response: :empty\n"]
+      when "binary" then ["response: :binary\n", "accept: #{Text.literal(response.fetch("contentType"))}\n"]
+      else ["model: #{response.dig("type", "name")}\n"]
+      end
+    end
+  end
+end

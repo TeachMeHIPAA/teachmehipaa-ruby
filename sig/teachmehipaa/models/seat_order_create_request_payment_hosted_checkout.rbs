@@ -1,0 +1,9 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A SeatOrderCreateRequestPaymentHostedCheckout object.
+  class SeatOrderCreateRequestPaymentHostedCheckout < Model
+    include SeatOrderCreateRequestPayment
+
+    def return_url: () -> String
+  end
+end

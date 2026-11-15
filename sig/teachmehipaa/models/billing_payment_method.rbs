@@ -1,0 +1,10 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A BillingPaymentMethod object.
+  class BillingPaymentMethod < Model
+    # The saved card's brand, last four digits, expiry and id, or `null` when none is saved.
+    def default_payment_method: () -> BillingPaymentMethodDefaultPaymentMethod?
+    # Whether a `saved_payment_method` order would charge it now.
+    def chargeable: () -> bool
+  end
+end

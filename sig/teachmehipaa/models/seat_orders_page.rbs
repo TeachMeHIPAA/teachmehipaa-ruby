@@ -1,0 +1,8 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A SeatOrdersPage object.
+  class SeatOrdersPage < Model
+    def items: () -> Array[SeatOrder]
+    def next_cursor: () -> String?
+  end
+end

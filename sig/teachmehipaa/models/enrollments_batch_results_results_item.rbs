@@ -1,0 +1,10 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An EnrollmentsBatchResultsResultsItem object.
+  class EnrollmentsBatchResultsResultsItem < Model
+    def enrollment_id: () -> String
+    # See EnrollmentsBatchResultsResultsItemOutcome for known values; the API may send newer ones.
+    def outcome: () -> String
+    def problem: () -> Problem?
+  end
+end

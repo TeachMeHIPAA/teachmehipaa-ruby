@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-# Hand-written for the tracer; the generator replaces this file.
-module TeachMeHipaa
-  # A reminder to a Learner was queued.
-  class LearnerRemindAccepted < Model
-    # Known values of #action. The API may add more.
-    module Action
-      REMIND = "remind"
-    end
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
 
+module TeachMeHipaa
+  # A LearnerRemindAccepted object.
+  class LearnerRemindAccepted < Model
+    # The learner the reminder is for.
     field :learner_id, "learnerId"
+    # Always `remind`.
+    #
+    # See LearnerRemindAcceptedAction for known values; the API may send newer ones.
     field :action, "action"
   end
 end

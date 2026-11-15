@@ -1,0 +1,14 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An event whose eventType is not in the catalog yet. The catalog only grows, so SDKs parse it
+  # instead of failing.
+  class UnknownEvent < Model
+    include Event
+
+    def event_id: () -> String
+    def event_type: () -> String
+    def org_id: () -> String
+    def occurred_at: () -> Time
+    def data: () -> Hash[String, untyped]
+  end
+end

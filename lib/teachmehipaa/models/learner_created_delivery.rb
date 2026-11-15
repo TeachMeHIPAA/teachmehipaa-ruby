@@ -1,0 +1,13 @@
+# frozen_string_literal: true
+
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+
+module TeachMeHipaa
+  # How the invite was delivered: `email`, or `none` when you deliver it.
+  #
+  # Known values; the API may add more at any time, so handle values you don't recognize.
+  module LearnerCreatedDelivery
+    EMAIL = "email"
+    NONE = "none"
+  end
+end

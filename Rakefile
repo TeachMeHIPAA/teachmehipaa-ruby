@@ -9,6 +9,11 @@ end
 
 RuboCop::RakeTask.new(:rubocop)
 
+desc "Regenerate the models and resources (and their signatures) from openapi/sdk-ir.json"
+task :generate do
+  ruby "scripts/generate.rb"
+end
+
 namespace :rbs do
   desc "Validate the RBS signatures in sig/"
   task :validate do

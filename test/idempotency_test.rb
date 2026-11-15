@@ -27,7 +27,7 @@ class IdempotencyTest < Minitest::Test
 
     accepted = @client.learners.remind(LEARNER_ID)
 
-    assert_equal [LEARNER_ID, TeachMeHipaa::LearnerRemindAccepted::Action::REMIND],
+    assert_equal [LEARNER_ID, TeachMeHipaa::LearnerRemindAcceptedAction::REMIND],
                  [accepted.learner_id, accepted.action]
     assert_equal 202, accepted.last_response.status
     assert_match UUID_V4, only(keys_sent(REMIND_PATH))

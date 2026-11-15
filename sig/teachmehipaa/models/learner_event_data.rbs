@@ -1,0 +1,13 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A LearnerEventData object.
+  class LearnerEventData < Model
+    def learner_id: () -> String
+    def email: () -> String
+    def external_id: () -> String?
+    def course_id: () -> String
+    # See LearnerStatus for known values; the API may send newer ones.
+    def status: () -> String
+    def occurred_at: () -> Time
+  end
+end

@@ -1,0 +1,8 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A PartnerOrganizationsPage object.
+  class PartnerOrganizationsPage < Model
+    def items: () -> Array[PartnerOrganization]
+    def next_cursor: () -> String?
+  end
+end

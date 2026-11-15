@@ -63,7 +63,7 @@ class RetrieveLearnerTest < Minitest::Test
 
     certificate = build_client(@transport).learners.retrieve(LEARNER_ID).certificate
 
-    assert_instance_of TeachMeHipaa::Learner::Certificate, certificate
+    assert_instance_of TeachMeHipaa::LearnerCertificate, certificate
     assert_equal "crt_01JD8Z4N3QX5V7W9Y2B4C6D8EH", certificate.certificate_id
     assert_equal Time.utc(2026, 11, 10, 15), certificate.issued_at
     assert_equal Time.utc(2027, 11, 10, 15), certificate.expires_at
@@ -112,7 +112,7 @@ class RetrieveLearnerTest < Minitest::Test
     assert_equal(
       {
         learner_id: LEARNER_ID, email: "ana@example.com", name: "Ana Lima", external_id: "hr-123",
-        status: TeachMeHipaa::Learner::Status::IN_PROGRESS,
+        status: TeachMeHipaa::LearnerStatus::IN_PROGRESS,
         course: { course_id: "hipaa-essentials", title: "HIPAA Essentials" },
         invited_at: Time.utc(2026, 11, 1, 9), started_at: Time.utc(2026, 11, 2, 10, 30),
         completed_at: nil, due_at: Time.utc(2026, 12, 1), certificate: nil

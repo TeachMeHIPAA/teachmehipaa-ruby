@@ -1,0 +1,93 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  module Resources
+    # The methods under +client.enrollments+.
+    class Enrollments < Core::Resource
+      # Update many enrollments
+      #
+      # Reminds, resends, cancels, renews, archives or unarchives up to 500 enrollments in one
+      # request, chosen by id or by filter. Each enrollment succeeds or fails on its own. Requires
+      # the `enrollments:write` scope.
+      #
+      # +select+ takes the form with +enrollment_ids+.
+      def batch: (operation: String | Symbol, select: params,
+                  ?request_options: request_options) -> EnrollmentsBatchResults
+
+      # Update many enrollments
+      #
+      # Reminds, resends, cancels, renews, archives or unarchives up to 500 enrollments in one
+      # request, chosen by id or by filter. Each enrollment succeeds or fails on its own. Requires
+      # the `enrollments:write` scope.
+      #
+      # +select+ takes the form with +filter+.
+      def batch_by_filter: (operation: String | Symbol, select: params, ?request_options: request_options) -> Operation
+
+      # Cancel an enrollment
+      #
+      # Cancels an invite that hasn't been accepted yet and returns its seat to the pool. With
+      # `refund: true`, refunds the seat to the card that paid for it instead. The enrollment
+      # remains, with status `CANCELLED`. Requires the `enrollments:write` scope.
+      def cancel: (String enrollment_id, ?refund: bool?, ?request_options: request_options) -> CancelEnrollmentResponse
+
+      # Create an enrollment
+      #
+      # Invites a person to a course, creating their profile if needed, and uses one seat. The
+      # course defaults to `hipaa`. Requires the `enrollments:write` scope.
+      def create: (email: String, ?name: String?, ?course_id: String?, ?request_options: request_options) -> Enrollment
+
+      # Export enrollments
+      #
+      # Exports the organization's enrollments as CSV. Requires the `enrollments:read` scope.
+      def export: (format: String | Symbol, ?request_options: request_options) -> Operation
+
+      # Import learners from CSV
+      #
+      # Invites everyone in a CSV file with an `email` column (and optional `name` and `courseId`).
+      # Send `validateOnly: true` first to preview the file without inviting anyone. Up to 500 rows.
+      # Requires the `enrollments:write` scope.
+      #
+      # Sets +options.validate_only+ to false itself.
+      def import: (file: upload, ?options: params?, ?request_options: request_options) -> Operation
+
+      # List all enrollments
+      #
+      # Returns a list of the organization's enrollments. Filter by `status`, `courseId` or
+      # `archived`. Requires the `enrollments:read` scope.
+      def list: (?limit: Integer?, ?cursor: String?, ?status: (String | Symbol)?, ?course_id: String?,
+                 ?archived: (String | Symbol)?, ?include: (String | Symbol)?,
+                 ?request_options: request_options) -> Page[OrgEnrollmentListItem]
+
+      # Import learners from CSV
+      #
+      # Invites everyone in a CSV file with an `email` column (and optional `name` and `courseId`).
+      # Send `validateOnly: true` first to preview the file without inviting anyone. Up to 500 rows.
+      # Requires the `enrollments:write` scope.
+      #
+      # Sets +options.validate_only+ to true itself.
+      def preview_import: (file: upload, ?options: params?, ?request_options: request_options) -> ImportPreview
+
+      # Remind an enrollment
+      #
+      # Emails the learner again: the invitation if they haven't joined, or a reminder linking to
+      # the training if they have. Requires the `enrollments:write` scope.
+      def remind: (String enrollment_id, ?request_options: request_options) -> EnrollmentActionAccepted
+
+      # Renew an enrollment
+      #
+      # Starts the next certification cycle for a certified learner and invites them again, using
+      # one seat. Retrying never uses a second seat. Requires the `enrollments:write` scope.
+      def renew: (String enrollment_id, ?request_options: request_options) -> Enrollment
+
+      # Resend an invite
+      #
+      # Sends a pending invite again, within the same cycle. To invite a certified learner again,
+      # renew the enrollment. Requires the `enrollments:write` scope.
+      def resend_invite: (String enrollment_id, ?request_options: request_options) -> EnrollmentActionAccepted
+
+      # Retrieve an enrollment
+      #
+      # Retrieves an enrollment. Requires the `enrollments:read` scope.
+      def retrieve: (String enrollment_id, ?request_options: request_options) -> Enrollment
+    end
+  end
+end

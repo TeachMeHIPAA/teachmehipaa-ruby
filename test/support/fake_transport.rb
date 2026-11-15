@@ -13,10 +13,15 @@ class FakeTransport
       new(status:, body: JSON.generate(body), headers:, content_type:)
     end
 
+    # A reply with no body and no Content-Type, such as a 204.
+    def self.empty(status: 204, headers: {})
+      new(status:, body: "", headers:, content_type: nil)
+    end
+
     def to_response
       TeachMeHipaa::Transport::Response.new(
         status:,
-        headers: { "content-type" => content_type }.merge(headers),
+        headers: { "content-type" => content_type }.compact.merge(headers),
         body:,
       )
     end

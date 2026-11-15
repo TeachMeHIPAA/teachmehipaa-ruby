@@ -1,0 +1,12 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An AuthorizationCodeTokenResponse object.
+  class AuthorizationCodeTokenResponse < Model
+    def access_token: () -> String
+    # See AuthorizationCodeTokenResponseTokenType for known values; the API may send newer ones.
+    def token_type: () -> String
+    def expires_in: () -> Integer
+    def refresh_token: () -> String
+    def scope: () -> String
+  end
+end

@@ -1,0 +1,26 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An EnrollmentCancelRefunded object.
+  class EnrollmentCancelRefunded < Model
+    include CancelEnrollmentResponse
+
+    def enrollment_id: () -> String
+    def subject_id: () -> String
+    def course_id: () -> String
+    def org_id: () -> String
+    # See EnrollmentCancelRefundedStatus for known values; the API may send newer ones.
+    def status: () -> String
+    # See EnrollmentCancelRefundedEffectiveStatus for known values; the API may send newer ones.
+    def effective_status: () -> String
+    def archived: () -> bool
+    def cycle: () -> Integer
+    def rev: () -> Integer
+    def invited_at: () -> String?
+    def started_at: () -> String?
+    def completed_at: () -> String?
+    def certified_at: () -> String?
+    def expires_at: () -> String?
+    def certificate_id: () -> String?
+    def refund: () -> EnrollmentCancelRefundedRefund
+  end
+end

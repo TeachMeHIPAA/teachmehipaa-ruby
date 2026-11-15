@@ -1,0 +1,13 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # Known values; the API may add more at any time, so handle values you don't recognize.
+  module LearnerStatus
+    NOT_STARTED: String
+    INVITE_BOUNCED: String
+    IN_PROGRESS: String
+    COMPLIANT: String
+    EXPIRING_SOON: String
+    EXPIRED: String
+    REMOVED: String
+  end
+end

@@ -1,0 +1,16 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A PartnerOrganizationCreate object.
+  class PartnerOrganizationCreate < Model
+    # The organization's name.
+    def name: () -> String
+    # The email address of the organization's administrator.
+    def admin_email: () -> String
+    # The administrator's full name.
+    def admin_name: () -> String?
+    # The scopes your app gets on the new organization. A subset of your app's scopes.
+    #
+    # See PartnerOrganizationCreateScopesItem for known values; the API may send newer ones.
+    def scopes: () -> Array[String]
+  end
+end

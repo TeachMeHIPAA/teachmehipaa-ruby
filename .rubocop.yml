@@ -39,6 +39,8 @@ Metrics/MethodLength:
 Metrics/ClassLength:
   Exclude:
     - "test/**/*"
+    # Generated: a resource class holds one method per API operation.
+    - "lib/teachmehipaa/resources/*.rb"
 
 Metrics/AbcSize:
   Max: 25

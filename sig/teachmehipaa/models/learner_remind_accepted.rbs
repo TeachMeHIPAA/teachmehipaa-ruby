@@ -1,12 +1,12 @@
-# Hand-written for the tracer; the generator replaces this file.
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
 module TeachMeHipaa
+  # A LearnerRemindAccepted object.
   class LearnerRemindAccepted < Model
-    module Action
-      REMIND: String
-    end
-
+    # The learner the reminder is for.
     def learner_id: () -> String
-    # One of Action, or a value newer than this library.
+    # Always `remind`.
+    #
+    # See LearnerRemindAcceptedAction for known values; the API may send newer ones.
     def action: () -> String
   end
 end

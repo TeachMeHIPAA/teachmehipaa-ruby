@@ -28,29 +28,35 @@ module TeachMeHipaa
       # from the client's Organization binding, never by the caller
       # (ADR-0003).
       #
-      # +body+ is a Hash sent as JSON with +content_type+. +retry_safe+ and
+      # +body+ is a Hash of wire-named fields, sent as JSON with
+      # +content_type+, or as multipart/form-data with +binary_parts+ (field
+      # name => content type) sent as files. +retry_safe+ and
       # +idempotency_key+ (:required or nil) come from the IR; a call that
       # carries an Idempotency-Key is retry-safe either way.
-      def request(method:, path:, model:, path_params: {}, query: {}, headers: {}, body: nil,
-                  content_type: "application/json", retry_safe: false, idempotency_key: nil, request_options: {})
+      #
+      # +response+ is the IR's response kind: :model (+model+ reads the
+      # body), :page (+model+ reads each item), :write_result, :empty, or
+      # :binary (the body must be of media type +accept+).
+      def request(method:, path:, model: nil, path_params: {}, query: {}, headers: {}, body: nil,
+                  content_type: "application/json", binary_parts: {}, retry_safe: false, idempotency_key: nil,
+                  response: :model, accept: nil, request_options: {})
         options = check_request_options(request_options)
         # One key per call, not per attempt, so every retry and the 401
         # replay is recognised as the same request.
         key = options.fetch(:idempotency_key) { SecureRandom.uuid if idempotency_key == :required }
-        params = path_params.transform_keys(&:to_s)
-        params["orgId"] = organization_id if path.include?(ORG_PLACEHOLDER)
+        encoded, encoded_type = encode(body, content_type, binary_parts)
         request = {
           method:,
-          path: expand(path, params),
-          query:,
-          headers: request_headers(headers, body && content_type, key, options.fetch(:headers, {})),
-          body: body && JSON.generate(body),
+          path: expand(path, path_params),
+          query: Values.write(nil, query),
+          headers: request_headers(headers.merge(accept ? { "accept" => accept } : {}), encoded_type, key,
+                                   options.fetch(:headers, {})),
+          body: encoded,
           timeout: options[:timeout],
         }
         policy = Retries::Policy.new(retry_safe: retry_safe?(method, retry_safe, key),
                                      max_retries: options.fetch(:max_retries, @connection.config.max_retries))
-        response = authorized(request, policy)
-        model.new(Json.success_body(response), last_response: LastResponse.from(response))
+        Responses.read(authorized(request, policy), response, model, accept)
       end
 
       private
@@ -102,8 +108,17 @@ module TeachMeHipaa
 
       # Only ids are escaped, so a Custom method's literal ":verb" suffix
       # survives.
-      def expand(template, params)
+      def expand(template, path_params)
+        params = path_params.transform_keys(&:to_s)
+        params["orgId"] = organization_id if template.include?(ORG_PLACEHOLDER)
         template.gsub(/\{(\w+)\}/) { URI.encode_uri_component(params.fetch(Regexp.last_match(1))) }
+      end
+
+      def encode(body, content_type, binary_parts)
+        return [nil, nil] if body.nil?
+        return Multipart.encode(body, binary_parts) if content_type == "multipart/form-data"
+
+        [JSON.generate(body), content_type]
       end
 
       def check_request_options(options)

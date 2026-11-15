@@ -1,0 +1,9 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # Your app's connection to the organization.
+  class PartnerOrganizationCreatedGrant < Model
+    def grant_id: () -> String
+    # See PartnerOrganizationCreatedGrantScopesItem for known values; the API may send newer ones.
+    def scopes: () -> Array[String]
+  end
+end

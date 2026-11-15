@@ -1,0 +1,16 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An AuditEventLearnerUpdated object.
+  class AuditEventLearnerUpdated < Model
+    include AuditEvent
+
+    def event_id: () -> String
+    def at: () -> String
+    def type: () -> String
+    def actor_subject_id: () -> String
+    def actor: () -> AuditEventActor
+    def subject_id: () -> String
+    # See AuditEventLearnerUpdatedFieldsItem for known values; the API may send newer ones.
+    def fields: () -> Array[String]
+  end
+end

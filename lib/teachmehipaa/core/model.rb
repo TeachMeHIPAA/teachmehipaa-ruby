@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 module TeachMeHipaa
+  # The default of an optional parameter on a merge-patch method (an
+  # update), meaning "leave this field unchanged". Passing +nil+ instead
+  # clears the field.
+  OMIT = Object.new.tap { |omit| omit.define_singleton_method(:inspect) { "TeachMeHipaa::OMIT" } }.freeze
+
   # The HTTP response a returned object was read from. +headers+ has
   # lower-case String keys.
   LastResponse = Data.define(:status, :headers) do
@@ -25,16 +30,8 @@ module TeachMeHipaa
   # that may hold values newer than the library.
   class Model
     Field = Data.define(:wire_name, :type) do
-      def read(value)
-        return nil if value.nil?
-
-        case type
-        when nil then value
-        when :time then Time.iso8601(value)
-        when Array then value.map { |item| type.first.new(item) }
-        else type.new(value)
-        end
-      end
+      def read(value) = Core::Values.read(type, value)
+      def write(value) = Core::Values.write(type, value)
     end
     private_constant :Field
 
@@ -43,13 +40,33 @@ module TeachMeHipaa
         @fields ||= {}
       end
 
+      # The API's JSON for +params+, a Hash keyed by snake_case field names
+      # (or the API's own names): known fields under their API names, nested
+      # objects converted the same way, unknown keys sent as given.
+      # OMIT values are left out.
+      def to_wire(params)
+        params.each_with_object({}) do |(key, value), wire|
+          next if OMIT.equal?(value)
+
+          field = field_for(key)
+          wire[field ? field.wire_name : key.to_s] = field ? field.write(value) : Core::Values.write(nil, value)
+        end
+      end
+
       private
 
-      # +type+ is nil for JSON scalars, :time for ISO 8601 date-times, a
-      # Model subclass for a nested object, or [ModelSubclass] for a list.
-      def field(name, wire_name, type: nil)
+      # +type+ is nil for JSON values kept as parsed, :time for ISO 8601
+      # date-times, a Model subclass or Union module for a nested object,
+      # [type] for a list and { String => type } for a map. +reader: false+
+      # skips the reader for a name Ruby objects already answer to (such as
+      # +method+); #[] still reads it.
+      def field(name, wire_name, type: nil, reader: true)
         fields[name] = Field.new(wire_name:, type:)
-        define_method(name) { @values[name] }
+        define_method(name) { @values[name] } if reader
+      end
+
+      def field_for(key)
+        fields[key.to_sym] || fields.each_value.find { |field| field.wire_name == key.to_s }
       end
     end
 
@@ -99,7 +116,49 @@ module TeachMeHipaa
       case value
       when Model then value.to_h
       when Array then value.map { |item| plain(item) }
+      when Hash then value.transform_values { |item| plain(item) }
       else value
+      end
+    end
+  end
+
+  module Core
+    # Converts field values between parsed JSON and Ruby, by the field types
+    # Model.field takes.
+    #
+    # @api private
+    module Values
+      module_function
+
+      def read(type, value)
+        return value if value.nil? || type.nil?
+        return Time.iso8601(value) if type == :time
+        return read_collection(type, value) if type.is_a?(Array) || type.is_a?(Hash)
+
+        type.new(value)
+      end
+
+      def read_collection(type, value)
+        return value.map { |item| read(type.first, item) } if type.is_a?(Array)
+
+        value.transform_values { |item| read(type[String], item) }
+      end
+
+      def write(type, value)
+        case value
+        when Hash then write_object(type, value)
+        when Array then value.map { |item| write(type.is_a?(Array) ? type.first : nil, item) }
+        when Time then value.getutc.iso8601
+        when Symbol then value.to_s
+        else value
+        end
+      end
+
+      def write_object(type, value)
+        return type.to_wire(value) if type.respond_to?(:to_wire)
+
+        inner = type[String] if type.is_a?(Hash)
+        value.to_h { |key, item| [key.to_s, write(inner, item)] }
       end
     end
   end

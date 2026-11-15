@@ -1,0 +1,16 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An Operation object.
+  class Operation < Model
+    # Unique identifier for the operation.
+    def name: () -> String
+    # Whether the operation has finished.
+    def done: () -> bool
+    # Progress information, if any.
+    def metadata: () -> (Hash[String, untyped])?
+    # The result, once `done` is `true`.
+    def response: () -> untyped
+    # The problem, if the operation failed.
+    def error: () -> Problem?
+  end
+end

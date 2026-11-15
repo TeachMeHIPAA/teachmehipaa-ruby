@@ -1,0 +1,14 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # Learners by status: `learners`, `compliant`, `expiringSoon`, `expired`, `inProgress`,
+  # `notStarted` and `inviteBounced`.
+  class ComplianceSummaryTotals < Model
+    def learners: () -> Integer
+    def compliant: () -> Integer
+    def expiring_soon: () -> Integer
+    def expired: () -> Integer
+    def in_progress: () -> Integer
+    def not_started: () -> Integer
+    def invite_bounced: () -> Integer
+  end
+end

@@ -1,13 +1,86 @@
-# Hand-written for the tracer; the generator replaces this file.
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
 module TeachMeHipaa
   module Resources
+    # The methods under +client.learners+.
     class Learners < Core::Resource
-      def retrieve: (String learner_id, ?course_id: String?, ?request_options: request_options) -> Learner
-      def update: (String learner_id, if_match: String, name: String, ?course_id: String?,
-                   ?request_options: request_options) -> Learner
-      def remind: (String learner_id, ?course_id: String?, ?request_options: request_options) -> LearnerRemindAccepted
+      # Create many learners
+      #
+      # Creates or retrieves up to 500 learners in one request. Each item works like creating one
+      # learner and succeeds or fails on its own.
+      def batch_upsert: (items: Array[params], ?delivery: (String | Symbol)?, ?seat_policy: (String | Symbol)?,
+                         ?request_options: request_options) -> Operation
+
+      # Create a learner
+      #
+      # Adds a person to the organization and invites them to a course in one call, using one seat.
+      # If the email or `externalId` already belongs to an active learner in the course, nothing is
+      # created. With `delivery: "none"`, no email is sent and the response includes a `joinUrl` for
+      # you to deliver.
+      def create: (email: String, ?name: String?, ?external_id: String?, ?course_id: String?,
+                   ?delivery: (String | Symbol)?, ?seat_policy: (String | Symbol)?,
+                   ?request_options: request_options) -> LearnerWriteResult
+
+      # Create a launch link
+      #
+      # Creates a link that opens the course with the learner already signed in, for a "Start
+      # training" button in your product. The link works once and expires after 5 minutes: create it
+      # when the learner clicks, then redirect them to it. Never email, store or log it. Only for a
+      # learner who has accepted their invite.
       def create_launch_link: (String learner_id, ?course_id: String?,
                                ?request_options: request_options) -> LearnerLaunchLink
+
+      # Export learners
+      #
+      # Exports the organization's learners in one course as CSV, optionally only those with one
+      # `status`. Requires the `learners:read` scope.
+      def export: (format: String | Symbol, ?course_id: String?, ?status: (String | Symbol)?,
+                   ?request_options: request_options) -> Operation
+
+      # List all learners
+      #
+      # Returns a list of the organization's learners in one course, with each learner's status,
+      # dates and current certificate. Filter by `status`, or find one learner by `email` or
+      # `externalId`.
+      def list: (?limit: Integer?, ?cursor: String?, ?email: String?, ?external_id: String?,
+                 ?status: (String | Symbol)?, ?course_id: String?, ?request_options: request_options) -> Page[Learner]
+
+      # Offboard a learner
+      #
+      # Removes a learner from the organization. A learner who hasn't started has their invite
+      # cancelled and the seat returned; a learner who has started keeps their training history and
+      # certificates. Releases the learner's `externalId`.
+      def offboard: (String learner_id, ?if_match: String?, ?course_id: String?,
+                     ?request_options: request_options) -> Learner
+
+      # Remind a learner
+      #
+      # Emails the learner a reminder: the invite again if they haven't started, or a nudge to
+      # finish if they have.
+      def remind: (String learner_id, ?course_id: String?, ?request_options: request_options) -> LearnerRemindAccepted
+
+      # Retrieve a learner
+      #
+      # Retrieves a learner's status in one course.
+      def retrieve: (String learner_id, ?course_id: String?, ?request_options: request_options) -> Learner
+
+      # Update a learner
+      #
+      # Updates a learner's `name` or `externalId`; parameters you don't send are left unchanged.
+      # Send the body as `application/merge-patch+json` with the learner's current `ETag` in
+      # `If-Match`.
+      #
+      # Parameters you leave out are unchanged; pass nil to clear one.
+      def update: (String learner_id, if_match: String, ?name: String, ?external_id: String?, ?course_id: String?,
+                   ?request_options: request_options) -> Learner
+
+      # Create or retrieve a learner by your id
+      #
+      # Makes sure a learner exists for your own id. Creates and invites the learner the first time,
+      # and returns them on every later call, so a sync job can replay it safely. Never uses a
+      # second seat.
+      def upsert_by_external_id: (String external_id, email: String, ?name: String?, ?course_id: String?,
+                                  ?delivery: (String | Symbol)?, ?seat_policy: (String | Symbol)?,
+                                  ?request_options: request_options) -> LearnerWriteResult
     end
   end
 end

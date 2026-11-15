@@ -1,0 +1,22 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A Problem object.
+  class Problem < Model
+    # A URI identifying the problem type.
+    def type: () -> String?
+    # A short summary of the problem.
+    def title: () -> String
+    # The HTTP status code.
+    def status: () -> Integer
+    # An explanation of this occurrence.
+    def detail: () -> String?
+    # Identifies this occurrence.
+    def instance: () -> String?
+    # A machine-readable error code, such as `seat_unavailable`.
+    #
+    # See ProblemCode for known values; the API may send newer ones.
+    def code: () -> String
+    # Each invalid field, with its `path` and `message`.
+    def errors: () -> Array[ProblemErrorsItem]?
+  end
+end

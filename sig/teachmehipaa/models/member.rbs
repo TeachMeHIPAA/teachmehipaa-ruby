@@ -1,0 +1,18 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A Member object.
+  class Member < Model
+    # Unique identifier for the member. `null` for an older member who can't be addressed yet.
+    def subject_id: () -> String?
+    # The member's email address.
+    def email: () -> String
+    # The member's full name.
+    def name: () -> String?
+    # `admin` or `learner`.
+    #
+    # See MemberRole for known values; the API may send newer ones.
+    def role: () -> String
+    # Whether the member's account is disabled.
+    def is_disabled: () -> bool
+  end
+end

@@ -1,0 +1,18 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An AuditEventMemberRoleChanged object.
+  class AuditEventMemberRoleChanged < Model
+    include AuditEvent
+
+    def event_id: () -> String
+    def at: () -> String
+    def type: () -> String
+    def actor_subject_id: () -> String
+    def actor: () -> AuditEventActor
+    def subject_id: () -> String
+    # See AuditEventMemberRoleChangedRoleFrom for known values; the API may send newer ones.
+    def role_from: () -> String
+    # See AuditEventMemberRoleChangedRoleTo for known values; the API may send newer ones.
+    def role_to: () -> String
+  end
+end

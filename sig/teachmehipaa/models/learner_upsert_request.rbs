@@ -1,0 +1,21 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A LearnerUpsertRequest object.
+  class LearnerUpsertRequest < Model
+    # The learner's email address.
+    def email: () -> String
+    # The learner's full name.
+    def name: () -> String?
+    # The course to invite them to. Defaults to the organization's default course.
+    def course_id: () -> String?
+    # `email` (default) sends the invite email. `none` sends nothing and returns `joinUrl` for you
+    # to deliver.
+    #
+    # See LearnerUpsertRequestDelivery for known values; the API may send newer ones.
+    def delivery: () -> String?
+    # `require_available` fails with `409` when no seat is free.
+    #
+    # See LearnerUpsertRequestSeatPolicy for known values; the API may send newer ones.
+    def seat_policy: () -> String?
+  end
+end

@@ -1,0 +1,10 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A PaymentMethodSavedByUser object.
+  class PaymentMethodSavedByUser < Model
+    include PaymentMethodSavedBy
+
+    def type: () -> String
+    def name: () -> String
+  end
+end

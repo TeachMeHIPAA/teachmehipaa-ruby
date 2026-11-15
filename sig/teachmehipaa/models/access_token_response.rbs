@@ -1,0 +1,12 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An AccessTokenResponse object.
+  class AccessTokenResponse < Model
+    # See AccessTokenResponseTokenType for known values; the API may send newer ones.
+    def token_type: () -> String
+    def access_token: () -> String
+    def expires_in_sec: () -> Integer
+    # See AccessTokenResponseScopesItem for known values; the API may send newer ones.
+    def scopes: () -> Array[String]
+  end
+end

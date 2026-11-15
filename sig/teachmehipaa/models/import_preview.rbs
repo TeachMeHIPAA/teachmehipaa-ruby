@@ -1,0 +1,17 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An ImportPreview object.
+  class ImportPreview < Model
+    # Rows in the file.
+    def total_rows: () -> Integer
+    # Rows that would be invited.
+    def valid_rows: () -> Integer
+    # Seats the import would use.
+    def seats_required: () -> Integer
+    # Seats available now.
+    def seats_available: () -> Integer
+    # Each row's result: `valid`, `invalid_email`, `duplicate_in_file`, `already_enrolled` or
+    # `already_invited`.
+    def rows: () -> Array[ImportPreviewRowsItem]
+  end
+end

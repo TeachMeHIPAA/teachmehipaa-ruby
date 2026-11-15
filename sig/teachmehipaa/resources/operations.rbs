@@ -1,0 +1,12 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  module Resources
+    # The methods under +client.operations+.
+    class Operations < Core::Resource
+      # Retrieve an operation
+      #
+      # Retrieves a bulk operation and its result. Operations are kept for 24 hours.
+      def retrieve: (String operation_id, ?request_options: request_options) -> Operation
+    end
+  end
+end

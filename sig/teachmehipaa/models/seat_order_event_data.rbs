@@ -1,0 +1,10 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A SeatOrderEventData object.
+  class SeatOrderEventData < Model
+    def seat_order_id: () -> String
+    def quantity: () -> Integer
+    # See SeatOrderEventDataStatus for known values; the API may send newer ones.
+    def status: () -> String
+  end
+end

@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
-# Hand-written for the tracer; the generator replaces this file.
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+
 module TeachMeHipaa
-  # A single-use Launch link; redirect the Learner to #url right away.
+  # A LearnerLaunchLink object.
   class LearnerLaunchLink < Model
+    # The single-use sign-in URL. Redirect the learner to it right away.
     field :url, "url"
+    # When the URL stops working, 5 minutes after it was created.
     field :expires_at, "expiresAt", type: :time
   end
 end

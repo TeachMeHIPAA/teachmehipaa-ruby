@@ -1,0 +1,28 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A Certificate object.
+  class Certificate < Model
+    # Unique identifier for the certificate.
+    def certificate_id: () -> String
+    # The holder's member id.
+    def subject_id: () -> String?
+    # Whether the holder could be resolved: `resolved`, `none` or `lookup_failed`.
+    #
+    # See CertificateHolderStatus for known values; the API may send newer ones.
+    def holder_status: () -> String?
+    # The course the certificate is for.
+    def course_id: () -> String
+    # The course version the holder passed.
+    def course_version: () -> String?
+    # When it was issued (ISO 8601).
+    def issued_at: () -> String?
+    # When it expires.
+    def expires_at: () -> String?
+    # `VALID`, `EXPIRED` or `REVOKED`.
+    #
+    # See CertificateStatus for known values; the API may send newer ones.
+    def status: () -> String
+    # When it was revoked, if it was.
+    def revoked_at: () -> String?
+  end
+end

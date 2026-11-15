@@ -1,0 +1,13 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An ImportPreviewRowsItem object.
+  class ImportPreviewRowsItem < Model
+    def row_number: () -> Integer
+    def email: () -> String
+    def name: () -> String?
+    def course_id: () -> String
+    # See ImportPreviewRowsItemStatus for known values; the API may send newer ones.
+    def status: () -> String
+    def detail: () -> String?
+  end
+end

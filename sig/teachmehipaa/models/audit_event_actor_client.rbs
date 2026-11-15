@@ -1,0 +1,10 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An AuditEventActorClient object.
+  class AuditEventActorClient < Model
+    include AuditEventActor
+
+    def type: () -> String
+    def client_id: () -> String
+  end
+end

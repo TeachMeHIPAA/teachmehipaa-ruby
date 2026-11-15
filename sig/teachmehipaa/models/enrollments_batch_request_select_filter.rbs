@@ -1,0 +1,9 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An EnrollmentsBatchRequestSelectFilter object.
+  class EnrollmentsBatchRequestSelectFilter < Model
+    include EnrollmentsBatchRequestSelect
+
+    def filter: () -> EnrollmentsBatchRequestSelectFilterFilter
+  end
+end

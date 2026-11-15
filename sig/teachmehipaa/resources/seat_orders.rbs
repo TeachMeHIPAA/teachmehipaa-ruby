@@ -1,0 +1,35 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  module Resources
+    # The methods under +client.seat_orders+.
+    class SeatOrders < Core::Resource
+      # Create a seat order
+      #
+      # Buys seats at list price. Pay with a Stripe-hosted checkout, the organization's saved card,
+      # or an invoice when it's enabled. Send the `expectedTotal` and `currency` from the quote you
+      # showed the buyer: if the price changed, nothing is charged. Seats are granted once payment
+      # succeeds. Requires the `seats:purchase` or `billing:write` scope.
+      def create: (quantity: Integer, payment: params, ?client_reference: String?,
+                   ?request_options: request_options) -> SeatOrderCreated
+
+      # List all seat orders
+      #
+      # Returns a list of the organization's seat orders, oldest first. Requires the
+      # `seats:purchase` or `billing:write` scope.
+      def list: (?limit: Integer?, ?cursor: String?, ?request_options: request_options) -> Page[SeatOrder]
+
+      # Quote a seat order
+      #
+      # Gets the list price for a number of seats in the organization's currency, before tax. The
+      # quote is for display and expires after 15 minutes. Requires the `seats:purchase` or
+      # `billing:write` scope.
+      def quote: (quantity: Integer, ?currency: String?, ?request_options: request_options) -> SeatOrderQuote
+
+      # Retrieve a seat order
+      #
+      # Retrieves a seat order, its status and the seats it granted. Requires the `seats:purchase`
+      # or `billing:write` scope.
+      def retrieve: (String seat_order_id, ?request_options: request_options) -> SeatOrder
+    end
+  end
+end

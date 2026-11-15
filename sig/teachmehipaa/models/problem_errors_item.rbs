@@ -1,0 +1,8 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A ProblemErrorsItem object.
+  class ProblemErrorsItem < Model
+    def path: () -> String
+    def message: () -> String
+  end
+end
