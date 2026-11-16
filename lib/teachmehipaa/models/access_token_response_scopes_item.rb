@@ -20,9 +20,6 @@ module TeachMeHipaa
     LEARNERS_READ = "learners:read"
     LEARNERS_WRITE = "learners:write"
     COMPLIANCE_READ = "compliance:read"
-    SEATS_PURCHASE = "seats:purchase"
     WEBHOOKS_MANAGE = "webhooks:manage"
-    PARTNER_ORGS_READ = "partner:orgs:read"
-    PARTNER_ORGS_WRITE = "partner:orgs:write"
   end
 end

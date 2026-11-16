@@ -13,9 +13,6 @@ module TeachMeHipaa
       attr_reader learners: Learners
       attr_reader members: Members
       attr_reader operations: Operations
-      attr_reader partners: Partners
-      attr_reader payment_method: PaymentMethod
-      attr_reader seat_orders: SeatOrders
       attr_reader seats: Seats
       attr_reader webhook_subscriptions: WebhookSubscriptions
     end

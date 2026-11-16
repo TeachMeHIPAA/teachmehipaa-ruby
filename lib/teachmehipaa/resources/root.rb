@@ -7,8 +7,7 @@ module TeachMeHipaa
     # The resource accessors on TeachMeHipaa::Client.
     module Root
       attr_reader :audit_events, :auth, :certificate_verifications, :certificates, :compliance, :courses, :enrollments,
-                  :events, :learners, :members, :operations, :partners, :payment_method, :seat_orders, :seats,
-                  :webhook_subscriptions
+                  :events, :learners, :members, :operations, :seats, :webhook_subscriptions
 
       private
 
@@ -24,9 +23,6 @@ module TeachMeHipaa
         @learners = Learners.new(requestor)
         @members = Members.new(requestor)
         @operations = Operations.new(requestor)
-        @partners = Partners.new(requestor)
-        @payment_method = PaymentMethod.new(requestor)
-        @seat_orders = SeatOrders.new(requestor)
         @seats = Seats.new(requestor)
         @webhook_subscriptions = WebhookSubscriptions.new(requestor)
       end

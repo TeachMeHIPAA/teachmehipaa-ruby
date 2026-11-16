@@ -49,18 +49,6 @@ class GeneratedSurfaceTest < Minitest::Test
     "listMembers" => ["members.list"],
     "getMember" => ["members.retrieve"],
     "getOperation" => ["operations.retrieve"],
-    "createPartnerOrganization" => ["partners.organizations.create"],
-    "listPartnerOrganizations" => ["partners.organizations.list"],
-    "getPartner" => ["partners.retrieve"],
-    "confirmPaymentMethod" => ["payment_method.confirm"],
-    "removePaymentMethod" => ["payment_method.delete"],
-    "preparePaymentMethod" => ["payment_method.prepare"],
-    "getPaymentMethod" => ["payment_method.retrieve"],
-    "setupPaymentMethod" => ["payment_method.setup"],
-    "createSeatOrder" => ["seat_orders.create"],
-    "listSeatOrders" => ["seat_orders.list"],
-    "quoteSeatOrder" => ["seat_orders.quote"],
-    "getSeatOrder" => ["seat_orders.retrieve"],
     "getSeatInventory" => ["seats.retrieve"],
     "createWebhookSubscription" => ["webhook_subscriptions.create"],
     "deleteWebhookSubscription" => ["webhook_subscriptions.delete"],
@@ -91,14 +79,14 @@ class GeneratedSurfaceTest < Minitest::Test
   def test_covers_every_developer_api_operation_except_the_token_endpoint
     covered = spec_operation_ids - HAND_WRITTEN_OPERATIONS
 
-    assert_equal 55, covered.length
+    assert_equal 43, covered.length
     assert_equal EXPECTED_METHODS.keys.sort, covered.sort
   end
 
   def test_exposes_exactly_one_public_method_per_ir_method_with_the_expected_name
     expected = EXPECTED_METHODS.values.flatten
 
-    assert_equal 57, expected.length
+    assert_equal 45, expected.length
     assert_equal (expected + HAND_WRITTEN_METHODS).sort, public_methods_of(build_client(FakeTransport.new)).keys.sort
   end
 
@@ -106,7 +94,7 @@ class GeneratedSurfaceTest < Minitest::Test
     named = ir_methods.map { |name, method| [name, EXPECTED_METHODS.fetch(method["operationId"], [])] }
 
     named.each { |name, expected| assert_includes expected, name }
-    assert_equal 57, named.map(&:first).uniq.length
+    assert_equal 45, named.map(&:first).uniq.length
   end
 
   def test_path_parameters_are_positional_and_no_method_takes_an_organization
@@ -131,14 +119,6 @@ class GeneratedSurfaceTest < Minitest::Test
 
       assert_equal kinds.fetch(method["ifMatch"]), parameters.fetch(:if_match, :absent), name
       assert_equal kinds.fetch(method["ifNoneMatch"]), parameters.fetch(:if_none_match, :absent), name
-    end
-  end
-
-  def test_partner_methods_take_the_partner_id
-    methods = public_methods_of(build_client(FakeTransport.new))
-
-    %w[partners.retrieve partners.organizations.list partners.organizations.create].each do |name|
-      assert_equal %i[req partner_id], methods.fetch(name).parameters.first, name
     end
   end
 

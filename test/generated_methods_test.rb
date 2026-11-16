@@ -8,7 +8,6 @@ class GeneratedMethodsTest < Minitest::Test
   UUID_V4 = /\A\h{8}-\h{4}-4\h{3}-[89ab]\h{3}-\h{12}\z/
   ENROLLMENT_ID = "enr_01JD8C"
   SUBSCRIPTION_ID = "whs_01JD8D"
-  PARTNER_ID = "ptn_01JD8E"
   CERTIFICATE_ID = "cert_01JD8F"
   ORG = "/organizations/#{Fixtures::ORG_ID}".freeze
 
@@ -58,21 +57,19 @@ class GeneratedMethodsTest < Minitest::Test
     assert_instance_of TeachMeHipaa::EnrollmentCancelRefunded, @client.enrollments.cancel(ENROLLMENT_ID, refund: true)
   end
 
-  def test_a_partner_method_takes_the_partner_id_and_skips_the_organization_lookup
-    path = "/partners/#{PARTNER_ID}/organizations"
-    items = [{ "orgId" => "org_clinic", "name" => "Clinic", "createdAt" => "2026-11-02T10:00:00.000Z",
-               "grantActive" => true }]
-    @transport.on("GET", path, FakeTransport::Reply.json({ "items" => items, "nextCursor" => "cur_2" },
-                                                         headers: { "x-request-id" => "req_page" }))
+  def test_a_method_outside_an_organization_skips_the_organization_lookup
+    course = { "courseId" => "hipaa-2026", "title" => "HIPAA Essentials", "courseVersion" => "2026.1",
+               "passingThreshold" => 0.8 }
+    @transport.on("GET", "/courses", FakeTransport::Reply.json({ "items" => [course], "nextCursor" => "cur_2" },
+                                                               headers: { "x-request-id" => "req_page" }))
 
-    page = build_client(@transport).partners.organizations.list(PARTNER_ID, limit: 10)
+    page = build_client(@transport).courses.list(limit: 10)
 
     assert_instance_of TeachMeHipaa::Page, page
-    assert_equal ["org_clinic"], page.items.map(&:org_id)
-    assert_equal Time.utc(2026, 11, 2, 10), page.items.first.created_at
+    assert_equal ["hipaa-2026"], page.items.map(&:course_id)
     assert_equal "cur_2", page.next_cursor
     assert_equal "req_page", page.last_response.request_id
-    assert_equal ["#{LIVE_BASE}/auth/token", "#{LIVE_BASE}#{path}?limit=10"], @transport.requests.map(&:url)
+    assert_equal ["#{LIVE_BASE}/courses?limit=10"], @transport.requests.map(&:url)
   end
 
   def test_a_patch_sends_a_merge_patch_keeping_an_explicit_nil

@@ -1,9 +1,0 @@
-# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
-module TeachMeHipaa
-  # A SeatOrderCreateRequestPaymentInvoice object.
-  class SeatOrderCreateRequestPaymentInvoice < Model
-    include SeatOrderCreateRequestPayment
-
-    def days_until_due: () -> Integer?
-  end
-end

@@ -17,9 +17,6 @@ module TeachMeHipaa
     LEARNERS_READ: String
     LEARNERS_WRITE: String
     COMPLIANCE_READ: String
-    SEATS_PURCHASE: String
     WEBHOOKS_MANAGE: String
-    PARTNER_ORGS_READ: String
-    PARTNER_ORGS_WRITE: String
   end
 end

@@ -17,8 +17,5 @@ module TeachMeHipaa
     INVITE_BOUNCED = "invite.bounced"
     CERTIFICATE_REVOKED = "certificate.revoked"
     SEATS_LOW = "seats.low"
-    SEAT_ORDER_PAID = "seat_order.paid"
-    SEAT_ORDER_FAILED = "seat_order.failed"
-    SEAT_ORDER_EXPIRED = "seat_order.expired"
   end
 end

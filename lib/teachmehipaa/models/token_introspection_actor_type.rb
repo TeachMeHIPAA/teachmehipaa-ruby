@@ -3,7 +3,7 @@
 # Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
 
 module TeachMeHipaa
-  # `client` for an API client or partner app, `user` for a person.
+  # `client` for an API client, `user` for a person.
   #
   # Known values; the API may add more at any time, so handle values you don't recognize.
   module TokenIntrospectionActorType

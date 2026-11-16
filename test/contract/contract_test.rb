@@ -18,7 +18,6 @@ class ContractTest < Minitest::Test
   COURSE_ID = "hipaa-2026"
   SUBSCRIPTION_ID = "whs_01JD8D"
   OPERATION_ID = "op-01JD8H"
-  PARTNER_ID = "ptn_01JD8E2C3D4E5F6G7H8J9K0M1N"
   TINY_ID = "cAbCdEfGhIjKl"
 
   def setup
@@ -41,10 +40,12 @@ class ContractTest < Minitest::Test
   end
 
   def test_the_harness_catches_a_request_that_breaks_the_spec
-    assert_raises(TeachMeHipaa::InvalidRequestError) { @client.seat_orders.quote(quantity: 0) }
+    assert_raises(TeachMeHipaa::InvalidRequestError) do
+      @client.webhook_subscriptions.create(endpoint_url: "https://hr.example.com/hooks/tmh", event_types: [])
+    end
 
     assert_equal 1, @violations.found.length
-    assert_includes @violations.found.first, "quantity"
+    assert_includes @violations.found.first, "eventTypes"
     @violations.found.clear
   end
 
@@ -123,10 +124,6 @@ class ContractTest < Minitest::Test
     assert pdf_type?(streamed.content_type), "got #{streamed.content_type}"
   end
 
-  def test_quotes_a_seat_order
-    assert_kind_of Integer, @client.seat_orders.quote(quantity: 10, currency: "usd").quantity
-  end
-
   def test_creates_a_webhook_subscription_with_its_signing_secret
     subscription = @client.webhook_subscriptions.create(
       endpoint_url: "https://hr.example.com/hooks/tmh", event_types: %w[learner.certified seats.low],
@@ -159,13 +156,6 @@ class ContractTest < Minitest::Test
 
   def test_introspects_the_access_token
     assert_kind_of String, @client.auth.introspect.actor_type
-  end
-
-  def test_lists_a_partners_organizations
-    page = @client.partners.organizations.list(PARTNER_ID, limit: 10)
-
-    page.each { |organization| assert_kind_of String, organization.org_id }
-    assert_equal 200, page.last_response.status
   end
 
   private

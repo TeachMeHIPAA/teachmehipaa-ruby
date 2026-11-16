@@ -147,7 +147,6 @@ class ConditionalRequestsTest < Minitest::Test
   def test_every_retrieve_the_api_answers_conditionally_takes_if_none_match
     retrieves = [
       [@client.enrollments, "#{ORG}/enrollments/enr_1", "enr_1"],
-      [@client.seat_orders, "#{ORG}/seat-orders/so_1", "so_1"],
       [@client.webhook_subscriptions, "#{ORG}/webhook-subscriptions/whs_1", "whs_1"],
     ]
     retrieves.each do |resource, path, id|

@@ -36,7 +36,7 @@ module SdkGenerator
       name
     end
 
-    # ["partners", "organizations"] becomes PartnerOrganizations.
+    # ["webhookSubscriptions", "deliveries"] becomes WebhookSubscriptionDeliveries.
     def resource_class(path)
       path.each_with_index.map { |segment, i| pascal(i == path.length - 1 ? segment : singular(segment)) }.join
     end

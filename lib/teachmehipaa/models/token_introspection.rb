@@ -5,11 +5,11 @@
 module TeachMeHipaa
   # A TokenIntrospection object.
   class TokenIntrospection < Model
-    # `client` for an API client or partner app, `user` for a person.
+    # `client` for an API client, `user` for a person.
     #
     # See TokenIntrospectionActorType for known values; the API may send newer ones.
     field :actor_type, "actorType"
-    # The API client or partner app the token belongs to.
+    # The API client the token belongs to.
     field :client_id, "clientId"
     # The person the token belongs to, for a user token.
     field :subject_id, "subjectId"
