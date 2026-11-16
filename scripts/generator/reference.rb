@@ -40,20 +40,24 @@ module SdkGenerator
       <<~MARKDOWN.chomp
         # Resource reference
 
-        Every method under `TeachMeHipaa::Client`, generated from the Developer
-        API document release `#{@ir.data.dig("source", "release")}`. For what the library adds on top
-        (`events.tail`, `Operation#wait`, `Webhook`), see the [guides](../README.md);
-        for every class and field, see the [API reference](#{API_REFERENCE}).
+        Each method the client offers, one section apiece, generated from the
+        Developer API document release `#{@ir.data.dig("source", "release")}`. The extras the gem
+        layers on top (`events.tail`, `Operation#wait`, `Webhook`) live in the
+        [guides](../README.md), and every class and field is in the
+        [API reference](#{API_REFERENCE}).
 
-        - Ids in the path are positional arguments; everything else is a keyword.
-        - Paths are relative to the Environment's base URL: `#{live}` (Live) or
-          `#{sandbox}` (Sandbox). The client fills in `{orgId}` from
-          the Organization binding, so no method takes an Organization id.
-        - Every method also takes `request_options:`, a Hash of
+        How to read a section:
+
+        - The Ruby line shows the call with its defaults. Ids in the URL are
+          positional; the rest are keywords.
+        - Every method also takes `request_options:`, a Hash with
           `idempotency_key`, `max_retries`, `timeout`, `request_id` and `headers`
-          for that call only (see [Configuration](../guides/configuration.md)).
-        - Types are in YARD notation. Enum fields are Strings and may hold values
-          newer than this library.
+          ([Setting up a client](../guides/client.md#options-for-one-call)).
+        - HTTP paths are relative to `#{live}` (Live) or
+          `#{sandbox}` (Sandbox). The client fills in
+          `{orgId}` itself, so no method asks for an Organization id.
+        - Types use YARD notation. Enum fields are Strings and can hold values
+          newer than this gem.
       MARKDOWN
     end
 
@@ -78,8 +82,8 @@ module SdkGenerator
   # One method's section of the resource reference.
   class ReferenceMethod
     CODE_WIDTH = 80
-    NOT_MODIFIED = "`if_none_match:` returns `NotModified` when your copy is current"
-    MERGE_PATCH = "JSON merge patch: a keyword left out is unchanged; `nil` clears the field"
+    NOT_MODIFIED = "Pass `if_none_match:` and a current copy comes back as `NotModified`"
+    MERGE_PATCH = "A JSON merge patch. Leave a keyword out to keep the field, pass `nil` to clear it"
 
     def initialize(method, path)
       @method = method
@@ -117,7 +121,7 @@ module SdkGenerator
         ["HTTP", "`#{@method.data.fetch("httpMethod")} #{http_path}`"],
         ["Scopes", scopes],
         ["Returns", "`#{YardTags.returns(@method)}`"],
-        ["Retries", retries],
+        ["Retried", retries],
         *conditional_facts,
       ]
       facts.map { |name, text| "- **#{name}:** #{text}." }.join("\n")
@@ -130,17 +134,17 @@ module SdkGenerator
     end
 
     def scopes
-      return "None: a public method that sends no Access token" if @method.public?
-      return "Any Access token" if Scopes.any_token?(@method)
+      return "None. The client sends no Access token" if @method.public?
+      return "Any Access token will do" if Scopes.any_token?(@method)
 
       Scopes.phrase(@method) { |scope| "`#{scope}`" }
     end
 
     def retries
-      return "Never retried" unless @method.data.fetch("retrySafe")
-      return "Retried safely" unless @method.data.fetch("idempotencyKey") == "required"
+      return "No" unless @method.data.fetch("retrySafe")
+      return "Yes, it is safe to replay" unless @method.data.fetch("idempotencyKey") == "required"
 
-      "Retried safely: sends a generated `Idempotency-Key`, reused by each retry"
+      "Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it"
     end
 
     def conditional_facts
@@ -153,13 +157,13 @@ module SdkGenerator
 
     def if_match
       requirement = @method.if_match.required ? "Required" : "Optional"
-      "#{requirement}: `if_match:` takes the ETag or the object you read; a stale one raises " \
+      "#{requirement}. Pass the ETag, or the model you read, as `if_match:`; a stale one raises " \
         "`PreconditionFailedError`"
     end
 
     def parameter_table
       parameters = YardTags.parameters(@method)
-      return "Takes no parameters besides `request_options:`." if parameters.empty?
+      return "Takes only `request_options:`." if parameters.empty?
 
       rows = parameters.map do |param|
         name = @method.path_params.include?(param) ? param.ruby : "#{param.ruby}:"
