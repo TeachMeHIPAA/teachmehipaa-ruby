@@ -84,7 +84,7 @@ default):
 | Environment | `environment:` | Base URL |
 | --- | --- | --- |
 | Live | `:live` | `https://api.tme.so/v1` |
-| Sandbox | `:sandbox` | `https://api-teachmehipaa-dev.web.app/v1` |
+| Sandbox | `:sandbox` | `https://sandbox.api.tme.so/v1` |
 
 Build and test against Sandbox, then create a separate API client in Live
 for production. A Sandbox token's introspection has `mode` `"test"`; a Live

@@ -2976,12 +2976,12 @@
     {
       "description": "Sandbox (test mode)",
       "environment": "sandbox",
-      "url": "https://api-teachmehipaa-dev.web.app/v1"
+      "url": "https://sandbox.api.tme.so/v1"
     }
   ],
   "source": {
     "release": "trimmed-2026-11-15",
-    "sha256": "98526f13da45a1c6bf6018a483b9ed27f6812552264beec2fb001e3270a083eb"
+    "sha256": "b1cc5600310985755913aef7f162803e2e2891c77edba354f8115307a622d834"
   },
   "types": [
     {

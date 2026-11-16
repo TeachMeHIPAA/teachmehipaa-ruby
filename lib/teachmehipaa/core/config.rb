@@ -4,7 +4,7 @@ module TeachMeHipaa
   # The base URL of each Environment.
   ENVIRONMENTS = {
     live: "https://api.tme.so/v1",
-    sandbox: "https://api-teachmehipaa-dev.web.app/v1",
+    sandbox: "https://sandbox.api.tme.so/v1",
   }.freeze
 
   # The default of Client.new's +max_retries:+.

@@ -9,7 +9,7 @@ for every class and field, see the [API reference](https://teachmehipaa.github.i
 
 - Ids in the path are positional arguments; everything else is a keyword.
 - Paths are relative to the Environment's base URL: `https://api.tme.so/v1` (Live) or
-  `https://api-teachmehipaa-dev.web.app/v1` (Sandbox). The client fills in `{orgId}` from
+  `https://sandbox.api.tme.so/v1` (Sandbox). The client fills in `{orgId}` from
   the Organization binding, so no method takes an Organization id.
 - Every method also takes `request_options:`, a Hash of
   `idempotency_key`, `max_retries`, `timeout`, `request_id` and `headers`
