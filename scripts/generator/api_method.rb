@@ -15,9 +15,8 @@ module SdkGenerator
                        "your copy is current."
     STRING = { "kind" => "primitive", "type" => "string" }.freeze
     # The spec leaves an Operation's +response+ untyped; these settle with a
-    # known shape (research api-sdk-surface.md §8). By operationId, the
-    # Operation subclass in lib/teachmehipaa/extensions/operation.rb that
-    # reads it.
+    # known shape. By operationId, the Operation subclass in
+    # lib/teachmehipaa/extensions/operation.rb that reads it.
     OPERATION_MODELS = {
       "redriveWebhookSubscription" => "WebhookDeliveryOperation",
       "testWebhookSubscription" => "WebhookDeliveryOperation",

@@ -169,9 +169,9 @@ module TeachMeHipaa
   # How a Test delivery or a redrive ended: the +response+ of the
   # WebhookDeliveryOperation that +webhook_subscriptions.test+ and +.redrive+
   # return. The spec leaves it untyped; the webhook worker settles it with
-  # one of these (research api-sdk-surface.md §8). Tell the variants apart
-  # by +tag+ or by class. Others may appear, read as
-  # WebhookDeliveryResult::Unknown, so handle tags you don't recognize.
+  # one of these. Tell the variants apart by +tag+ or by class. Others may
+  # appear, read as WebhookDeliveryResult::Unknown, so handle tags you don't
+  # recognize.
   module WebhookDeliveryResult
     extend Union
 

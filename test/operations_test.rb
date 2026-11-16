@@ -9,7 +9,7 @@ class OperationsTest < Minitest::Test
 
   ORG = "/organizations/#{ORG_ID}".freeze
   OPERATION_ID = "0b7d4a8e-5c1f-4e2a-9d3b-6f8a1c2e4b7d"
-  # Research api-sdk-surface.md §8: organizations/{orgId}/operations/{id}.
+  # The Developer API names operations organizations/{orgId}/operations/{id}.
   OPERATION_NAME = "organizations/#{ORG_ID}/operations/#{OPERATION_ID}".freeze
   POLL_PATH = "#{ORG}/operations/#{OPERATION_ID}".freeze
   SUBSCRIPTION_ID = "whs_01JD8K2M4N6P8R0T2V4X6Z8B0D"
@@ -42,7 +42,7 @@ class OperationsTest < Minitest::Test
 
   # A Test delivery's 202: pending until the webhook worker settles it.
   PENDING_OPERATION = { "name" => OPERATION_NAME, "done" => false }.freeze
-  # The worker's settle on a 2xx from the endpoint (§8: response._tag).
+  # The worker's settle on a 2xx from the endpoint (response._tag).
   SENT_OPERATION = {
     "name" => OPERATION_NAME, "done" => true, "response" => { "_tag" => "sent", "responseStatus" => 200 }
   }.freeze

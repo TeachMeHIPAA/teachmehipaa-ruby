@@ -11,7 +11,7 @@ class ConditionalRequestsTest < Minitest::Test
   OFFBOARD_PATH = "#{Fixtures::LEARNER_PATH}:offboard".freeze
   SUBSCRIPTION_ID = "whs_01JD8D"
   SUBSCRIPTION_PATH = "#{ORG}/webhook-subscriptions/#{SUBSCRIPTION_ID}".freeze
-  # Learners carry a quoted SHA-256 hex strong tag (api-sdk-surface.md §5).
+  # Learners carry a quoted SHA-256 hex strong tag.
   LEARNER_ETAG = '"9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"'
   # Rev-based resources carry a quoted revision.
   COURSE_ETAG = '"7"'

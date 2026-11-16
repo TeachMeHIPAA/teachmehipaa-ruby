@@ -9,10 +9,11 @@ class GeneratedSurfaceTest < Minitest::Test
 
   ROOT = File.expand_path("..", __dir__)
 
-  # The public method for every Developer API operation: research
-  # api-sdk-surface.md §11 in snake_case, with the renames settled since
-  # (grilling Q12: retrieve_links; the IR: auth.introspect and delete over
-  # del) and the Q25 splits of importEnrollments and batchEnrollments.
+  # The public method for every Developer API operation, from the developer
+  # API reference in snake_case and written down independently of the
+  # generator, with the renames settled since (grilling Q12: retrieve_links;
+  # the IR: auth.introspect and delete over del) and the Q25 splits of
+  # importEnrollments and batchEnrollments.
   EXPECTED_METHODS = {
     "listAuditEvents" => ["audit_events.list"],
     "introspectAccessToken" => ["auth.introspect"],

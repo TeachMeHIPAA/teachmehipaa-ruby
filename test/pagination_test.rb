@@ -64,7 +64,7 @@ class PaginationTest < Minitest::Test
   end
 
   def test_the_event_log_pages_by_after_the_last_events_id_not_cursor
-    # §4: nextCursor is the last Event id while more rows exist.
+    # nextCursor is the last Event id while more rows exist.
     script(EVENTS_PATH, page([event("evt_01"), event("evt_02")], "evt_02"), page([event("evt_03")], nil))
 
     events = @client.events.list(type: "learner.certified").auto_paging_each.to_a
@@ -164,7 +164,7 @@ class PaginationTest < Minitest::Test
   def test_tail_resumes_from_an_event_id_and_returns_once_caught_up
     script(EVENTS_PATH,
            page([event("evt_03"), event("evt_04")], "evt_04"),
-           # §4: nextCursor is null at the current end, so it gives no resume
+           # nextCursor is null at the current end, so it gives no resume
            # point; the tail keeps the last id itself.
            page([event("evt_05")], nil))
 
@@ -281,7 +281,7 @@ class PaginationTest < Minitest::Test
     }
   end
 
-  # research api-sdk-surface.md §4: { items, nextCursor }.
+  # The Developer API's page envelope: { items, nextCursor }.
   def page(items, next_cursor, headers: {})
     FakeTransport::Reply.json({ "items" => items, "nextCursor" => next_cursor }, headers:)
   end
