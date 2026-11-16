@@ -14,11 +14,13 @@ require_relative "generator/request_call"
 require_relative "generator/rbs_signature"
 require_relative "generator/yard_tags"
 require_relative "generator/reference"
+require_relative "generator/sample_calls"
+require_relative "generator/code_samples"
 require_relative "generator/resources"
 
-# Generates the resource and model layer, and its Markdown reference, from
-# openapi/sdk-ir.json, the only input it reads (ADR-0001). Run it with
-# `bundle exec rake generate`.
+# Generates the resource and model layer, its Markdown reference and the API
+# reference's Ruby samples from openapi/sdk-ir.json, the only input it reads
+# (ADR-0001). Run it with `bundle exec rake generate`.
 module SdkGenerator
   # Directories the generator owns outright: anything else in them is stale.
   DIRECTORIES = %w[
@@ -26,7 +28,7 @@ module SdkGenerator
   ].freeze
   INDEXES = %w[lib/teachmehipaa/models.rb lib/teachmehipaa/resources.rb].freeze
   # Generated files outside those directories, beside hand-written ones.
-  SINGLE_FILES = [*INDEXES, Reference::PATH].freeze
+  SINGLE_FILES = [*INDEXES, Reference::PATH, CodeSamples::PATH].freeze
   # Hand-written, never generated: one .rb and one .rbs per extended resource.
   EXTENSIONS = { "lib/teachmehipaa/extensions" => "rb", "sig/teachmehipaa/extensions" => "rbs" }.freeze
 
@@ -46,7 +48,7 @@ module SdkGenerator
   # same IR always yields the same Hash.
   def generate(data)
     ir = Ir.new(data)
-    Models.new(ir).files.merge(Resources.new(ir).files, Reference.new(ir).files).sort.to_h
+    Models.new(ir).files.merge(Resources.new(ir).files, Reference.new(ir).files, CodeSamples.new(ir).files).sort.to_h
   end
 
   # The hand-written files each of Resources::EXTENDED_RESOURCES and

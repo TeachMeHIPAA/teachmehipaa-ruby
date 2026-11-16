@@ -2,20 +2,24 @@
 
 # Resource reference
 
-Every method under `TeachMeHipaa::Client`, generated from the Developer
-API document release `trimmed-2026-11-15`. For what the library adds on top
-(`events.tail`, `Operation#wait`, `Webhook`), see the [guides](../README.md);
-for every class and field, see the [API reference](https://teachmehipaa.github.io/teachmehipaa-ruby/).
+Each method the client offers, one section apiece, generated from the
+Developer API document release `trimmed-2026-11-15`. The extras the gem
+layers on top (`events.tail`, `Operation#wait`, `Webhook`) live in the
+[guides](../README.md), and every class and field is in the
+[API reference](https://teachmehipaa.github.io/teachmehipaa-ruby/).
 
-- Ids in the path are positional arguments; everything else is a keyword.
-- Paths are relative to the Environment's base URL: `https://api.tme.so/v1` (Live) or
-  `https://sandbox.api.tme.so/v1` (Sandbox). The client fills in `{orgId}` from
-  the Organization binding, so no method takes an Organization id.
-- Every method also takes `request_options:`, a Hash of
+How to read a section:
+
+- The Ruby line shows the call with its defaults. Ids in the URL are
+  positional; the rest are keywords.
+- Every method also takes `request_options:`, a Hash with
   `idempotency_key`, `max_retries`, `timeout`, `request_id` and `headers`
-  for that call only (see [Configuration](../guides/configuration.md)).
-- Types are in YARD notation. Enum fields are Strings and may hold values
-  newer than this library.
+  ([Setting up a client](../guides/client.md#options-for-one-call)).
+- HTTP paths are relative to `https://api.tme.so/v1` (Live) or
+  `https://sandbox.api.tme.so/v1` (Sandbox). The client fills in
+  `{orgId}` itself, so no method asks for an Organization id.
+- Types use YARD notation. Enum fields are Strings and can hold values
+  newer than this gem.
 
 ## Contents
 
@@ -50,7 +54,7 @@ client.audit_events.list(limit: nil, cursor: nil, type: nil, transition: nil,
 - **HTTP:** `GET /organizations/{orgId}/audit-events`.
 - **Scopes:** `audit:read`.
 - **Returns:** `Page<AuditEvent>`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -75,11 +79,11 @@ client.auth.introspect(request_options: {}) # => TokenIntrospection
 ```
 
 - **HTTP:** `GET /auth/introspection`.
-- **Scopes:** Any Access token.
+- **Scopes:** Any Access token will do.
 - **Returns:** `TokenIntrospection`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
-Takes no parameters besides `request_options:`.
+Takes only `request_options:`.
 
 ## Certificate verifications
 
@@ -95,9 +99,9 @@ client.certificate_verifications.retrieve(tiny_id,
 ```
 
 - **HTTP:** `GET /certificate-verifications/{tinyId}`.
-- **Scopes:** None: a public method that sends no Access token.
+- **Scopes:** None. The client sends no Access token.
 - **Returns:** `CertificateVerification`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -121,7 +125,7 @@ client.certificates.download_pdf(cert_id,
 - **HTTP:** `GET /organizations/{orgId}/certificates/{certId}/content`.
 - **Scopes:** `certificates:read`.
 - **Returns:** `BinaryResponse, StreamedResponse`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -138,7 +142,7 @@ client.certificates.export(format:, request_options: {}) # => Operation
 - **HTTP:** `POST /organizations/{orgId}/certificates:export`.
 - **Scopes:** `certificates:read`.
 - **Returns:** `Operation`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -156,7 +160,7 @@ client.certificates.list(limit: nil, cursor: nil, subject_id: nil,
 - **HTTP:** `GET /organizations/{orgId}/certificates`.
 - **Scopes:** `certificates:read`.
 - **Returns:** `Page<Certificate>`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -175,7 +179,7 @@ client.certificates.retrieve(cert_id, request_options: {}) # => Certificate
 - **HTTP:** `GET /organizations/{orgId}/certificates/{certId}`.
 - **Scopes:** `certificates:read`.
 - **Returns:** `Certificate`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -193,7 +197,7 @@ client.certificates.retrieve_links(cert_id,
 - **HTTP:** `GET /organizations/{orgId}/certificates/{certId}/credentials`.
 - **Scopes:** `certificates:read`.
 - **Returns:** `CertificateLinks`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -215,7 +219,7 @@ client.compliance.retrieve(course_id: nil,
 - **HTTP:** `GET /organizations/{orgId}/compliance`.
 - **Scopes:** `compliance:read`.
 - **Returns:** `ComplianceSummary`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -235,9 +239,9 @@ client.courses.list(limit: nil, cursor: nil,
 ```
 
 - **HTTP:** `GET /courses`.
-- **Scopes:** None: a public method that sends no Access token.
+- **Scopes:** None. The client sends no Access token.
 - **Returns:** `Page<Course>`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -254,10 +258,10 @@ client.courses.retrieve(course_id, if_none_match: nil,
 ```
 
 - **HTTP:** `GET /courses/{courseId}`.
-- **Scopes:** None: a public method that sends no Access token.
+- **Scopes:** None. The client sends no Access token.
 - **Returns:** `Course, NotModified`.
-- **Retries:** Retried safely.
-- **If-None-Match:** `if_none_match:` returns `NotModified` when your copy is current.
+- **Retried:** Yes, it is safe to replay.
+- **If-None-Match:** Pass `if_none_match:` and a current copy comes back as `NotModified`.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -280,7 +284,7 @@ client.enrollments.batch(operation:, select:,
 - **HTTP:** `POST /organizations/{orgId}/enrollments:batch`.
 - **Scopes:** `enrollments:write`.
 - **Returns:** `EnrollmentsBatchResults`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -299,7 +303,7 @@ client.enrollments.batch_by_filter(operation:, select:,
 - **HTTP:** `POST /organizations/{orgId}/enrollments:batch`.
 - **Scopes:** `enrollments:write`.
 - **Returns:** `Operation`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -318,7 +322,7 @@ client.enrollments.cancel(enrollment_id, refund: nil,
 - **HTTP:** `POST /organizations/{orgId}/enrollments/{enrollmentId}:cancel`.
 - **Scopes:** `enrollments:write`.
 - **Returns:** `CancelEnrollmentResponse`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -337,7 +341,7 @@ client.enrollments.create(email:, name: nil, course_id: nil,
 - **HTTP:** `POST /organizations/{orgId}/enrollments`.
 - **Scopes:** `enrollments:write`.
 - **Returns:** `Enrollment`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -356,7 +360,7 @@ client.enrollments.export(format:, request_options: {}) # => Operation
 - **HTTP:** `POST /organizations/{orgId}/enrollments:export`.
 - **Scopes:** `enrollments:read`.
 - **Returns:** `Operation`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -374,7 +378,7 @@ client.enrollments.import(file:, options: nil,
 - **HTTP:** `POST /organizations/{orgId}/enrollments:import`.
 - **Scopes:** `enrollments:write`.
 - **Returns:** `Operation`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -394,7 +398,7 @@ client.enrollments.list(limit: nil, cursor: nil, status: nil, course_id: nil,
 - **HTTP:** `GET /organizations/{orgId}/enrollments`.
 - **Scopes:** `enrollments:read`.
 - **Returns:** `Page<OrgEnrollmentListItem>`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -417,7 +421,7 @@ client.enrollments.preview_import(file:, options: nil,
 - **HTTP:** `POST /organizations/{orgId}/enrollments:import`.
 - **Scopes:** `enrollments:write`.
 - **Returns:** `ImportPreview`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -436,7 +440,7 @@ client.enrollments.remind(enrollment_id,
 - **HTTP:** `POST /organizations/{orgId}/enrollments/{enrollmentId}:remind`.
 - **Scopes:** `enrollments:write`.
 - **Returns:** `EnrollmentActionAccepted`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -453,7 +457,7 @@ client.enrollments.renew(enrollment_id, request_options: {}) # => Enrollment
 - **HTTP:** `POST /organizations/{orgId}/enrollments/{enrollmentId}:renew`.
 - **Scopes:** `enrollments:write`.
 - **Returns:** `Enrollment`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -471,7 +475,7 @@ client.enrollments.resend_invite(enrollment_id,
 - **HTTP:** `POST /organizations/{orgId}/enrollments/{enrollmentId}:resendInvite`.
 - **Scopes:** `enrollments:write`.
 - **Returns:** `EnrollmentActionAccepted`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -489,8 +493,8 @@ client.enrollments.retrieve(enrollment_id, if_none_match: nil,
 - **HTTP:** `GET /organizations/{orgId}/enrollments/{enrollmentId}`.
 - **Scopes:** `enrollments:read`.
 - **Returns:** `Enrollment, NotModified`.
-- **Retries:** Retried safely.
-- **If-None-Match:** `if_none_match:` returns `NotModified` when your copy is current.
+- **Retried:** Yes, it is safe to replay.
+- **If-None-Match:** Pass `if_none_match:` and a current copy comes back as `NotModified`.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -513,7 +517,7 @@ client.events.list(limit: nil, after: nil, type: nil,
 - **HTTP:** `GET /organizations/{orgId}/events`.
 - **Scopes:** `webhooks:manage` or `audit:read`.
 - **Returns:** `Page<Event>`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -537,7 +541,7 @@ client.learners.batch_upsert(items:, delivery: nil, seat_policy: nil,
 - **HTTP:** `POST /organizations/{orgId}/learners:batchUpsert`.
 - **Scopes:** `learners:write`.
 - **Returns:** `Operation`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -558,7 +562,7 @@ client.learners.create(email:, name: nil, external_id: nil, course_id: nil,
 - **HTTP:** `POST /organizations/{orgId}/learners`.
 - **Scopes:** `learners:write`.
 - **Returns:** `LearnerWriteResult`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -581,7 +585,7 @@ client.learners.create_launch_link(learner_id, course_id: nil,
 - **HTTP:** `POST /organizations/{orgId}/learners/{learnerId}:createLaunchLink`.
 - **Scopes:** `learners:write`.
 - **Returns:** `LearnerLaunchLink`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -600,7 +604,7 @@ client.learners.export(format:, course_id: nil, status: nil,
 - **HTTP:** `POST /organizations/{orgId}/learners:export`.
 - **Scopes:** `learners:read`.
 - **Returns:** `Operation`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -621,7 +625,7 @@ client.learners.list(limit: nil, cursor: nil, email: nil, external_id: nil,
 - **HTTP:** `GET /organizations/{orgId}/learners`.
 - **Scopes:** `learners:read`.
 - **Returns:** `Page<Learner>`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -644,8 +648,8 @@ client.learners.offboard(learner_id, if_match: nil, course_id: nil,
 - **HTTP:** `POST /organizations/{orgId}/learners/{learnerId}:offboard`.
 - **Scopes:** `learners:write`.
 - **Returns:** `Learner`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
-- **If-Match:** Optional: `if_match:` takes the ETag or the object you read; a stale one raises `PreconditionFailedError`.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
+- **If-Match:** Optional. Pass the ETag, or the model you read, as `if_match:`; a stale one raises `PreconditionFailedError`.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -665,7 +669,7 @@ client.learners.remind(learner_id, course_id: nil,
 - **HTTP:** `POST /organizations/{orgId}/learners/{learnerId}:remind`.
 - **Scopes:** `learners:write`.
 - **Returns:** `LearnerRemindAccepted`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -684,7 +688,7 @@ client.learners.retrieve(learner_id, course_id: nil,
 - **HTTP:** `GET /organizations/{orgId}/learners/{learnerId}`.
 - **Scopes:** `learners:read`.
 - **Returns:** `Learner`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -703,9 +707,9 @@ client.learners.update(learner_id, if_match:, name: OMIT, external_id: OMIT,
 - **HTTP:** `PATCH /organizations/{orgId}/learners/{learnerId}`.
 - **Scopes:** `learners:write`.
 - **Returns:** `Learner`.
-- **Retries:** Never retried.
-- **If-Match:** Required: `if_match:` takes the ETag or the object you read; a stale one raises `PreconditionFailedError`.
-- **Body:** JSON merge patch: a keyword left out is unchanged; `nil` clears the field.
+- **Retried:** No.
+- **If-Match:** Required. Pass the ETag, or the model you read, as `if_match:`; a stale one raises `PreconditionFailedError`.
+- **Body:** A JSON merge patch. Leave a keyword out to keep the field, pass `nil` to clear it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -729,7 +733,7 @@ client.learners.upsert_by_external_id(external_id, email:, name: nil,
 - **HTTP:** `PUT /organizations/{orgId}/learners/by-external-id/{externalId}`.
 - **Scopes:** `learners:write`.
 - **Returns:** `LearnerWriteResult`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -756,7 +760,7 @@ client.members.list(limit: nil, cursor: nil, include: nil, role: nil,
 - **HTTP:** `GET /organizations/{orgId}/members`.
 - **Scopes:** `members:read`.
 - **Returns:** `Page<MemberListItem>`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -776,7 +780,7 @@ client.members.retrieve(subject_id, request_options: {}) # => Member
 - **HTTP:** `GET /organizations/{orgId}/members/{subjectId}`.
 - **Scopes:** `members:read`.
 - **Returns:** `Member`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -795,9 +799,9 @@ client.operations.retrieve(operation_id, request_options: {}) # => Operation
 ```
 
 - **HTTP:** `GET /organizations/{orgId}/operations/{operationId}`.
-- **Scopes:** Any Access token.
+- **Scopes:** Any Access token will do.
 - **Returns:** `Operation`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -818,9 +822,9 @@ client.seats.retrieve(request_options: {}) # => SeatsInventory
 - **HTTP:** `GET /organizations/{orgId}/seats`.
 - **Scopes:** `enrollments:read`.
 - **Returns:** `SeatsInventory`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
-Takes no parameters besides `request_options:`.
+Takes only `request_options:`.
 
 ## Webhook subscriptions
 
@@ -839,7 +843,7 @@ client.webhook_subscriptions.create(endpoint_url:, event_types:,
 - **HTTP:** `POST /organizations/{orgId}/webhook-subscriptions`.
 - **Scopes:** `org:admin` or `webhooks:manage`.
 - **Returns:** `WebhookSubscriptionCreated`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -860,7 +864,7 @@ client.webhook_subscriptions.delete(subscription_id,
 - **HTTP:** `DELETE /organizations/{orgId}/webhook-subscriptions/{subscriptionId}`.
 - **Scopes:** `org:admin` or `webhooks:manage`.
 - **Returns:** `EmptyResponse`.
-- **Retries:** Never retried.
+- **Retried:** No.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -878,7 +882,7 @@ client.webhook_subscriptions.list(limit: nil, cursor: nil,
 - **HTTP:** `GET /organizations/{orgId}/webhook-subscriptions`.
 - **Scopes:** `org:admin` or `webhooks:manage`.
 - **Returns:** `Page<WebhookSubscription>`.
-- **Retries:** Retried safely.
+- **Retried:** Yes, it is safe to replay.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -897,7 +901,7 @@ client.webhook_subscriptions.redrive(subscription_id,
 - **HTTP:** `POST /organizations/{orgId}/webhook-subscriptions/{subscriptionId}:redrive`.
 - **Scopes:** `org:admin` or `webhooks:manage`.
 - **Returns:** `WebhookDeliveryOperation`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -915,8 +919,8 @@ client.webhook_subscriptions.retrieve(subscription_id, if_none_match: nil,
 - **HTTP:** `GET /organizations/{orgId}/webhook-subscriptions/{subscriptionId}`.
 - **Scopes:** `org:admin` or `webhooks:manage`.
 - **Returns:** `WebhookSubscription, NotModified`.
-- **Retries:** Retried safely.
-- **If-None-Match:** `if_none_match:` returns `NotModified` when your copy is current.
+- **Retried:** Yes, it is safe to replay.
+- **If-None-Match:** Pass `if_none_match:` and a current copy comes back as `NotModified`.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -935,7 +939,7 @@ client.webhook_subscriptions.test(subscription_id,
 - **HTTP:** `POST /organizations/{orgId}/webhook-subscriptions/{subscriptionId}:test`.
 - **Scopes:** `org:admin` or `webhooks:manage`.
 - **Returns:** `WebhookDeliveryOperation`.
-- **Retries:** Retried safely: sends a generated `Idempotency-Key`, reused by each retry.
+- **Retried:** Yes. Each call sends a fresh `Idempotency-Key` and its retries reuse it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -956,9 +960,9 @@ client.webhook_subscriptions.update(subscription_id, if_match:,
 - **HTTP:** `PATCH /organizations/{orgId}/webhook-subscriptions/{subscriptionId}`.
 - **Scopes:** `org:admin` or `webhooks:manage`.
 - **Returns:** `WebhookSubscription`.
-- **Retries:** Never retried.
-- **If-Match:** Required: `if_match:` takes the ETag or the object you read; a stale one raises `PreconditionFailedError`.
-- **Body:** JSON merge patch: a keyword left out is unchanged; `nil` clears the field.
+- **Retried:** No.
+- **If-Match:** Required. Pass the ETag, or the model you read, as `if_match:`; a stale one raises `PreconditionFailedError`.
+- **Body:** A JSON merge patch. Leave a keyword out to keep the field, pass `nil` to clear it.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |

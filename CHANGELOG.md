@@ -65,6 +65,7 @@ the Developer API document release `trimmed-2026-11-15`.
 
 ### Documentation
 
+- `docs/reference/code-samples.json`, a generated Ruby sample for every operation in the TeachMeHIPAA API reference, and a rewritten README with eight guides (now including Rails) in place of the original ten.
 - A shorter README, with a pre-release status note, CI and license badges,
   and a link to a guide for every topic.
 - Guides in `docs/guides/`: getting started, authentication, errors and

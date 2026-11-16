@@ -1,17 +1,15 @@
 # Testing
 
-Test your integration at two levels: end to end against the Sandbox
-Environment, and in your unit tests against a fake transport that never
-touches the network. Neither should ever use Live credentials.
+Test your integration at two levels. End-to-end checks run against the
+Sandbox. Unit tests run against a fake transport and never open a socket.
+Live credentials belong in neither.
 
 ## The Sandbox
 
-The Sandbox is a separate Environment for building and testing, with its own
-API clients and Organizations. Sandbox credentials don't work against Live,
-and Live credentials don't work against the Sandbox, so a test suite with
-Sandbox credentials can't change production data. Point a client at it with
-`environment: :sandbox`, and check which Environment a token belongs to with
-`auth.introspect`:
+The Sandbox is its own Environment, with its own API clients and
+Organizations. Its credentials fail against Live, so a suite that holds only
+Sandbox credentials can't touch production data. Check where a token
+belongs with `auth.introspect`:
 
 <!-- sample: sandbox -->
 ```ruby
@@ -27,16 +25,17 @@ A Sandbox token's `mode` is `"test"`.
 
 ## A fake transport
 
-The client sends every request through its `transport:`, any object whose
-`call(request)` takes a `TeachMeHipaa::Transport::Request` (`http_method`,
-`url`, `headers`, `body`, `timeout`) and returns a
-`TeachMeHipaa::Transport::Response` (`status`, `headers` with lower-case
-names, `body`). Pass a fake one to test your code against canned responses.
-Your code then runs through the real client: the same parameters, errors,
-pagination and retries.
+Every request goes through the client's `transport:`. Swap in your own
+object and the rest of the client runs for real: parameters, errors, pages
+and retries all behave as they would against the API.
 
-Use a `TokenProviders::Static` token and an `organization_id:`, so your fake
-only has to answer the calls your code makes:
+A transport answers `call(request)`. The request is a
+`TeachMeHipaa::Transport::Request` with `http_method`, `url`, `headers`,
+`body` and `timeout`. The reply is a `TeachMeHipaa::Transport::Response`
+with `status`, `headers` (names in lower case) and `body`.
+
+Pair the fake with a `TokenProviders::Static` token and an
+`organization_id:`, and it only has to answer the calls your code makes:
 
 <!-- sample: fake-transport -->
 ```ruby
@@ -79,23 +78,27 @@ end
 puts transport.requests.length
 ```
 
-Paths include the base URL's `/v1`. A `Response` body of problem JSON with
-a 4xx or 5xx status raises the matching error, so you can test your error
-handling. Pass `sleep:` a lambda that doesn't wait, so tests of retries and
-`Operation#wait` run instantly; `clock:` (monotonic seconds) controls the
-time the client sees.
+A few things to know:
 
-To test against an HTTP mock server instead, such as Prism serving the
-OpenAPI document, pass its URL as `base_url:`.
+- Paths include the base URL's `/v1`.
+- A 4xx or 5xx reply with a problem body raises the matching error class,
+  which is how you test your `rescue` branches.
+- `sleep:` takes any callable. A lambda that returns at once makes retries
+  and `Operation#wait` finish instantly. `clock:` (monotonic seconds) sets
+  the time the client sees.
 
-## Sign test Deliveries
+For an HTTP mock server instead, such as Prism serving the OpenAPI document,
+pass its URL as `base_url:`.
+
+## Signed Deliveries
 
 `TeachMeHipaa::Webhook.generate_test_headers` returns the headers
 TeachMeHIPAA would send with a payload, signed with your Signing secret for
-the path you give. Post the payload with those headers to your handler. With
-the Sinatra app from the [Webhooks guide](webhooks.md#sinatra-and-rack), the
-headers become Rack env keys: `HTTP_X_TMH_SIGNATURE` and so on, and
-`CONTENT_TYPE`, without which Rack would read the body as a form:
+the path you name. Post the payload with them and your handler can't tell
+the difference. With the Sinatra app from
+[Events and webhooks](events-and-webhooks.md#verifying-a-delivery), turn
+the headers into Rack env keys (`HTTP_X_TMH_SIGNATURE` and so on, and
+`CONTENT_TYPE`, without which Rack reads the body as a form):
 
 <!-- sample: sign-delivery -->
 ```ruby
@@ -113,6 +116,7 @@ response = Rack::MockRequest.new(TmhWebhooks).post("/webhooks/tmh", env.merge(in
 puts response.status, response.body
 ```
 
-Sign a payload for a different path, or change it after signing, to check
-that your handler rejects it with 400. Pass `timestamp:` to sign a Delivery
-from the past and test the 5-minute tolerance.
+To check the unhappy paths, sign for a different path or edit the payload
+after signing, and expect a 400. `timestamp:` signs a Delivery from the past,
+for testing the 5-minute tolerance. In Rails, an integration test can post
+the headers as they are; [Rails](rails.md#testing-the-endpoint) has one.

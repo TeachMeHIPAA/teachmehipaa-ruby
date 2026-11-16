@@ -1,64 +1,61 @@
 # Documentation
 
-Documentation for the TeachMeHIPAA Ruby library. Start with the [project
-README](../README.md) for installation and a quickstart.
+Start with the [README](../README.md): it installs the gem and makes the
+first calls. The guides pick up from there, and every Ruby block in them runs
+in the test suite against a fake API, so the code matches the gem you
+install.
 
 ## Guides
 
-Every Ruby sample in these guides runs in the test suite against a fake
-transport, so it matches the library's current behaviour.
+1. [Setting up a client](guides/client.md): credentials, Live and Sandbox,
+   Scopes, the Organization, static tokens, public calls, every option,
+   per-call options, timeouts, logging, threads and transports.
+2. [Models, pages and ETags](guides/models-and-pages.md): method
+   conventions, model readers, `Enumerable` pages, `auto_paging_each` and
+   `lazy`, `if_match:`, merge patches and `if_none_match:`.
+3. [Errors and retries](guides/errors.md): the error classes, `code`,
+   request ids, the retry rules and idempotency keys.
+4. [Events and webhooks](guides/events-and-webhooks.md): the Event log,
+   Event classes, `events.tail`, subscriptions, verifying Deliveries in
+   Rack and Sinatra, Test deliveries.
+5. [Operations and files](guides/operations.md): `Operation#wait`, CSV
+   exports, Certificate PDFs, CSV imports.
+6. [Rails](guides/rails.md): credentials, an initializer, a job, a webhook
+   controller and its integration test.
+7. [Testing](guides/testing.md): the Sandbox, a fake transport, signed
+   Deliveries.
+8. [Versions and upgrades](guides/upgrading.md): semantic versioning, Ruby
+   support, `OPENAPI_VERSION`, and how API additions reach you.
 
-- [Getting started](guides/getting-started.md): install, credentials, first
-  calls, reading responses.
-- [Authentication](guides/authentication.md): client credentials, Scopes, the
-  Live and Sandbox Environments, the Organization binding, static tokens and
-  calls without credentials.
-- [Errors and retries](guides/errors-and-retries.md): error classes, `code`,
-  request ids, retries and idempotency keys.
-- [Pagination and events](guides/pagination-and-events.md): pages,
-  auto-paging, the Event log and `events.tail`.
-- [Webhooks](guides/webhooks.md): subscriptions, verifying Deliveries with
-  the raw body and exact path, Rails and Sinatra handlers, Test deliveries
-  and test headers.
-- [Operations and files](guides/operations-and-files.md): `Operation#wait`,
-  CSV exports, Certificate PDF downloads and streaming, CSV imports.
-- [Conditional requests](guides/conditional-requests.md): ETags,
-  `if_match:`, `if_none_match:` and merge-patch updates.
-- [Testing](guides/testing.md): the Sandbox, injecting a fake transport and
-  signing test Deliveries.
-- [Configuration](guides/configuration.md): every client option and its
-  default, request options, logging, timeouts and thread safety.
-- [Versioning](guides/versioning.md): semantic versioning, `OPENAPI_VERSION`
-  and how API additions reach you.
+## Reference
 
-## API reference
-
-- [Resource reference](reference/resources.md): every resource method with
-  its Ruby call, HTTP request, Scopes, retry and conditional behaviour,
-  parameters and return type. Generated from `openapi/sdk-ir.json`.
+- [Resource reference](reference/resources.md): each method's Ruby call,
+  HTTP request, Scopes, retry and conditional behaviour, parameters and
+  return type. Generated from `openapi/sdk-ir.json`.
+- [`reference/code-samples.json`](reference/code-samples.json): the Ruby
+  sample for each operation that the TeachMeHIPAA API reference shows.
+  Generated from the same IR, and run by `test/code_samples_test.rb`.
 - [API reference](https://teachmehipaa.github.io/teachmehipaa-ruby/): every
-  public class, method and model field, built with YARD from the code's doc
-  comments (`bundle exec rake docs` builds it locally into `doc/`).
-- RBS signatures for every public class and method ship in the gem's `sig/`
-  directory, for Steep and editors with RBS support.
+  public class, method and model field, built by YARD from the doc comments
+  (`bundle exec rake docs` writes it to `doc/`).
+- RBS signatures for the public API ship in the gem's `sig/` directory, for
+  Steep and RBS-aware editors.
 
 ## Examples
 
-[`examples/`](../examples) holds small programs that run against the Sandbox:
-a quickstart, a roster sync by External ID, a Sinatra webhook endpoint, and
-a Certificate export. See [`examples/README.md`](../examples/README.md).
+[`examples/`](../examples) holds programs you can run against the Sandbox: a
+quickstart, a roster sync by External ID, a Sinatra webhook endpoint and a
+Certificate export. [`examples/README.md`](../examples/README.md) says how to
+run them.
 
-## Contributing / design records
+## For contributors
 
-For people working on the library rather than with it:
-
-- [CONTRIBUTING.md](../CONTRIBUTING.md): setup, tests, the generator, how the
-  docs are built and kept in sync, and releasing.
+- [CONTRIBUTING.md](../CONTRIBUTING.md): setup, tests, the generator, how
+  the docs stay in sync, releasing.
 - [`adr/`](adr): architecture decision records, such as why webhook
   verification takes the request path.
-- [`design/`](design): the design interview that settled the library's
-  interface.
+- [`design/`](design): the design interview that settled the interface.
 - [`research/`](research): how Stripe's Ruby library does things, and what
-  this library adopts from it.
-- [`agents/`](agents): notes for coding agents working in this repository.
+  this gem borrows.
+- [`agents/`](agents): notes for coding agents in this repository.
 - [GLOSSARY.md](../GLOSSARY.md): the domain terms the code and docs use.

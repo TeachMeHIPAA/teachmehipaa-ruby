@@ -4,8 +4,8 @@ require "bundler/gem_tasks"
 require "minitest/test_task"
 require "rubocop/rake_task"
 
-# The contract and sandbox suites live in subdirectories, so a plain
-# `rake test` needs neither Node nor credentials.
+# The contract, sandbox and Rails suites live in subdirectories, so a plain
+# `rake test` needs neither Node, credentials nor Rails.
 Minitest::TestTask.create(:test) do |t|
   t.test_globs = ["test/*_test.rb"]
 end
@@ -20,6 +20,11 @@ namespace :test do
     t.test_globs = ["test/sandbox/**/*_test.rb"]
   end
   Rake::Task["test:sandbox"].clear_comments.add_description "Smoke-test the real Sandbox (needs credentials)"
+
+  Minitest::TestTask.create(:rails) do |t|
+    t.test_globs = ["test/rails/**/*_test.rb"]
+  end
+  Rake::Task["test:rails"].clear_comments.add_description "Run the Rails guide samples under Action Pack"
 end
 
 RuboCop::RakeTask.new(:rubocop)
@@ -68,4 +73,4 @@ namespace :docs do
   end
 end
 
-task default: %i[rubocop rbs:validate rbs:test]
+task default: %i[rubocop rbs:validate rbs:test test:rails]
