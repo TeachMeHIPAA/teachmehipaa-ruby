@@ -22,9 +22,9 @@ class ClientConfigTest < Minitest::Test
 
     client.learners.retrieve(LEARNER_ID)
 
-    assert_equal "https://api-teachmehipaa-dev.web.app/v1", client.base_url
-    assert_equal ["api-teachmehipaa-dev.web.app"], hosts_called(transport)
-    assert_equal "https://api-teachmehipaa-dev.web.app/v1/auth/token", transport.requests.first.url
+    assert_equal "https://sandbox.api.tme.so/v1", client.base_url
+    assert_equal ["sandbox.api.tme.so"], hosts_called(transport)
+    assert_equal "https://sandbox.api.tme.so/v1/auth/token", transport.requests.first.url
   end
 
   def test_base_url_overrides_the_environment

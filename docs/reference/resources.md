@@ -16,7 +16,7 @@ How to read a section:
   `idempotency_key`, `max_retries`, `timeout`, `request_id` and `headers`
   ([Setting up a client](../guides/client.md#options-for-one-call)).
 - HTTP paths are relative to `https://api.tme.so/v1` (Live) or
-  `https://api-teachmehipaa-dev.web.app/v1` (Sandbox). The client fills in
+  `https://sandbox.api.tme.so/v1` (Sandbox). The client fills in
   `{orgId}` itself, so no method asks for an Organization id.
 - Types use YARD notation. Enum fields are Strings and can hold values
   newer than this gem.

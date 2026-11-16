@@ -45,7 +45,7 @@ Each credential belongs to one Environment and fails in the other.
 | Environment | `environment:` | Base URL |
 | --- | --- | --- |
 | Live | `:live` | `https://api.tme.so/v1` |
-| Sandbox | `:sandbox` | `https://api-teachmehipaa-dev.web.app/v1` |
+| Sandbox | `:sandbox` | `https://sandbox.api.tme.so/v1` |
 
 Build against the Sandbox, then make a second API client in Live for
 production. `auth.introspect.mode` is `"test"` for a Sandbox token and

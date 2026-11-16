@@ -2,7 +2,7 @@
 
 module Fixtures
   LIVE_BASE = "https://api.tme.so/v1"
-  SANDBOX_BASE = "https://api-teachmehipaa-dev.web.app/v1"
+  SANDBOX_BASE = "https://sandbox.api.tme.so/v1"
 
   CLIENT_ID = "cli_01JD8Z4N3QX5V7W9Y2B4C6D8EF"
   CLIENT_SECRET = "tmh_cs_k3Jq9-Zx_8LmN2pR4tV6wY0aB1cD3eF5gH7iJ9kL0mN"
