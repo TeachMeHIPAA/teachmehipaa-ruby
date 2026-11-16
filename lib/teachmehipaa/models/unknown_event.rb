@@ -10,10 +10,15 @@ module TeachMeHipaa
   class UnknownEvent < Model
     include Event
 
+    # @return [String]
     field :event_id, "eventId"
+    # @return [String]
     field :event_type, "eventType"
+    # @return [String]
     field :org_id, "orgId"
+    # @return [Time]
     field :occurred_at, "occurredAt", type: :time
+    # @return [Hash{String => Object}]
     field :data, "data"
   end
 end

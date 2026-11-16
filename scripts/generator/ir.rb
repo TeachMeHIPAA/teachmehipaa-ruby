@@ -60,6 +60,10 @@ module SdkGenerator
       rbs.include?(" ") ? "(#{rbs})?" : "#{rbs}?"
     end
 
+    def self.optional_yard(yard)
+      yard == "Object" ? yard : "#{yard}, nil"
+    end
+
     def self.reader_name(field)
       Naming.snake(field.fetch("name"))
     end

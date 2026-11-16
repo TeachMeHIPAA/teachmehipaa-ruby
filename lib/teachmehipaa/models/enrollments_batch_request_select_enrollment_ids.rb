@@ -9,6 +9,7 @@ module TeachMeHipaa
   class EnrollmentsBatchRequestSelectEnrollmentIds < Model
     include EnrollmentsBatchRequestSelect
 
+    # @return [Array<String>]
     field :enrollment_ids, "enrollmentIds"
   end
 end

@@ -26,6 +26,9 @@ module TeachMeHipaa
 
     # The default transport, on the standard library's Net::HTTP.
     class NetHttp
+      # Sends +request+ once on a new connection.
+      # @param request [Request]
+      # @return [Response]
       def call(request, &stream)
         uri = URI(request.url)
         http = Net::HTTP.new(uri.host, uri.port)

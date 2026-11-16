@@ -9,6 +9,13 @@ module TeachMeHipaa
       # Retrieve the compliance summary
       #
       # Counts the organization's learners in one course by status. Removed learners aren't counted.
+      #
+      # Needs the +compliance:read+ Scope.
+      #
+      # @param course_id [String, nil] The course. Defaults to the organization's default course.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [ComplianceSummary]
       def retrieve(course_id: nil, request_options: {})
         request(
           method: "GET",

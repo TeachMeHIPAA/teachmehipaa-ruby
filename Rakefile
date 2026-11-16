@@ -47,4 +47,25 @@ namespace :rbs do
   end
 end
 
+desc "Build the API reference into doc/; fails on any YARD warning or undocumented public API"
+task docs: "docs:coverage" do
+  sh "yard", "doc", "--fail-on-warning"
+end
+
+namespace :docs do
+  desc "Fail if a public class, module, method, attribute or constant has no doc comment"
+  task :coverage do
+    require "yard"
+    stats = YARD::CLI::Stats.new
+    stats.run("--no-save", "--fail-on-warning")
+    # A generated enum module's constants are its known values; each one's
+    # name and value are its documentation.
+    public_api = stats.all_objects.select { |object| %i[module class constant method].include?(object.type) }
+    undocumented = public_api.select { |object| object.docstring.blank? }.reject do |object|
+      object.type == :constant && object.file.start_with?("lib/teachmehipaa/models/")
+    end
+    abort "Undocumented public API:\n  #{undocumented.map(&:path).sort.join("\n  ")}" if undocumented.any?
+  end
+end
+
 task default: %i[rubocop rbs:validate rbs:test]

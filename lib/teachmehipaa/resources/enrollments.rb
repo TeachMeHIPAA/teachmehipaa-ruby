@@ -13,6 +13,16 @@ module TeachMeHipaa
       # the `enrollments:write` scope.
       #
       # +select+ takes the form with +enrollment_ids+.
+      #
+      # Needs the +enrollments:write+ Scope.
+      #
+      # @param operation [String, Symbol] What to do to each enrollment: `remind`, `resendInvite`,
+      #   `cancel`, `recertify`, `archive` or `unarchive`.
+      # @param select [Hash] The enrollments to act on: a list of `enrollmentIds` (up to 500), or
+      #   a `filter`.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [EnrollmentsBatchResults]
       def batch(operation:, select:, request_options: {})
         request(
           method: "POST",
@@ -32,6 +42,16 @@ module TeachMeHipaa
       # the `enrollments:write` scope.
       #
       # +select+ takes the form with +filter+.
+      #
+      # Needs the +enrollments:write+ Scope.
+      #
+      # @param operation [String, Symbol] What to do to each enrollment: `remind`, `resendInvite`,
+      #   `cancel`, `recertify`, `archive` or `unarchive`.
+      # @param select [Hash] The enrollments to act on: a list of `enrollmentIds` (up to 500), or
+      #   a `filter`.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [Operation]
       def batch_by_filter(operation:, select:, request_options: {})
         request(
           method: "POST",
@@ -50,6 +70,15 @@ module TeachMeHipaa
       # Cancels an invite that hasn't been accepted yet and returns its seat to the pool. With
       # `refund: true`, refunds the seat to the card that paid for it instead. The enrollment
       # remains, with status `CANCELLED`. Requires the `enrollments:write` scope.
+      #
+      # Needs the +enrollments:write+ Scope.
+      #
+      # @param enrollment_id [String]
+      # @param refund [Boolean, nil] Refund the seat to the card that paid for it instead of
+      #   returning it to the pool. Defaults to `false`.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [CancelEnrollmentResponse]
       def cancel(enrollment_id, refund: nil, request_options: {})
         request(
           method: "POST",
@@ -67,6 +96,15 @@ module TeachMeHipaa
       #
       # Invites a person to a course, creating their profile if needed, and uses one seat. The
       # course defaults to `hipaa`. Requires the `enrollments:write` scope.
+      #
+      # Needs the +enrollments:write+ Scope.
+      #
+      # @param email [String] The learner's email address.
+      # @param name [String, nil] The learner's full name.
+      # @param course_id [String, nil] The course to invite them to. Defaults to `hipaa`.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [Enrollment]
       def create(email:, name: nil, course_id: nil, request_options: {})
         request(
           method: "POST",
@@ -82,6 +120,13 @@ module TeachMeHipaa
       # Export enrollments
       #
       # Exports the organization's enrollments as CSV. Requires the `enrollments:read` scope.
+      #
+      # Needs the +enrollments:read+ Scope.
+      #
+      # @param format [String, Symbol] The file format. Only `csv` today.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [Operation]
       def export(format:, request_options: {})
         request(
           method: "POST",
@@ -102,6 +147,15 @@ module TeachMeHipaa
       # Requires the `enrollments:write` scope.
       #
       # Sets +options.validate_only+ to false itself.
+      #
+      # Needs the +enrollments:write+ Scope.
+      #
+      # @param file [String, Pathname, IO, FilePart] UTF-8 CSV (RFC 4180: quoted fields, `""`
+      #   escapes, CRLF/LF). Header row required.
+      # @param options [Hash, nil]
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [Operation]
       def import(file:, options: nil, request_options: {})
         request(
           method: "POST",
@@ -121,6 +175,22 @@ module TeachMeHipaa
       #
       # Returns a list of the organization's enrollments. Filter by `status`, `courseId` or
       # `archived`. Requires the `enrollments:read` scope.
+      #
+      # Needs the +enrollments:read+ Scope.
+      #
+      # @param limit [Integer, nil] How many objects to return, between 1 and 1000. Defaults to
+      #   20.
+      # @param cursor [String, nil] The `nextCursor` from the previous page.
+      # @param status [String, Symbol, nil] Filter on the derived effectiveStatus.
+      # @param course_id [String, nil]
+      # @param archived [String, Symbol, nil]
+      # @param include [String, Symbol, nil] Opt-in enrichment. With `priorCertificate`, an item
+      #   carries `priorCertificate` (object, or null when the server confirmed there is none). The
+      #   key is omitted on an item whose answer is unknown, and on every item of the page if the
+      #   certificate lookup failed; clients must treat a missing key as unknown, never as null.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [Page<OrgEnrollmentListItem>]
       def list(limit: nil, cursor: nil, status: nil, course_id: nil, archived: nil, include: nil, request_options: {})
         request(
           method: "GET",
@@ -141,6 +211,15 @@ module TeachMeHipaa
       # Requires the `enrollments:write` scope.
       #
       # Sets +options.validate_only+ to true itself.
+      #
+      # Needs the +enrollments:write+ Scope.
+      #
+      # @param file [String, Pathname, IO, FilePart] UTF-8 CSV (RFC 4180: quoted fields, `""`
+      #   escapes, CRLF/LF). Header row required.
+      # @param options [Hash, nil]
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [ImportPreview]
       def preview_import(file:, options: nil, request_options: {})
         request(
           method: "POST",
@@ -159,6 +238,13 @@ module TeachMeHipaa
       #
       # Emails the learner again: the invitation if they haven't joined, or a reminder linking to
       # the training if they have. Requires the `enrollments:write` scope.
+      #
+      # Needs the +enrollments:write+ Scope.
+      #
+      # @param enrollment_id [String]
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [EnrollmentActionAccepted]
       def remind(enrollment_id, request_options: {})
         request(
           method: "POST",
@@ -175,6 +261,13 @@ module TeachMeHipaa
       #
       # Starts the next certification cycle for a certified learner and invites them again, using
       # one seat. Retrying never uses a second seat. Requires the `enrollments:write` scope.
+      #
+      # Needs the +enrollments:write+ Scope.
+      #
+      # @param enrollment_id [String]
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [Enrollment]
       def renew(enrollment_id, request_options: {})
         request(
           method: "POST",
@@ -191,6 +284,13 @@ module TeachMeHipaa
       #
       # Sends a pending invite again, within the same cycle. To invite a certified learner again,
       # renew the enrollment. Requires the `enrollments:write` scope.
+      #
+      # Needs the +enrollments:write+ Scope.
+      #
+      # @param enrollment_id [String]
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [EnrollmentActionAccepted]
       def resend_invite(enrollment_id, request_options: {})
         request(
           method: "POST",
@@ -209,6 +309,15 @@ module TeachMeHipaa
       #
       # Given +if_none_match:+ (an ETag, or the copy you hold), returns NotModified when your copy
       # is current.
+      #
+      # Needs the +enrollments:read+ Scope.
+      #
+      # @param enrollment_id [String]
+      # @param if_none_match [String, Model] The ETag of the copy you hold: a String, or the
+      #   object you read.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [Enrollment, NotModified]
       def retrieve(enrollment_id, if_none_match: nil, request_options: {})
         request(
           method: "GET",

@@ -14,6 +14,8 @@ module TeachMeHipaa
   class Client
     include Resources::Root
 
+    # The frozen settings this client was built with.
+    # @return [Config]
     attr_reader :config
 
     # Pass the API client's +client_id+ and +client_secret+, or a
@@ -44,15 +46,21 @@ module TeachMeHipaa
       freeze
     end
 
+    # @return [Symbol] :live or :sandbox.
     def environment = config.environment
+    # @return [String] The API's base URL, such as "https://api.tme.so/v1".
     def base_url = config.base_url
+    # @return [Integer] How many times a failed call that is safe to replay is retried.
     def max_retries = config.max_retries
+    # @return [Float] Seconds to wait to connect, and for each read and write.
     def timeout = config.timeout
 
     # TeachMeHipaa::Webhook, for verifying Deliveries. It needs only the
     # Signing secret, so it is also usable without a client.
     def webhooks = Webhook
 
+    # Shows the Environment and base URL only, never credentials.
+    # @return [String]
     def inspect
       "#<#{self.class.name} environment=#{environment.inspect} base_url=#{base_url.inspect}>"
     end

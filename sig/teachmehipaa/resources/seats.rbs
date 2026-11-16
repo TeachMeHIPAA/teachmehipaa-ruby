@@ -7,6 +7,8 @@ module TeachMeHipaa
       #
       # Retrieves how many seats the organization has, how many are assigned and how many are
       # available for new invites. Requires the `enrollments:read` scope.
+      #
+      # Needs the +enrollments:read+ Scope.
       def retrieve: (?request_options: request_options) -> SeatsInventory
     end
   end

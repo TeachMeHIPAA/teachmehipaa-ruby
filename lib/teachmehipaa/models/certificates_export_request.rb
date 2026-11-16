@@ -8,6 +8,8 @@ module TeachMeHipaa
     # The file format. Only `csv` today.
     #
     # See CertificatesExportRequestFormat for known values; the API may send newer ones.
+    #
+    # @return [String]
     field :format, "format"
   end
 end

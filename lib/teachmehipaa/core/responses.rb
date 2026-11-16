@@ -74,6 +74,8 @@ module TeachMeHipaa
       each_page { |page| page.items.each(&block) }
     end
 
+    # Counts the items rather than listing them.
+    # @return [String]
     def inspect
       "#<#{self.class.name} items=#{items.length} next_cursor=#{next_cursor.inspect}>"
     end

@@ -10,6 +10,17 @@ module TeachMeHipaa
       #
       # Subscribes an HTTPS endpoint to event types and creates its signing secret. Requires the
       # `webhooks:manage` or `org:admin` scope.
+      #
+      # Needs the +org:admin+ or +webhooks:manage+ Scope.
+      #
+      # @param endpoint_url [String] The HTTPS URL to deliver events to.
+      # @param event_types [Array<String, Symbol>] The event types to deliver.
+      # @param description [String, nil] A description for your own reference.
+      # @param seats_low_threshold [Integer, nil] Send `seats.low` when available seats drop to
+      #   this number. Defaults to 5.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [WebhookSubscriptionCreated]
       def create(endpoint_url:, event_types:, description: nil, seats_low_threshold: nil, request_options: {})
         request(
           method: "POST",
@@ -27,6 +38,13 @@ module TeachMeHipaa
       #
       # Deletes a webhook subscription and its signing secret. Requires the `webhooks:manage` or
       # `org:admin` scope.
+      #
+      # Needs the +org:admin+ or +webhooks:manage+ Scope.
+      #
+      # @param subscription_id [String] The webhook subscription id.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [EmptyResponse]
       def delete(subscription_id, request_options: {})
         request(
           method: "DELETE",
@@ -41,6 +59,14 @@ module TeachMeHipaa
       #
       # Returns a list of the organization's webhook subscriptions. Signing secrets are never
       # returned. Requires the `webhooks:manage` or `org:admin` scope.
+      #
+      # Needs the +org:admin+ or +webhooks:manage+ Scope.
+      #
+      # @param limit [Integer, nil] How many objects to return, between 1 and 100. Defaults to 20.
+      # @param cursor [String, nil] The `nextCursor` from the previous page.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [Page<WebhookSubscription>]
       def list(limit: nil, cursor: nil, request_options: {})
         request(
           method: "GET",
@@ -58,6 +84,13 @@ module TeachMeHipaa
       #
       # Delivers the subscription's failed events again. Requires the `webhooks:manage` or
       # `org:admin` scope.
+      #
+      # Needs the +org:admin+ or +webhooks:manage+ Scope.
+      #
+      # @param subscription_id [String] The webhook subscription id.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [WebhookDeliveryOperation]
       def redrive(subscription_id, request_options: {})
         request(
           method: "POST",
@@ -77,6 +110,15 @@ module TeachMeHipaa
       #
       # Given +if_none_match:+ (an ETag, or the copy you hold), returns NotModified when your copy
       # is current.
+      #
+      # Needs the +org:admin+ or +webhooks:manage+ Scope.
+      #
+      # @param subscription_id [String] The webhook subscription id.
+      # @param if_none_match [String, Model] The ETag of the copy you hold: a String, or the
+      #   object you read.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [WebhookSubscription, NotModified]
       def retrieve(subscription_id, if_none_match: nil, request_options: {})
         request(
           method: "GET",
@@ -93,6 +135,13 @@ module TeachMeHipaa
       #
       # Sends a signed test delivery to the subscription's endpoint, so you can check your verifier.
       # Requires the `webhooks:manage` or `org:admin` scope.
+      #
+      # Needs the +org:admin+ or +webhooks:manage+ Scope.
+      #
+      # @param subscription_id [String] The webhook subscription id.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [WebhookDeliveryOperation]
       def test(subscription_id, request_options: {})
         request(
           method: "POST",
@@ -113,6 +162,21 @@ module TeachMeHipaa
       # `webhooks:manage` or `org:admin` scope.
       #
       # Parameters you leave out are unchanged; pass nil to clear one.
+      #
+      # Needs the +org:admin+ or +webhooks:manage+ Scope.
+      #
+      # @param subscription_id [String] The webhook subscription id.
+      # @param if_match [String, Model] The ETag of the copy you hold: a String, or the object you
+      #   read.
+      # @param endpoint_url [String] The HTTPS URL to deliver events to.
+      # @param event_types [Array<String, Symbol>] The event types to deliver.
+      # @param enabled [Boolean] Turn deliveries on or off.
+      # @param description [String, nil] A description for your own reference.
+      # @param seats_low_threshold [Integer] Send `seats.low` when available seats drop to this
+      #   number.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [WebhookSubscription]
       def update(subscription_id, if_match:, endpoint_url: OMIT, event_types: OMIT, enabled: OMIT, description: OMIT,
                  seats_low_threshold: OMIT, request_options: {})
         request(

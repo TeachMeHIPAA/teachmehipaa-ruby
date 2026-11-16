@@ -13,6 +13,14 @@ module TeachMeHipaa
       #
       # Returns the whole file as a BinaryResponse. Given a block, yields the file's bytes in chunks
       # as they arrive instead and returns a StreamedResponse.
+      #
+      # Needs the +certificates:read+ Scope.
+      #
+      # @param cert_id [String]
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @yieldparam chunk [String] The next chunk of the file's bytes.
+      # @return [BinaryResponse, StreamedResponse]
       def download_pdf(cert_id, request_options: {}, &)
         request(
           method: "GET",
@@ -30,6 +38,13 @@ module TeachMeHipaa
       #
       # Exports the organization's certificate records as CSV. Requires the `certificates:read`
       # scope.
+      #
+      # Needs the +certificates:read+ Scope.
+      #
+      # @param format [String, Symbol] The file format. Only `csv` today.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [Operation]
       def export(format:, request_options: {})
         request(
           method: "POST",
@@ -46,6 +61,15 @@ module TeachMeHipaa
       # List all certificates
       #
       # Returns a list of the organization's certificates. Pass `subjectId` to list one learner's.
+      #
+      # Needs the +certificates:read+ Scope.
+      #
+      # @param limit [Integer, nil] How many objects to return, between 1 and 100. Defaults to 20.
+      # @param cursor [String, nil] The `nextCursor` from the previous page.
+      # @param subject_id [String, nil] Filter to one holder (canonical subject id).
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [Page<Certificate>]
       def list(limit: nil, cursor: nil, subject_id: nil, request_options: {})
         request(
           method: "GET",
@@ -62,6 +86,13 @@ module TeachMeHipaa
       # Retrieve a certificate
       #
       # Retrieves a certificate.
+      #
+      # Needs the +certificates:read+ Scope.
+      #
+      # @param cert_id [String]
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [Certificate]
       def retrieve(cert_id, request_options: {})
         request(
           method: "GET",
@@ -77,6 +108,13 @@ module TeachMeHipaa
       #
       # Retrieves the certificate's LinkedIn add-to-profile link and its public `tme.so`
       # verification link. Requires the `certificates:read` scope.
+      #
+      # Needs the +certificates:read+ Scope.
+      #
+      # @param cert_id [String]
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [CertificateLinks]
       def retrieve_links(cert_id, request_options: {})
         request(
           method: "GET",

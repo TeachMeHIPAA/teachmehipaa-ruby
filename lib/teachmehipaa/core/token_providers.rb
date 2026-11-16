@@ -65,14 +65,22 @@ module TeachMeHipaa
         @cache = Core::AccessTokenCache.new
       end
 
+      # A current Access token, minted through +connection+ when none is
+      # cached or the cached one nears expiry.
+      # @return [String]
       def access_token(connection)
         @cache.fetch(connection.config.clock) { mint(connection) }
       end
 
+      # Forgets +access_token+ after the API refused it, so the next call
+      # mints another.
+      # @return [void]
       def invalidate(access_token)
         @cache.invalidate(access_token)
       end
 
+      # Shows the client id only, never the secret or a token.
+      # @return [String]
       def inspect
         "#<#{self.class.name} client_id=#{@client_id.inspect}>"
       end
@@ -126,6 +134,8 @@ module TeachMeHipaa
         @access_token = access_token
       end
 
+      # The token this provider was given.
+      # @return [String]
       def access_token(_connection)
         @access_token
       end
@@ -133,6 +143,8 @@ module TeachMeHipaa
       # Nothing to drop: this provider can't get another token.
       def invalidate(_access_token); end
 
+      # Never shows the token.
+      # @return [String]
       def inspect
         "#<#{self.class.name}>"
       end

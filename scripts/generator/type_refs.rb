@@ -9,6 +9,13 @@ module SdkGenerator
       "dateTime" => "Time", "binary" => "untyped", "json" => "untyped"
     }.freeze
     PRIMITIVE_PARAM_RBS = PRIMITIVE_RBS.merge("dateTime" => "Time | String", "binary" => "upload").freeze
+    # The same types in YARD's notation, for the API reference.
+    PRIMITIVE_YARD = {
+      "string" => "String", "integer" => "Integer", "number" => "Numeric", "boolean" => "Boolean",
+      "dateTime" => "Time", "binary" => "Object", "json" => "Object"
+    }.freeze
+    PRIMITIVE_PARAM_YARD = PRIMITIVE_YARD.merge("dateTime" => "Time, String",
+                                                "binary" => "String, Pathname, IO, FilePart").freeze
 
     # The +type:+ argument Model.field takes, or nil when values stay as
     # parsed (strings, numbers, enums, raw JSON).
@@ -55,6 +62,26 @@ module SdkGenerator
       when "ref" then kind_of(ref) == "enum" ? "String | Symbol" : "params"
       when "array" then "Array[#{param_rbs(ref.fetch("items"))}]"
       when "map" then "Hash[String | Symbol, #{param_rbs(ref.fetch("values"))}]"
+      end
+    end
+
+    # #rbs in YARD's notation.
+    def yard(ref)
+      case ref.fetch("kind")
+      when "primitive" then PRIMITIVE_YARD.fetch(ref.fetch("type"))
+      when "ref" then kind_of(ref) == "enum" ? "String" : ref.fetch("name")
+      when "array" then "Array<#{yard(ref.fetch("items"))}>"
+      when "map" then "Hash{String => #{yard(ref.fetch("values"))}}"
+      end
+    end
+
+    # #param_rbs in YARD's notation.
+    def param_yard(ref)
+      case ref.fetch("kind")
+      when "primitive" then PRIMITIVE_PARAM_YARD.fetch(ref.fetch("type"))
+      when "ref" then kind_of(ref) == "enum" ? "String, Symbol" : "Hash"
+      when "array" then "Array<#{param_yard(ref.fetch("items"))}>"
+      when "map" then "Hash{String, Symbol => #{param_yard(ref.fetch("values"))}}"
       end
     end
 

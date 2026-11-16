@@ -7,7 +7,9 @@ require_relative "course"
 module TeachMeHipaa
   # A CoursesPage object.
   class CoursesPage < Model
+    # @return [Array<Course>]
     field :items, "items", type: [Course]
+    # @return [String, nil]
     field :next_cursor, "nextCursor"
   end
 end

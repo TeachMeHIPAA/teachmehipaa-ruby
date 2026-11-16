@@ -7,6 +7,8 @@ module TeachMeHipaa
   class EnrollmentCancelRequest < Model
     # Refund the seat to the card that paid for it instead of returning it to the pool. Defaults to
     # `false`.
+    #
+    # @return [Boolean, nil]
     field :refund, "refund"
   end
 end

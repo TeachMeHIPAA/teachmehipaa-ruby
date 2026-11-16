@@ -9,7 +9,9 @@ module TeachMeHipaa
   class AuditEventActorAgent < Model
     include AuditEventActor
 
+    # @return [String]
     field :type, "type"
+    # @return [String]
     field :agent_id, "agentId"
   end
 end

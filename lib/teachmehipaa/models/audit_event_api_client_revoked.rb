@@ -10,11 +10,17 @@ module TeachMeHipaa
   class AuditEventApiClientRevoked < Model
     include AuditEvent
 
+    # @return [String]
     field :event_id, "eventId"
+    # @return [String]
     field :at, "at"
+    # @return [String]
     field :type, "type"
+    # @return [String]
     field :actor_subject_id, "actorSubjectId"
+    # @return [AuditEventActor]
     field :actor, "actor", type: AuditEventActor
+    # @return [String]
     field :client_id, "clientId"
   end
 end

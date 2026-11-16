@@ -10,6 +10,12 @@ module TeachMeHipaa
       #
       # Describes the access token you call with: whether it belongs to an API client or a person,
       # its organization, its scopes and when it expires. Needs no scope.
+      #
+      # Works with any Access token, whatever its Scopes.
+      #
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [TokenIntrospection]
       def introspect(request_options: {})
         request(
           method: "GET",

@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 module TeachMeHipaa
+  # The library's internals, which may change in any release. The API
+  # reference leaves them out.
+  #
+  # @api private
   module Core
     # Checks on the arguments the library is given.
     #

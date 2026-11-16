@@ -7,6 +7,8 @@ module TeachMeHipaa
       #
       # Creates or retrieves up to 500 learners in one request. Each item works like creating one
       # learner and succeeds or fails on its own.
+      #
+      # Needs the +learners:write+ Scope.
       def batch_upsert: (items: Array[params], ?delivery: (String | Symbol)?, ?seat_policy: (String | Symbol)?,
                          ?request_options: request_options) -> Operation
 
@@ -16,6 +18,8 @@ module TeachMeHipaa
       # If the email or `externalId` already belongs to an active learner in the course, nothing is
       # created. With `delivery: "none"`, no email is sent and the response includes a `joinUrl` for
       # you to deliver.
+      #
+      # Needs the +learners:write+ Scope.
       def create: (email: String, ?name: String?, ?external_id: String?, ?course_id: String?,
                    ?delivery: (String | Symbol)?, ?seat_policy: (String | Symbol)?,
                    ?request_options: request_options) -> LearnerWriteResult
@@ -26,6 +30,8 @@ module TeachMeHipaa
       # training" button in your product. The link works once and expires after 5 minutes: create it
       # when the learner clicks, then redirect them to it. Never email, store or log it. Only for a
       # learner who has accepted their invite.
+      #
+      # Needs the +learners:write+ Scope.
       def create_launch_link: (String learner_id, ?course_id: String?,
                                ?request_options: request_options) -> LearnerLaunchLink
 
@@ -33,6 +39,8 @@ module TeachMeHipaa
       #
       # Exports the organization's learners in one course as CSV, optionally only those with one
       # `status`. Requires the `learners:read` scope.
+      #
+      # Needs the +learners:read+ Scope.
       def export: (format: String | Symbol, ?course_id: String?, ?status: (String | Symbol)?,
                    ?request_options: request_options) -> Operation
 
@@ -41,6 +49,8 @@ module TeachMeHipaa
       # Returns a list of the organization's learners in one course, with each learner's status,
       # dates and current certificate. Filter by `status`, or find one learner by `email` or
       # `externalId`.
+      #
+      # Needs the +learners:read+ Scope.
       def list: (?limit: Integer?, ?cursor: String?, ?email: String?, ?external_id: String?,
                  ?status: (String | Symbol)?, ?course_id: String?, ?request_options: request_options) -> Page[Learner]
 
@@ -49,6 +59,8 @@ module TeachMeHipaa
       # Removes a learner from the organization. A learner who hasn't started has their invite
       # cancelled and the seat returned; a learner who has started keeps their training history and
       # certificates. Releases the learner's `externalId`.
+      #
+      # Needs the +learners:write+ Scope.
       def offboard: (String learner_id, ?if_match: etag?, ?course_id: String?,
                      ?request_options: request_options) -> Learner
 
@@ -56,11 +68,15 @@ module TeachMeHipaa
       #
       # Emails the learner a reminder: the invite again if they haven't started, or a nudge to
       # finish if they have.
+      #
+      # Needs the +learners:write+ Scope.
       def remind: (String learner_id, ?course_id: String?, ?request_options: request_options) -> LearnerRemindAccepted
 
       # Retrieve a learner
       #
       # Retrieves a learner's status in one course.
+      #
+      # Needs the +learners:read+ Scope.
       def retrieve: (String learner_id, ?course_id: String?, ?request_options: request_options) -> Learner
 
       # Update a learner
@@ -70,6 +86,8 @@ module TeachMeHipaa
       # `If-Match`.
       #
       # Parameters you leave out are unchanged; pass nil to clear one.
+      #
+      # Needs the +learners:write+ Scope.
       def update: (String learner_id, if_match: etag, ?name: String | Omit, ?external_id: String? | Omit,
                    ?course_id: String?, ?request_options: request_options) -> Learner
 
@@ -78,6 +96,8 @@ module TeachMeHipaa
       # Makes sure a learner exists for your own id. Creates and invites the learner the first time,
       # and returns them on every later call, so a sync job can replay it safely. Never uses a
       # second seat.
+      #
+      # Needs the +learners:write+ Scope.
       def upsert_by_external_id: (String external_id, email: String, ?name: String?, ?course_id: String?,
                                   ?delivery: (String | Symbol)?, ?seat_policy: (String | Symbol)?,
                                   ?request_options: request_options) -> LearnerWriteResult

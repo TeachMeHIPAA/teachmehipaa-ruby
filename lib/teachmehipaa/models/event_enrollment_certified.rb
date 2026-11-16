@@ -10,10 +10,15 @@ module TeachMeHipaa
   class EventEnrollmentCertified < Model
     include Event
 
+    # @return [String]
     field :event_id, "eventId"
+    # @return [String]
     field :event_type, "eventType"
+    # @return [String]
     field :org_id, "orgId"
+    # @return [Time]
     field :occurred_at, "occurredAt", type: :time
+    # @return [EnrollmentCertifiedEventData]
     field :data, "data", type: EnrollmentCertifiedEventData
   end
 end

@@ -5,7 +5,9 @@
 module TeachMeHipaa
   # A ProblemErrorsItem object.
   class ProblemErrorsItem < Model
+    # @return [String]
     field :path, "path"
+    # @return [String]
     field :message, "message"
   end
 end

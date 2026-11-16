@@ -6,6 +6,8 @@ module TeachMeHipaa
       # Retrieve the compliance summary
       #
       # Counts the organization's learners in one course by status. Removed learners aren't counted.
+      #
+      # Needs the +compliance:read+ Scope.
       def retrieve: (?course_id: String?, ?request_options: request_options) -> ComplianceSummary
     end
   end

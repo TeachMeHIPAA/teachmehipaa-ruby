@@ -9,6 +9,13 @@ module TeachMeHipaa
       # Retrieve an operation
       #
       # Retrieves a bulk operation and its result. Operations are kept for 24 hours.
+      #
+      # Works with any Access token, whatever its Scopes.
+      #
+      # @param operation_id [String] The server-minted opaque operation id.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [Operation]
       def retrieve(operation_id, request_options: {})
         request(
           method: "GET",

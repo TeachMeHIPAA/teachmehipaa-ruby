@@ -11,8 +11,12 @@ module TeachMeHipaa
     # `unarchive`.
     #
     # See EnrollmentsBatchRequestOperation for known values; the API may send newer ones.
+    #
+    # @return [String]
     field :operation, "operation"
     # The enrollments to act on: a list of `enrollmentIds` (up to 500), or a `filter`.
+    #
+    # @return [EnrollmentsBatchRequestSelect]
     field :select, "select", type: EnrollmentsBatchRequestSelect
   end
 end

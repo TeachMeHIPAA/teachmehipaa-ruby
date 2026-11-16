@@ -24,13 +24,17 @@ module TeachMeHipaa
   #
   #   operation = client.webhook_subscriptions.test(subscription_id).wait
   class Operation < OperationBase
+    # The default +timeout:+ of #wait, in seconds.
     DEFAULT_WAIT_TIMEOUT = 300.0
+    # The default +interval:+ of #wait, in seconds.
     DEFAULT_WAIT_INTERVAL = 1.0
+    # The longest #wait backs off to between polls, in seconds.
     MAX_WAIT_INTERVAL = 10.0
+    # An Operation's +name+; the capture is its operation id.
     NAME_PATTERN = %r{\Aorganizations/[^/\s]+/operations/([^/\s]+)\z}
 
     # The operation id in an Operation's +name+, which is
-    # "organizations/{orgId}/operations/{operationId}": what
+    # <tt>organizations/{orgId}/operations/{operationId}</tt>: what
     # +operations.retrieve+ takes. Raises ArgumentError for anything else.
     def self.operation_id_from_name(name)
       match = NAME_PATTERN.match(name)
@@ -180,6 +184,7 @@ module TeachMeHipaa
     class Unknown < Model
       include WebhookDeliveryResult
 
+      # The result's kind, a value this library doesn't know yet.
       field :tag, "_tag"
     end
 

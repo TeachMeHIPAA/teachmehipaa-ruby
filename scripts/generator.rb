@@ -8,19 +8,25 @@ require_relative "generator/text"
 require_relative "generator/type_refs"
 require_relative "generator/ir"
 require_relative "generator/models"
+require_relative "generator/scopes"
 require_relative "generator/api_method"
 require_relative "generator/request_call"
 require_relative "generator/rbs_signature"
+require_relative "generator/yard_tags"
+require_relative "generator/reference"
 require_relative "generator/resources"
 
-# Generates the resource and model layer from openapi/sdk-ir.json, the only
-# input it reads (ADR-0001). Run it with `bundle exec rake generate`.
+# Generates the resource and model layer, and its Markdown reference, from
+# openapi/sdk-ir.json, the only input it reads (ADR-0001). Run it with
+# `bundle exec rake generate`.
 module SdkGenerator
   # Directories the generator owns outright: anything else in them is stale.
   DIRECTORIES = %w[
     lib/teachmehipaa/models lib/teachmehipaa/resources sig/teachmehipaa/models sig/teachmehipaa/resources
   ].freeze
   INDEXES = %w[lib/teachmehipaa/models.rb lib/teachmehipaa/resources.rb].freeze
+  # Generated files outside those directories, beside hand-written ones.
+  SINGLE_FILES = [*INDEXES, Reference::PATH].freeze
   # Hand-written, never generated: one .rb and one .rbs per extended resource.
   EXTENSIONS = { "lib/teachmehipaa/extensions" => "rb", "sig/teachmehipaa/extensions" => "rbs" }.freeze
 
@@ -40,7 +46,7 @@ module SdkGenerator
   # same IR always yields the same Hash.
   def generate(data)
     ir = Ir.new(data)
-    Models.new(ir).files.merge(Resources.new(ir).files).sort.to_h
+    Models.new(ir).files.merge(Resources.new(ir).files, Reference.new(ir).files).sort.to_h
   end
 
   # The hand-written files each of Resources::EXTENDED_RESOURCES and
@@ -59,7 +65,7 @@ module SdkGenerator
       path = File.join(root, directory)
       Dir.exist?(path) ? Dir.children(path).map { |name| "#{directory}/#{name}" } : []
     end
-    owned + INDEXES.select { |index| File.exist?(File.join(root, index)) }
+    owned + SINGLE_FILES.select { |path| File.exist?(File.join(root, path)) }
   end
 
   # Rewrites the generated files under +root+ and deletes stale ones.

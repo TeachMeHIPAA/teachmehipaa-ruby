@@ -144,13 +144,19 @@ module SdkGenerator
       args = [":#{Ir.reader_name(field)}", Text.literal(field.fetch("name"))]
       @ir.ruby_type(field.fetch("type"))&.then { |type| args << "type: #{type}" }
       args << "reader: false" unless Ir.reader?(field)
-      "#{Text.comment(@ir.field_doc(field) + [*no_reader_note(field)], 4)}field #{args.join(", ")}\n"
+      "#{Text.comment(@ir.field_doc(field) + yard_tags(field), 4)}field #{args.join(", ")}\n"
     end
 
-    def no_reader_note(field)
-      return nil if Ir.reader?(field)
+    # Model.field's YARD macro documents each field as a reader; a field
+    # without one is hidden from the API reference instead.
+    def yard_tags(field)
+      unless Ir.reader?(field)
+        return ["No reader: +#{Ir.reader_name(field)}+ is already a Ruby method. Read it with #[].",
+                "@!visibility private"]
+      end
 
-      "No reader: +#{Ir.reader_name(field)}+ is already a Ruby method. Read it with #[]."
+      type = @ir.yard(field.fetch("type"))
+      ["@return [#{field.fetch("nullable") || !field.fetch("required") ? Ir.optional_yard(type) : type}]"]
     end
 
     def enum(type)

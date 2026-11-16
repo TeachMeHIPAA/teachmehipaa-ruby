@@ -62,3 +62,21 @@ the Developer API document release `trimmed-2026-11-15`.
   `transport:`.
 - RBS signatures for every public class and method. Ruby 3.2 or newer, no
   runtime dependencies, no telemetry and no disk writes.
+
+### Documentation
+
+- A shorter README, with a pre-release status note, CI and license badges,
+  and a link to a guide for every topic.
+- Guides in `docs/guides/`: getting started, authentication, errors and
+  retries, pagination and events, webhooks, operations and files,
+  conditional requests, testing, configuration and versioning. Every Ruby
+  sample in them runs in the test suite.
+- `docs/reference/resources.md`, a resource reference generated from the
+  SDK IR: every method's Ruby call, HTTP request, Scopes, retry and
+  conditional behaviour, parameters and return type.
+- An API reference built with YARD (`bundle exec rake docs`), with parameter
+  and return types on every resource method and model field, published to
+  GitHub Pages from `main`.
+- Runnable programs in `examples/`: a quickstart, a roster sync by External
+  ID, a Sinatra webhook endpoint and a Certificate export.
+- Resource method doc comments now name the Scopes each method needs.

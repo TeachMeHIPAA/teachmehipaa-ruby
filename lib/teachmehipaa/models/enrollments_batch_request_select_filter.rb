@@ -10,6 +10,7 @@ module TeachMeHipaa
   class EnrollmentsBatchRequestSelectFilter < Model
     include EnrollmentsBatchRequestSelect
 
+    # @return [EnrollmentsBatchRequestSelectFilterFilter]
     field :filter, "filter", type: EnrollmentsBatchRequestSelectFilterFilter
   end
 end

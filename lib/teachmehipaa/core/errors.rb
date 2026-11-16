@@ -43,7 +43,7 @@ module TeachMeHipaa
     end
 
     # Builds the error for a token endpoint response, which carries the OAuth
-    # shape ({error, error_description}) rather than a problem.
+    # shape (+error+ and +error_description+) rather than a problem.
     def self.from_oauth_response(response)
       body = Core::Json.object_body(response)
       oauth_code = string(body&.fetch("error", nil))
@@ -133,6 +133,9 @@ module TeachMeHipaa
   # 5xx, an unlisted status, or a response the API should never send, such
   # as an HTML page where JSON was expected.
   class APIError < Error
+    # The error for a response that isn't the +expected+ media type.
+    #
+    # @api private
     def self.unexpected(response, expected: "JSON")
       content_type = response.headers["content-type"] || "no content type"
       new("The API answered HTTP #{response.status} with #{content_type} instead of #{expected}. " \

@@ -10,6 +10,8 @@ module TeachMeHipaa
       # the `enrollments:write` scope.
       #
       # +select+ takes the form with +enrollment_ids+.
+      #
+      # Needs the +enrollments:write+ Scope.
       def batch: (operation: String | Symbol, select: params,
                   ?request_options: request_options) -> EnrollmentsBatchResults
 
@@ -20,6 +22,8 @@ module TeachMeHipaa
       # the `enrollments:write` scope.
       #
       # +select+ takes the form with +filter+.
+      #
+      # Needs the +enrollments:write+ Scope.
       def batch_by_filter: (operation: String | Symbol, select: params, ?request_options: request_options) -> Operation
 
       # Cancel an enrollment
@@ -27,17 +31,23 @@ module TeachMeHipaa
       # Cancels an invite that hasn't been accepted yet and returns its seat to the pool. With
       # `refund: true`, refunds the seat to the card that paid for it instead. The enrollment
       # remains, with status `CANCELLED`. Requires the `enrollments:write` scope.
+      #
+      # Needs the +enrollments:write+ Scope.
       def cancel: (String enrollment_id, ?refund: bool?, ?request_options: request_options) -> CancelEnrollmentResponse
 
       # Create an enrollment
       #
       # Invites a person to a course, creating their profile if needed, and uses one seat. The
       # course defaults to `hipaa`. Requires the `enrollments:write` scope.
+      #
+      # Needs the +enrollments:write+ Scope.
       def create: (email: String, ?name: String?, ?course_id: String?, ?request_options: request_options) -> Enrollment
 
       # Export enrollments
       #
       # Exports the organization's enrollments as CSV. Requires the `enrollments:read` scope.
+      #
+      # Needs the +enrollments:read+ Scope.
       def export: (format: String | Symbol, ?request_options: request_options) -> Operation
 
       # Import learners from CSV
@@ -47,12 +57,16 @@ module TeachMeHipaa
       # Requires the `enrollments:write` scope.
       #
       # Sets +options.validate_only+ to false itself.
+      #
+      # Needs the +enrollments:write+ Scope.
       def import: (file: upload, ?options: params?, ?request_options: request_options) -> Operation
 
       # List all enrollments
       #
       # Returns a list of the organization's enrollments. Filter by `status`, `courseId` or
       # `archived`. Requires the `enrollments:read` scope.
+      #
+      # Needs the +enrollments:read+ Scope.
       def list: (?limit: Integer?, ?cursor: String?, ?status: (String | Symbol)?, ?course_id: String?,
                  ?archived: (String | Symbol)?, ?include: (String | Symbol)?,
                  ?request_options: request_options) -> Page[OrgEnrollmentListItem]
@@ -64,24 +78,32 @@ module TeachMeHipaa
       # Requires the `enrollments:write` scope.
       #
       # Sets +options.validate_only+ to true itself.
+      #
+      # Needs the +enrollments:write+ Scope.
       def preview_import: (file: upload, ?options: params?, ?request_options: request_options) -> ImportPreview
 
       # Remind an enrollment
       #
       # Emails the learner again: the invitation if they haven't joined, or a reminder linking to
       # the training if they have. Requires the `enrollments:write` scope.
+      #
+      # Needs the +enrollments:write+ Scope.
       def remind: (String enrollment_id, ?request_options: request_options) -> EnrollmentActionAccepted
 
       # Renew an enrollment
       #
       # Starts the next certification cycle for a certified learner and invites them again, using
       # one seat. Retrying never uses a second seat. Requires the `enrollments:write` scope.
+      #
+      # Needs the +enrollments:write+ Scope.
       def renew: (String enrollment_id, ?request_options: request_options) -> Enrollment
 
       # Resend an invite
       #
       # Sends a pending invite again, within the same cycle. To invite a certified learner again,
       # renew the enrollment. Requires the `enrollments:write` scope.
+      #
+      # Needs the +enrollments:write+ Scope.
       def resend_invite: (String enrollment_id, ?request_options: request_options) -> EnrollmentActionAccepted
 
       # Retrieve an enrollment
@@ -90,6 +112,8 @@ module TeachMeHipaa
       #
       # Given +if_none_match:+ (an ETag, or the copy you hold), returns NotModified when your copy
       # is current.
+      #
+      # Needs the +enrollments:read+ Scope.
       def retrieve: (String enrollment_id, ?request_options: request_options) -> Enrollment
                   | (String enrollment_id, if_none_match: etag?,
                      ?request_options: request_options) -> (Enrollment | NotModified)

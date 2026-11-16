@@ -48,6 +48,7 @@ module TeachMeHipaa
       self
     end
 
+    # @return [String] The tail's position.
     def inspect
       "#<#{self.class.name} last_event_id=#{last_event_id.inspect}>"
     end
@@ -62,6 +63,7 @@ module TeachMeHipaa
   module Resources
     # The methods under +client.events+: the generated EventsBase plus #tail.
     class Events < EventsBase
+      # The default +interval:+ of #tail, in seconds.
       DEFAULT_TAIL_INTERVAL = 2.0
 
       # Tail the event log

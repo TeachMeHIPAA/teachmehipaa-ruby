@@ -9,7 +9,9 @@ module TeachMeHipaa
   class AuditEventActorScim < Model
     include AuditEventActor
 
+    # @return [String]
     field :type, "type"
+    # @return [String]
     field :key_id, "keyId"
   end
 end

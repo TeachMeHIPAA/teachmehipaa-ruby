@@ -3,6 +3,7 @@
 module TeachMeHipaa
   # The class of OMIT, its only instance; named so signatures can admit it.
   class Omit
+    # @return [String] "TeachMeHipaa::OMIT", the constant to pass.
     def inspect = "TeachMeHipaa::OMIT"
   end
 
@@ -16,14 +17,19 @@ module TeachMeHipaa
   # The HTTP response a returned object was read from. +headers+ has
   # lower-case String keys.
   LastResponse = Data.define(:status, :headers) do
+    # @api private
     def self.from(response)
       new(status: response.status, headers: response.headers)
     end
 
+    # The id to quote to TeachMeHIPAA support about this response.
+    # @return [String, nil]
     def request_id
       headers["x-request-id"]
     end
 
+    # The ETag to send back as +if_match:+ or +if_none_match:+.
+    # @return [String, nil]
     def etag
       headers["etag"]
     end
@@ -36,6 +42,7 @@ module TeachMeHipaa
   # kept and reachable with #[] and #to_h, and enum fields are plain Strings
   # that may hold values newer than the library.
   class Model
+    # @api private
     Field = Data.define(:wire_name, :type) do
       def read(value) = Core::Values.read(type, value)
       def write(value) = Core::Values.write(type, value)
@@ -69,6 +76,12 @@ module TeachMeHipaa
       # [type] for a list and { String => type } for a map. +reader: false+
       # skips the reader for a name Ruby objects already answer to (such as
       # +method+); #[] still reads it.
+      #
+      # The macro documents each declared field as a reader in the API
+      # reference, under the doc comment written above the declaration.
+      #
+      # @!macro [attach] field
+      #   @!attribute [r] $1
       def field(name, wire_name, type: nil, reader: true)
         fields[name] = Field.new(wire_name:, type:)
         define_method(name) { @values[name] } if reader
@@ -110,15 +123,18 @@ module TeachMeHipaa
       known.merge(unknown.transform_keys(&:to_sym))
     end
 
+    # Equal when +other+ is the same class with the same fields.
     def ==(other)
       other.instance_of?(self.class) && other.to_h == to_h
     end
     alias eql? ==
 
+    # Consistent with #==, so models work as Hash keys.
     def hash
       [self.class, to_h].hash
     end
 
+    # @return [String] The class and every field.
     def inspect
       "#<#{self.class.name} #{to_h.map { |key, value| "#{key}: #{value.inspect}" }.join(", ")}>"
     end

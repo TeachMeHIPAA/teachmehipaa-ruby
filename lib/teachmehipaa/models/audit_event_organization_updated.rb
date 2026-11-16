@@ -10,12 +10,19 @@ module TeachMeHipaa
   class AuditEventOrganizationUpdated < Model
     include AuditEvent
 
+    # @return [String]
     field :event_id, "eventId"
+    # @return [String]
     field :at, "at"
+    # @return [String]
     field :type, "type"
+    # @return [String]
     field :actor_subject_id, "actorSubjectId"
+    # @return [AuditEventActor]
     field :actor, "actor", type: AuditEventActor
     # See AuditEventOrganizationUpdatedFieldsItem for known values; the API may send newer ones.
+    #
+    # @return [Array<String>]
     field :fields, "fields"
   end
 end

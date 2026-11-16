@@ -7,6 +7,8 @@ module TeachMeHipaa
       #
       # Returns a list of the organization's audit events, newest first. Filter by `type`,
       # `transition`, `subjectId`, or a `since` and `until` range.
+      #
+      # Needs the +audit:read+ Scope.
       def list: (?limit: Integer?, ?cursor: String?, ?type: (String | Symbol)?, ?transition: (String | Symbol)?,
                  ?subject_id: String?, ?since: (Time | String)?, ?until: (Time | String)?,
                  ?request_options: request_options) -> Page[AuditEvent]

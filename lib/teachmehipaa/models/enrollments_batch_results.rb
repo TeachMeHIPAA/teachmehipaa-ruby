@@ -10,8 +10,12 @@ module TeachMeHipaa
     # The operation that was run.
     #
     # See EnrollmentsBatchResultsOperation for known values; the API may send newer ones.
+    #
+    # @return [String]
     field :operation, "operation"
     # One result per enrollment: `succeeded`, `skipped` or `failed` with a problem.
+    #
+    # @return [Array<EnrollmentsBatchResultsResultsItem>]
     field :results, "results", type: [EnrollmentsBatchResultsResultsItem]
   end
 end

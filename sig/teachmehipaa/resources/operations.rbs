@@ -6,6 +6,8 @@ module TeachMeHipaa
       # Retrieve an operation
       #
       # Retrieves a bulk operation and its result. Operations are kept for 24 hours.
+      #
+      # Works with any Access token, whatever its Scopes.
       def retrieve: (String operation_id, ?request_options: request_options) -> Operation
     end
   end

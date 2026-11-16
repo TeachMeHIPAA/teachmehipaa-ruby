@@ -7,9 +7,13 @@ require_relative "problem"
 module TeachMeHipaa
   # An EnrollmentsBatchResultsResultsItem object.
   class EnrollmentsBatchResultsResultsItem < Model
+    # @return [String]
     field :enrollment_id, "enrollmentId"
     # See EnrollmentsBatchResultsResultsItemOutcome for known values; the API may send newer ones.
+    #
+    # @return [String]
     field :outcome, "outcome"
+    # @return [Problem, nil]
     field :problem, "problem", type: Problem
   end
 end

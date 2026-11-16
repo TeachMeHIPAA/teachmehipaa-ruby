@@ -12,6 +12,16 @@ module TeachMeHipaa
       # Returns a list of the organization's events from the last 30 days, oldest first. Pass the
       # last `eventId` you processed as `after` to resume where you stopped, and `type` to list one
       # event type.
+      #
+      # Needs the +webhooks:manage+ or +audit:read+ Scope.
+      #
+      # @param limit [Integer, nil] How many objects to return, between 1 and 100. Defaults to 20.
+      # @param after [String, nil] Return events after this event id (exclusive). The previous
+      #   page's `nextCursor`.
+      # @param type [String, Symbol, nil] Filter to one event type.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [Page<Event>]
       def list(limit: nil, after: nil, type: nil, request_options: {})
         request(
           method: "GET",

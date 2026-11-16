@@ -5,7 +5,9 @@
 module TeachMeHipaa
   # The course this learner record is for.
   class LearnerCourse < Model
+    # @return [String]
     field :course_id, "courseId"
+    # @return [String]
     field :title, "title"
   end
 end

@@ -12,6 +12,11 @@ module TeachMeHipaa
       # Limited to 60 requests a minute per IP address.
       #
       # Sends no Access token, so it also works on a client built without credentials.
+      #
+      # @param tiny_id [String] The id at the end of the certificate's tme.so link.
+      # @param request_options [Hash] Options for this call only: +idempotency_key+,
+      #   +max_retries+, +timeout+, +request_id+ and +headers+.
+      # @return [CertificateVerification]
       def retrieve(tiny_id, request_options: {})
         request(
           method: "GET",

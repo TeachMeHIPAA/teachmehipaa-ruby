@@ -7,7 +7,9 @@ require_relative "audit_event"
 module TeachMeHipaa
   # An AuditEventsPage object.
   class AuditEventsPage < Model
+    # @return [Array<AuditEvent>]
     field :items, "items", type: [AuditEvent]
+    # @return [String, nil]
     field :next_cursor, "nextCursor"
   end
 end

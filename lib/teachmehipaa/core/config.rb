@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
 module TeachMeHipaa
+  # The base URL of each Environment.
   ENVIRONMENTS = {
     live: "https://api.tme.so/v1",
     sandbox: "https://api-teachmehipaa-dev.web.app/v1",
   }.freeze
 
+  # The default of Client.new's +max_retries:+.
   DEFAULT_MAX_RETRIES = 2
+  # The default of Client.new's +timeout:+, in seconds.
   DEFAULT_TIMEOUT = 80.0
 
   # A client's settings, fixed at construction (ADR-0002). +clock+ returns
@@ -16,6 +19,9 @@ module TeachMeHipaa
     :environment, :base_url, :organization_id, :max_retries, :timeout, :user_agent,
     :logger, :clock, :sleep
   ) do
+    # Checks Client.new's settings and freezes them.
+    #
+    # @api private
     def self.build(environment:, base_url:, organization_id:, max_retries:, timeout:,
                    app_info:, logger:, clock:, sleep:)
       environment = check_environment(environment)
@@ -55,7 +61,7 @@ module TeachMeHipaa
     # A call's +request_options:+, checked, with the timeout as a Float.
     # +request_id+ is sent as x-request-id, to correlate the caller's logs
     # with TeachMeHIPAA support; the API replaces one that doesn't match
-    # /\A[A-Za-z0-9._-]{1,128}\z/.
+    # <tt>/\A[A-Za-z0-9._-]{1,128}\z/</tt>.
     def self.check_request_options(options)
       unknown = options.keys - %i[headers timeout max_retries idempotency_key request_id]
       raise ArgumentError, "unknown request option(s): #{unknown.map(&:inspect).join(", ")}" unless unknown.empty?

@@ -23,7 +23,7 @@ module SdkGenerator
     }.freeze
 
     # +body+ is true for a request-body field.
-    Param = Data.define(:ruby, :wire, :required, :nullable, :type, :body)
+    Param = Data.define(:ruby, :wire, :required, :nullable, :type, :body, :description)
 
     attr_reader :data, :qualified_name, :body, :ir
 
@@ -41,7 +41,7 @@ module SdkGenerator
 
     def doc
       [data["summary"], data["description"], *constraint_notes, (PATCH_NOTE if merge_patch?),
-       (BINARY_NOTE if binary?), (CONDITIONAL_NOTE if if_none_match), (PUBLIC_NOTE if public?)]
+       (BINARY_NOTE if binary?), (CONDITIONAL_NOTE if if_none_match), (PUBLIC_NOTE if public?), Scopes.note(self)]
     end
 
     # An operation the IR marks +security: none+, which the API serves to
@@ -119,12 +119,14 @@ module SdkGenerator
       requirement = data.fetch(ir_key)
       return nil if requirement == "none"
 
-      Param.new(ruby:, wire: nil, required: requirement == "required", nullable: false, type: nil, body: false)
+      Param.new(ruby:, wire: nil, required: requirement == "required", nullable: false, type: nil, body: false,
+                description: nil)
     end
 
     def param(field, required, body: false)
       Param.new(ruby: Naming.snake(field.fetch("name")), wire: field.fetch("name"), required:,
-                nullable: field.fetch("nullable", false), type: field.fetch("type"), body:)
+                nullable: field.fetch("nullable", false), type: field.fetch("type"), body:,
+                description: field["description"])
     end
 
     def constraint_notes

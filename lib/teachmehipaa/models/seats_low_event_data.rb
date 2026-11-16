@@ -5,7 +5,9 @@
 module TeachMeHipaa
   # A SeatsLowEventData object.
   class SeatsLowEventData < Model
+    # @return [Integer]
     field :available, "available"
+    # @return [Integer]
     field :threshold, "threshold"
   end
 end

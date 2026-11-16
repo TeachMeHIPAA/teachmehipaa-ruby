@@ -3,6 +3,7 @@
 # Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
 
 module TeachMeHipaa
+  # One class per API resource, reached from the client: +client.learners+ and so on.
   module Resources
     # The resource accessors on TeachMeHipaa::Client.
     module Root

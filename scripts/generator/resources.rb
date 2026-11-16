@@ -68,8 +68,8 @@ module SdkGenerator
       nodes.flat_map { |node| [node, *flatten(node.children)] }
     end
 
-    def wrap(body)
-      Text::RUBY_HEADER + Text.block("module TeachMeHipaa", Text.block("module Resources", body))
+    def wrap(body, doc: "")
+      Text::RUBY_HEADER + Text.block("module TeachMeHipaa", doc + Text.block("module Resources", body))
     end
 
     def wrap_rbs(body)
@@ -99,7 +99,8 @@ module SdkGenerator
 
     def ruby_method(method)
       signature = Text.pack("def #{method.ruby_name}(", method.ruby_parameters, ")", 6).chomp
-      Text.comment(method.doc, 6) + Text.block(signature, RequestCall.new(method).source)
+      "#{Text.comment(method.doc, 6)}#\n#{YardTags.new(method).comment(6)}" +
+        Text.block(signature, RequestCall.new(method).source)
     end
 
     def rbs_resource(node, methods)
@@ -113,7 +114,8 @@ module SdkGenerator
       assignments = tree.map { |node| "@#{node.accessor} = #{node.class_name}.new(requestor)\n" }
       body = "#{Text.pack("attr_reader ", tree.map { |node| ":#{node.accessor}" }, "", 6)}\nprivate\n\n" \
              "#{Text.block("def build_resources(requestor)", assignments.join)}"
-      wrap("# The resource accessors on TeachMeHipaa::Client.\n#{Text.block("module Root", body)}")
+      wrap("# The resource accessors on TeachMeHipaa::Client.\n#{Text.block("module Root", body)}",
+           doc: "# One class per API resource, reached from the client: +client.learners+ and so on.\n")
     end
 
     def rbs_root

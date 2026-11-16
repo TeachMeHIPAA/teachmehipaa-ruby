@@ -10,12 +10,19 @@ module TeachMeHipaa
   class AuditEventMemberTransferred < Model
     include AuditEvent
 
+    # @return [String]
     field :event_id, "eventId"
+    # @return [String]
     field :at, "at"
+    # @return [String]
     field :type, "type"
+    # @return [String]
     field :actor_subject_id, "actorSubjectId"
+    # @return [AuditEventActor]
     field :actor, "actor", type: AuditEventActor
+    # @return [String]
     field :subject_id, "subjectId"
+    # @return [String]
     field :target_org_id, "targetOrgId"
   end
 end

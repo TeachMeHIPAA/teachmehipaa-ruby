@@ -7,8 +7,12 @@ module TeachMeHipaa
   class EnrollmentsBatchRequestSelectFilterFilter < Model
     # See EnrollmentsBatchRequestSelectFilterFilterStatus for known values; the API may send newer
     # ones.
+    #
+    # @return [String, nil]
     field :status, "status"
+    # @return [String, nil]
     field :course_id, "courseId"
+    # @return [Boolean, nil]
     field :archived, "archived"
   end
 end
