@@ -56,3 +56,9 @@ Minitest/MultipleAssertions:
 # The generator's classes all take the parsed IR, the project's term for it.
 Naming/MethodParameterName:
   AllowedNames: [as, at, by, cc, db, id, if, in, io, ip, ir, of, on, os, pp, to]
+
+# The sample table holds Ruby source as single-quoted Strings, interpolation
+# included, for the generator to emit as is.
+Lint/InterpolationCheck:
+  Exclude:
+    - "scripts/generator/sample_calls.rb"
