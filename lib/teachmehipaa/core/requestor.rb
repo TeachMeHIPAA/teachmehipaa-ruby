@@ -148,7 +148,7 @@ module TeachMeHipaa
         return organization_id if organization_id.is_a?(String)
 
         raise Error.new(
-          "The access token is not bound to an Organization, so it cannot call Organization endpoints.",
+          "The Access token is not bound to an Organization. Pass organization_id: when you create the client.",
           status: response.status, request_id: response.headers["x-request-id"],
           headers: response.headers
         )

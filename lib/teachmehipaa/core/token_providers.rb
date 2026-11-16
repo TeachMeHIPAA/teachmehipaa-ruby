@@ -55,6 +55,9 @@ module TeachMeHipaa
     # token and mints a new one when it nears expiry; concurrent callers
     # share a single mint.
     class ClientCredentials
+      TOKEN_PATH = "/auth/token"
+      private_constant :TOKEN_PATH
+
       def initialize(client_id:, client_secret:, scopes: nil)
         @client_id = client_id
         @client_secret = client_secret
@@ -95,7 +98,7 @@ module TeachMeHipaa
         form["scope"] = @scopes.join(" ") unless @scopes.nil?
         {
           method: "POST",
-          path: "/auth/token",
+          path: TOKEN_PATH,
           headers: {
             "authorization" => "Basic #{basic_credentials}",
             "content-type" => "application/x-www-form-urlencoded",

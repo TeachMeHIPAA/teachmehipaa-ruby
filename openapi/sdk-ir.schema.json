@@ -1014,15 +1014,11 @@
               "name": {
                 "minLength": 1,
                 "type": "string"
-              },
-              "partnerOnly": {
-                "type": "boolean"
               }
             },
             "required": [
               "name",
-              "description",
-              "partnerOnly"
+              "description"
             ],
             "type": "object"
           },

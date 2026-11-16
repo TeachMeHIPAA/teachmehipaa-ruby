@@ -54,6 +54,7 @@ class OrganizationBindingTest < Minitest::Test
 
     error = assert_raises(TeachMeHipaa::Error) { build_client(transport).learners.retrieve(LEARNER_ID) }
 
-    assert_match(/not bound to an Organization/, error.message)
+    assert_equal "The Access token is not bound to an Organization. " \
+                 "Pass organization_id: when you create the client.", error.message
   end
 end

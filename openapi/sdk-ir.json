@@ -5,55 +5,46 @@
         "httpMethod": "POST",
         "operationId": "createAccessToken",
         "path": "/auth/token",
-        "reason": "Form-encoded OAuth endpoint with a 3-way oneOf 200 and inherited bearer security (§10, §12.11); every SDK core implements it by hand."
+        "reason": "Form-encoded OAuth endpoint with a 2-way oneOf 200 and inherited bearer security (§10, §12.11); every SDK core implements it by hand."
       }
     ],
     "introspectionPath": "/auth/introspection",
     "scopes": [
       {
         "description": "Read the organization's audit-event trail and event log.",
-        "name": "audit:read",
-        "partnerOnly": false
+        "name": "audit:read"
       },
       {
         "description": "Read certificates and download certificate artifacts.",
-        "name": "certificates:read",
-        "partnerOnly": false
+        "name": "certificates:read"
       },
       {
         "description": "API clients: read the compliance summary.",
-        "name": "compliance:read",
-        "partnerOnly": false
+        "name": "compliance:read"
       },
       {
         "description": "Read enrollments, invitations, seats, and member sub-resources.",
-        "name": "enrollments:read",
-        "partnerOnly": false
+        "name": "enrollments:read"
       },
       {
         "description": "Create and transition enrollments and assessment attempts.",
-        "name": "enrollments:write",
-        "partnerOnly": false
+        "name": "enrollments:write"
       },
       {
         "description": "API clients: read learners.",
-        "name": "learners:read",
-        "partnerOnly": false
+        "name": "learners:read"
       },
       {
         "description": "API clients: create and update learners.",
-        "name": "learners:write",
-        "partnerOnly": false
+        "name": "learners:write"
       },
       {
         "description": "Read organization members and the organization record.",
-        "name": "members:read",
-        "partnerOnly": false
+        "name": "members:read"
       },
       {
         "description": "API clients: manage webhook subscriptions and read the event log.",
-        "name": "webhooks:manage",
-        "partnerOnly": false
+        "name": "webhooks:manage"
       }
     ],
     "tokenPath": "/auth/token"
