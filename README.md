@@ -1,38 +1,42 @@
-# TeachMeHIPAA Ruby Library
+# teachmehipaa
 
-Enroll Learners in HIPAA training and track their compliance from your own
-Ruby code, through the TeachMeHIPAA Developer API.
+A Ruby client for the TeachMeHIPAA Developer API. Invite Learners to HIPAA
+training from your own app, and hear about their Certificates the moment
+they're issued.
 
 [![CI](https://github.com/TeachMeHIPAA/teachmehipaa-ruby/actions/workflows/ci.yml/badge.svg)](https://github.com/TeachMeHIPAA/teachmehipaa-ruby/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 > [!IMPORTANT]
-> **Status: pre-release.** The TeachMeHIPAA Developer API isn't generally
-> available yet, and this gem isn't published to RubyGems. Until it is,
-> install it from this GitHub repository (below). Expect changes before 1.0.
+> **Pre-release.** The Developer API isn't generally available yet, and the
+> gem isn't on RubyGems. Until both happen, point Bundler at this repository.
+> The interface can still change before 1.0.
 
-The library handles Access tokens, the Organization binding, retries,
-idempotency keys, typed errors, pagination, ETags, Operations and webhook
-verification, so your code only calls methods. It has no runtime
-dependencies, sends no telemetry and never logs request bodies.
+## Requirements
+
+Ruby 3.2 or newer. CI runs the suite on 3.2, 3.3 and 3.4. The gem has no
+runtime dependencies: it talks to the API through `Net::HTTP` and parses
+JSON with the standard library.
 
 ## Installation
 
-Ruby 3.2 or newer. Add the gem to your Gemfile from GitHub, then run
-`bundle install`:
+Add the gem to your Gemfile, straight from GitHub:
 
 <!-- sample: install -->
 ```ruby
-# Gemfile
 gem "teachmehipaa", git: "https://github.com/TeachMeHIPAA/teachmehipaa-ruby"
 ```
 
-Once it is on RubyGems, `gem "teachmehipaa"` will replace that line.
+Then run `bundle install`. Bundler records the commit it fetched in
+`Gemfile.lock`, so every machine gets the same code until you run
+`bundle update teachmehipaa`. Add `ref:` with a commit SHA to pin one on
+purpose. Once the gem reaches RubyGems, `gem "teachmehipaa"` replaces the
+whole line.
 
-## Quickstart
+## Usage
 
-Create an API client in the TeachMeHIPAA console to get a client id
-(`cli_…`) and secret (`tmh_cs_…`), and start in the Sandbox Environment:
+You need an API client from the TeachMeHIPAA console: a client id
+(`cli_…`) and a secret (`tmh_cs_…`). Make it in the Sandbox while you build.
 
 <!-- sample: quickstart -->
 ```ruby
@@ -47,45 +51,78 @@ client = TeachMeHipaa::Client.new(
 learner = client.learners.retrieve("sub_01JD80AB2C3D4E5F6G7H8J9K0M")
 puts "#{learner.name}: #{learner.status}"
 
-client.learners.list(status: "in_progress", limit: 20).auto_paging_each do |item|
-  puts item.email
+client.learners.list(status: :in_progress).auto_paging_each do |person|
+  puts person.email
 end
 ```
 
-The [getting started guide](docs/guides/getting-started.md) walks through
-your first calls, and [`examples/`](examples) has small programs you can run
-against the Sandbox.
+The client fetches an Access token on its first call, finds your
+Organization from it, and keeps both for later calls. You never pass an
+Organization id.
 
-## Documentation
+A few habits run through the whole library:
 
-| Topic | Guide |
-| --- | --- |
-| Install, first calls, reading responses | [Getting started](docs/guides/getting-started.md) |
-| Client credentials, Scopes, Live and Sandbox, the Organization binding, static tokens, public lookups | [Authentication](docs/guides/authentication.md) |
-| Error classes, `code`, request ids, retries, idempotency keys | [Errors and retries](docs/guides/errors-and-retries.md) |
-| Auto-paging, the Event log, `events.tail` | [Pagination and events](docs/guides/pagination-and-events.md) |
-| Verifying Deliveries, Test deliveries, Rails and Sinatra handlers | [Webhooks](docs/guides/webhooks.md) |
-| `Operation#wait`, CSV exports, Certificate PDFs, CSV imports | [Operations and files](docs/guides/operations-and-files.md) |
-| ETags, `if_match:`, `if_none_match:`, merge-patch updates | [Conditional requests](docs/guides/conditional-requests.md) |
-| The Sandbox, fake transports, signing test Deliveries | [Testing](docs/guides/testing.md) |
-| Every client option, logging, timeouts, thread safety | [Configuration](docs/guides/configuration.md) |
-| Semantic versioning, `OPENAPI_VERSION`, API additions | [Versioning](docs/guides/versioning.md) |
+- Ids in the URL go first, as positional arguments. Everything else is a
+  keyword, in snake_case: `external_id:` for the API's `externalId`.
+- Enum values can be Symbols or Strings. Readers always hand back Strings.
+- Models answer snake_case readers and `[]`, and `to_h` hands back a Hash
+  with Symbol keys.
+- A list returns a `TeachMeHipaa::Page`, which is `Enumerable` over its own
+  items. `auto_paging_each` walks every page, and without a block it
+  returns an `Enumerator` you can make `lazy`.
+- Failures raise subclasses of `TeachMeHipaa::Error`.
 
-Every resource method, with its HTTP request, Scopes and parameters, is in
-the [resource reference](docs/reference/resources.md). The
-[API reference](https://teachmehipaa.github.io/teachmehipaa-ruby/), built with
-YARD, documents every class and field; [`docs/`](docs/README.md) lists
-everything.
+### In a Rails app
+
+Create one client in an initializer and share it: it is thread-safe. The
+[Rails guide](docs/guides/rails.md) has the initializer, credentials, a
+webhook controller and a background job.
+
+## Guides
+
+- [Setting up a client](docs/guides/client.md): credentials, Live and
+  Sandbox, Scopes, every option, logging, threads.
+- [Models, pages and ETags](docs/guides/models-and-pages.md): reading what
+  comes back, paging with `Enumerable`, safe updates.
+- [Errors and retries](docs/guides/errors.md): which class to rescue, what
+  the client retries, idempotency keys.
+- [Events and webhooks](docs/guides/events-and-webhooks.md): the Event log,
+  `events.tail`, verifying Deliveries in Rack and Sinatra.
+- [Operations and files](docs/guides/operations.md): `Operation#wait`, CSV
+  exports and imports, Certificate PDFs.
+- [Rails](docs/guides/rails.md): an initializer, a webhook controller and
+  jobs.
+- [Testing](docs/guides/testing.md): the Sandbox, a fake transport, signing
+  your own Deliveries.
+- [Versions and upgrades](docs/guides/upgrading.md): what a version number
+  promises and how API additions reach you.
+
+Every method, with its HTTP request, Scopes and parameters, is listed in the
+[resource reference](docs/reference/resources.md). YARD builds the
+[API reference](https://teachmehipaa.github.io/teachmehipaa-ruby/) from the
+doc comments, and RBS signatures ship in `sig/`. [`examples/`](examples)
+holds small programs you can run against the Sandbox, and
+[`docs/`](docs/README.md) indexes it all.
+
+## Development
+
+```sh
+bundle install
+bundle exec rake          # RuboCop, RBS validation, and the tests under RBS checks
+bundle exec rake generate # rebuild resources, models and reference from openapi/sdk-ir.json
+```
+
+[CONTRIBUTING.md](CONTRIBUTING.md) covers the generator, the contract suite
+and releases.
 
 ## Support and security
 
 <!-- TODO(Nick): confirm the support address before launch. -->
 
-For help, contact TeachMeHIPAA support and quote the `request_id` from the
-error or `last_response`. To report a vulnerability, see
-[SECURITY.md](SECURITY.md); please don't open a public issue.
+For help, contact TeachMeHIPAA support with the `request_id` from the error
+or from `last_response`. To report a vulnerability, follow
+[SECURITY.md](SECURITY.md) and keep it out of public issues.
 
-## Contributing
+## License
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). The library is MIT licensed; see
-[LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).

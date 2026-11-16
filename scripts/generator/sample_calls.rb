@@ -89,7 +89,7 @@ module SdkGenerator
       "updateLearner" => call("learner", "puts learner.name",
                               before: "current = client.learners.retrieve(#{LEARNER_ID.inspect})",
                               args: { if_match: Raw.new("current"), name: NAME }),
-      "upsertLearnerByExternalId" => call("learner", 'puts learner.created? ? "created" : "updated"',
+      "upsertLearnerByExternalId" => call("learner", 'puts learner.created? ? "Invited" : "Already enrolled"',
                                           args: { email: EMAIL, name: NAME }),
       "listMembers" => call("members", "members.auto_paging_each { |member| puts member.email }",
                             args: { role: "admin" }),

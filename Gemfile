@@ -13,6 +13,11 @@ gem "rubocop", "1.92.2"
 gem "rubocop-minitest", "0.41.0"
 # The README's Sinatra webhook handler runs under the README doc test.
 gem "sinatra", "~> 4.1"
+# The Rails guide's initializer, job and webhook controller run under
+# `rake test:rails`, in a process of their own. The gem itself never loads
+# Rails.
+gem "actionpack", ">= 7.1", "< 9"
+gem "activejob", ">= 7.1", "< 9"
 # The API reference (`bundle exec rake docs`): YARD renders the code's RDoc
 # comments with rdoc (no longer a default gem from Ruby 4.0) and the Markdown
 # guides with Redcarpet.
