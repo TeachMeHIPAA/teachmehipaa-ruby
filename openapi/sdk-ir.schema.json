@@ -956,10 +956,6 @@
     "auth": {
       "additionalProperties": false,
       "properties": {
-        "authorizeUrl": {
-          "format": "uri",
-          "type": "string"
-        },
         "handWritten": {
           "items": {
             "additionalProperties": false,
@@ -1041,7 +1037,6 @@
         "handWritten",
         "tokenPath",
         "introspectionPath",
-        "authorizeUrl",
         "scopes"
       ],
       "type": "object"
