@@ -1,0 +1,12 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # Tell the variants apart by +type+ or by class. New variants may be added; handle ones you don't
+  # recognize.
+  module AuditEvent
+    extend Union
+
+    class Unknown < Model
+      include AuditEvent
+    end
+  end
+end

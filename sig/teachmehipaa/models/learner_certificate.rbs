@@ -1,0 +1,11 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # The learner's current certificate, with its verification and PDF links.
+  class LearnerCertificate < Model
+    def certificate_id: () -> String
+    def issued_at: () -> Time
+    def expires_at: () -> Time
+    def verify_url: () -> String?
+    def pdf_url: () -> String
+  end
+end

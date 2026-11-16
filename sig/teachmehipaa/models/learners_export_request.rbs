@@ -1,0 +1,16 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A LearnersExportRequest object.
+  class LearnersExportRequest < Model
+    # The file format. Only `csv` today.
+    #
+    # See LearnersExportRequestFormat for known values; the API may send newer ones.
+    def format: () -> String
+    # The course to export. Defaults to the organization's default course.
+    def course_id: () -> String?
+    # Only export learners with this status.
+    #
+    # See LearnerStatus for known values; the API may send newer ones.
+    def status: () -> String?
+  end
+end

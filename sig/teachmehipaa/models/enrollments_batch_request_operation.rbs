@@ -1,0 +1,15 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # What to do to each enrollment: `remind`, `resendInvite`, `cancel`, `recertify`, `archive` or
+  # `unarchive`.
+  #
+  # Known values; the API may add more at any time, so handle values you don't recognize.
+  module EnrollmentsBatchRequestOperation
+    REMIND: String
+    RESEND_INVITE: String
+    CANCEL: String
+    RECERTIFY: String
+    ARCHIVE: String
+    UNARCHIVE: String
+  end
+end

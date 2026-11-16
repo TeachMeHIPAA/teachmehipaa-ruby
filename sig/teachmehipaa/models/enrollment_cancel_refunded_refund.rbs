@@ -1,0 +1,9 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An EnrollmentCancelRefundedRefund object.
+  class EnrollmentCancelRefundedRefund < Model
+    def refund_id: () -> String
+    def amount_cents: () -> Integer
+    def currency: () -> String
+  end
+end

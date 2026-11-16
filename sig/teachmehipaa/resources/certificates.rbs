@@ -1,0 +1,51 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  module Resources
+    # The methods under +client.certificates+.
+    class Certificates < Core::Resource
+      # Download a certificate
+      #
+      # Downloads the certificate as a PDF. Revoked and expired certificates are watermarked.
+      # Requires the `certificates:read` scope.
+      #
+      # Returns the whole file as a BinaryResponse. Given a block, yields the file's bytes in chunks
+      # as they arrive instead and returns a StreamedResponse.
+      #
+      # Needs the +certificates:read+ Scope.
+      def download_pdf: (String cert_id, ?request_options: request_options) -> BinaryResponse
+                      | (String cert_id,
+                         ?request_options: request_options) { (String chunk) -> void } -> StreamedResponse
+
+      # Export certificates
+      #
+      # Exports the organization's certificate records as CSV. Requires the `certificates:read`
+      # scope.
+      #
+      # Needs the +certificates:read+ Scope.
+      def export: (format: String | Symbol, ?request_options: request_options) -> Operation
+
+      # List all certificates
+      #
+      # Returns a list of the organization's certificates. Pass `subjectId` to list one learner's.
+      #
+      # Needs the +certificates:read+ Scope.
+      def list: (?limit: Integer?, ?cursor: String?, ?subject_id: String?,
+                 ?request_options: request_options) -> Page[Certificate]
+
+      # Retrieve a certificate
+      #
+      # Retrieves a certificate.
+      #
+      # Needs the +certificates:read+ Scope.
+      def retrieve: (String cert_id, ?request_options: request_options) -> Certificate
+
+      # Retrieve certificate links
+      #
+      # Retrieves the certificate's LinkedIn add-to-profile link and its public `tme.so`
+      # verification link. Requires the `certificates:read` scope.
+      #
+      # Needs the +certificates:read+ Scope.
+      def retrieve_links: (String cert_id, ?request_options: request_options) -> CertificateLinks
+    end
+  end
+end

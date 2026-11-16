@@ -1,0 +1,17 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # The status to display. Adds `EXPIRING`, `EXPIRED` and `ARCHIVED`, derived when you read it.
+  #
+  # Known values; the API may add more at any time, so handle values you don't recognize.
+  module EnrollmentEffectiveStatus
+    INVITED: String
+    EMAIL_BOUNCED: String
+    STARTED: String
+    ASSESSMENT_IN_PROGRESS: String
+    CERTIFIED: String
+    CANCELLED: String
+    EXPIRING: String
+    EXPIRED: String
+    ARCHIVED: String
+  end
+end

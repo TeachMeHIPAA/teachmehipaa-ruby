@@ -1,0 +1,49 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A machine-readable error code, such as `seat_unavailable`.
+  #
+  # Known values; the API may add more at any time, so handle values you don't recognize.
+  module ProblemCode
+    VALIDATION_FAILED: String
+    UNAUTHORIZED: String
+    FORBIDDEN: String
+    NOT_FOUND: String
+    METHOD_NOT_ALLOWED: String
+    NOT_ACCEPTABLE: String
+    CONFLICT: String
+    RATE_LIMITED: String
+    PRECONDITION_REQUIRED: String
+    PRECONDITION_FAILED: String
+    IDEMPOTENCY_KEY_REUSE: String
+    UNSUPPORTED_MEDIA_TYPE: String
+    ILLEGAL_TRANSITION: String
+    SEAT_UNAVAILABLE: String
+    SEAT_ALREADY_CLAIMED: String
+    ALREADY_INVITED: String
+    EMAIL_ALREADY_REGISTERED: String
+    LAST_ADMIN_REMOVAL_BLOCKED: String
+    ORG_NOT_ACTIVE: String
+    ENROLLMENT_ARCHIVED: String
+    LESSONS_INCOMPLETE: String
+    BATCH_TOO_LARGE: String
+    IMPORT_TOO_LARGE: String
+    EXPORT_TOO_LARGE: String
+    SUMMARY_TOO_LARGE: String
+    SEAT_NOT_REFUNDABLE: String
+    REFUND_FAILED: String
+    NOT_CONFIGURED: String
+    RESET_UNAVAILABLE: String
+    AUTO_RECERTIFY_UNAVAILABLE: String
+    API_CLIENT_LIMIT_REACHED: String
+    EXTERNAL_ID_CONFLICT: String
+    CANNOT_OFFBOARD_ADMIN: String
+    CANNOT_LAUNCH_ADMIN: String
+    LEARNER_REMOVED: String
+    LEARNER_NOT_ACCEPTED: String
+    CANNOT_RENAME_ADMIN: String
+    LEARNER_IN_MULTIPLE_ORGS: String
+    ACCOUNT_EXISTS_USE_SIGN_IN: String
+    NAME_CHANGE_NOT_ALLOWED: String
+    TEMPORARILY_UNAVAILABLE: String
+  end
+end

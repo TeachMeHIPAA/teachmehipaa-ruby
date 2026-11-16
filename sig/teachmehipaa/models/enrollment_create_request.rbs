@@ -1,0 +1,12 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An EnrollmentCreateRequest object.
+  class EnrollmentCreateRequest < Model
+    # The learner's email address.
+    def email: () -> String
+    # The learner's full name.
+    def name: () -> String?
+    # The course to invite them to. Defaults to `hipaa`.
+    def course_id: () -> String?
+  end
+end

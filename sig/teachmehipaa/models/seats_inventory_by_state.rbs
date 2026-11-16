@@ -1,0 +1,12 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # Seats by internal state. Prefer `purchased`, `assigned` and `available`.
+  class SeatsInventoryByState < Model
+    def unused: () -> Integer
+    def assigned: () -> Integer
+    def accepted: () -> Integer
+    def revoked: () -> Integer
+    def free: () -> Integer
+    def refunded: () -> Integer
+  end
+end

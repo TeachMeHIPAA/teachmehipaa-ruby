@@ -1,0 +1,22 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A CertificateVerification object.
+  class CertificateVerification < Model
+    # `valid`, `expired` or `revoked`.
+    #
+    # See CertificateVerificationStatus for known values; the API may send newer ones.
+    def status: () -> String
+    # The name printed on the certificate.
+    def learner_name: () -> String
+    # The course.
+    def course_title: () -> String
+    # When it was issued (ISO 8601).
+    def issued_at: () -> Time
+    # When it expires.
+    def expires_at: () -> Time
+    # Who issued it.
+    #
+    # See CertificateVerificationIssuer for known values; the API may send newer ones.
+    def issuer: () -> String
+  end
+end

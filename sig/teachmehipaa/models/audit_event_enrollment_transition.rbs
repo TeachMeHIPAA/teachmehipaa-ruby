@@ -1,0 +1,22 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An AuditEventEnrollmentTransition object.
+  class AuditEventEnrollmentTransition < Model
+    include AuditEvent
+
+    def event_id: () -> String
+    def at: () -> String
+    def type: () -> String
+    # See AuditEventEnrollmentTransitionTransition for known values; the API may send newer ones.
+    def transition: () -> String
+    def subject_id: () -> String
+    def course_id: () -> String
+    # See AuditEventEnrollmentTransitionStatusFrom for known values; the API may send newer ones.
+    def status_from: () -> String
+    # See AuditEventEnrollmentTransitionStatusTo for known values; the API may send newer ones.
+    def status_to: () -> String
+    def archived_from: () -> bool
+    def archived_to: () -> bool
+    def rev: () -> Integer
+  end
+end

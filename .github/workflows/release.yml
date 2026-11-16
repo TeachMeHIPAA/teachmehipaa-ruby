@@ -1,0 +1,93 @@
+name: Release
+
+# Manual only. A run without `publish` checks, tests and builds the gem but
+# publishes nothing; with it, a second job also pushes the gem to RubyGems
+# through trusted publishing. Until launch, teachmehipaa.gemspec sets
+# `allowed_push_host` to https://example.invalid, and `gem push` refuses any
+# other host, so even a mistaken `publish` run fails at the push (see
+# CONTRIBUTING.md).
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Push to RubyGems (fails while allowed_push_host is example.invalid)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      # The contract suite runs Prism through npx.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: Lint
+        run: bundle exec rake rubocop
+      - name: Type check signatures
+        run: bundle exec rake rbs:validate
+      - name: Unit tests and README samples (with runtime signature checks)
+        run: bundle exec rake rbs:test
+      - name: Contract tests
+        run: bundle exec rake test:contract
+      - name: Build
+        run: gem build teachmehipaa.gemspec --strict
+      - name: List the gem's files
+        run: tar -xOf teachmehipaa-*.gem data.tar.gz | tar -tz
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: gem
+          path: teachmehipaa-*.gem
+          if-no-files-found: error
+
+  publish:
+    name: Publish to RubyGems
+    needs: verify
+    if: ${{ inputs.publish }}
+    runs-on: ubuntu-latest
+    environment:
+      name: rubygems
+      url: https://rubygems.org/gems/teachmehipaa
+    permissions:
+      # `rake release` pushes the v<version> tag.
+      contents: write
+      # RubyGems trusted publishing exchanges this OIDC token for a
+      # short-lived push credential; no RubyGems key is stored in the
+      # repository. The gem keeps rubygems_mfa_required, which trusted
+      # publishing satisfies.
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      # `rake release` pushes the tag before the gem, so stop here rather
+      # than tag a version that can't be pushed.
+      - name: Check that the gem may be pushed to RubyGems
+        run: |
+          host=$(ruby -e 'puts Gem::Specification.load("teachmehipaa.gemspec").metadata["allowed_push_host"]')
+          if [ -n "$host" ] && [ "$host" != "https://rubygems.org" ]; then
+            echo "::error::allowed_push_host is $host; see Releasing in CONTRIBUTING.md"
+            exit 1
+          fi
+      # Runs `rake release`: builds the gem from this commit, tags it and
+      # pushes it.
+      - uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1.4.1

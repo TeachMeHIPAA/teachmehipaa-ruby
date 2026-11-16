@@ -1,0 +1,12 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An EnrollmentsBatchResults object.
+  class EnrollmentsBatchResults < Model
+    # The operation that was run.
+    #
+    # See EnrollmentsBatchResultsOperation for known values; the API may send newer ones.
+    def operation: () -> String
+    # One result per enrollment: `succeeded`, `skipped` or `failed` with a problem.
+    def results: () -> Array[EnrollmentsBatchResultsResultsItem]
+  end
+end

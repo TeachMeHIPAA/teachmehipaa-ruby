@@ -1,0 +1,13 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # The enrollments to act on: a list of `enrollmentIds` (up to 500), or a `filter`.
+  #
+  # The variant is picked by which field is present.
+  module EnrollmentsBatchRequestSelect
+    extend Union
+
+    class Unknown < Model
+      include EnrollmentsBatchRequestSelect
+    end
+  end
+end

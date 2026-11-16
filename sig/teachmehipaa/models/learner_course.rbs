@@ -1,0 +1,8 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # The course this learner record is for.
+  class LearnerCourse < Model
+    def course_id: () -> String
+    def title: () -> String
+  end
+end

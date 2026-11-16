@@ -1,0 +1,15 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  module Resources
+    # The methods under +client.certificate_verifications+.
+    class CertificateVerifications < Core::Resource
+      # Verify a certificate
+      #
+      # Verifies the certificate behind a `https://tme.so/{tinyId}` link. Needs no access token.
+      # Limited to 60 requests a minute per IP address.
+      #
+      # Sends no Access token, so it also works on a client built without credentials.
+      def retrieve: (String tiny_id, ?request_options: request_options) -> CertificateVerification
+    end
+  end
+end

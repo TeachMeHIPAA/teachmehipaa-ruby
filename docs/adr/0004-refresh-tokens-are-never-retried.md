@@ -1,5 +1,7 @@
 # Refresh-token exchanges are never retried, and rotated tokens persist first
 
+_Superseded 2026-11-15: partner Grants removed (TeachMeHIPAA/monorepo#2308)._
+
 Every refresh returns a new Refresh token. Presenting any recent superseded
 one revokes the whole Grant. So an SDK must not retry a `refresh_token` or
 `authorization_code` exchange whose outcome is unknown, and it must save the

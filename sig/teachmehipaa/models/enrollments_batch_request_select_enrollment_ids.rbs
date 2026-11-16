@@ -1,0 +1,9 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An EnrollmentsBatchRequestSelectEnrollmentIds object.
+  class EnrollmentsBatchRequestSelectEnrollmentIds < Model
+    include EnrollmentsBatchRequestSelect
+
+    def enrollment_ids: () -> Array[String]
+  end
+end

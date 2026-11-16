@@ -1,0 +1,23 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  module Resources
+    # The methods under +client.members+.
+    class Members < Core::Resource
+      # List all members
+      #
+      # Returns a list of the organization's members, its admins and learners. Pass `role=admin` to
+      # list only admins.
+      #
+      # Needs the +members:read+ Scope.
+      def list: (?limit: Integer?, ?cursor: String?, ?include: String?, ?role: (String | Symbol)?,
+                 ?request_options: request_options) -> Page[MemberListItem]
+
+      # Retrieve a member
+      #
+      # Retrieves a member of the organization.
+      #
+      # Needs the +members:read+ Scope.
+      def retrieve: (String subject_id, ?request_options: request_options) -> Member
+    end
+  end
+end

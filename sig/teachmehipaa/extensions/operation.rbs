@@ -1,0 +1,77 @@
+module TeachMeHipaa
+  # The file an export Operation produced; see Operation#export_result.
+  class ExportResult < Data
+    attr_reader csv: String
+    attr_reader filename: String?
+    attr_reader row_count: Integer?
+
+    def self.new: (csv: String, filename: String?, row_count: Integer?) -> instance
+  end
+
+  # Work that may finish after the request that started it.
+  class Operation < OperationBase
+    DEFAULT_WAIT_TIMEOUT: Float
+    DEFAULT_WAIT_INTERVAL: Float
+    MAX_WAIT_INTERVAL: Float
+    NAME_PATTERN: Regexp
+
+    def self.operation_id_from_name: (String name) -> String
+    def self.poll_delay: (Float interval, Integer poll_number) -> Float
+
+    def initialize: (Hash[String, untyped] data, ?last_response: LastResponse?, ?requestor: Core::Requestor?) -> void
+    def wait: (?timeout: Numeric, ?interval: Numeric) -> instance
+    def export_result: () -> ExportResult
+
+    # Protected in Ruby; RBS has no protected.
+    def settled: () -> instance
+    def read_as: (singleton(Operation) model) -> Operation
+
+    private
+
+    def check_wait: (untyped timeout, untyped interval) -> [Numeric, Float]
+    def requestor: () -> Core::Requestor
+    def clock: () -> _Clock
+    def poll_after: (Float seconds) -> instance
+    def operation_id: () -> String
+    def decode_csv: (String data_base64) -> String
+    def timed_out: (Operation operation, Numeric timeout) -> OperationTimeoutError
+  end
+
+  # How a Test delivery or a redrive ended.
+  module WebhookDeliveryResult
+    extend Union
+
+    def tag: () -> String
+
+    class Unknown < Model
+      include WebhookDeliveryResult
+    end
+  end
+
+  # The endpoint accepted the Delivery.
+  class WebhookDeliverySent < Model
+    include WebhookDeliveryResult
+
+    def response_status: () -> Integer
+  end
+
+  # Delivery stopped for good; +reason+ says why.
+  class WebhookDeliveryFailed < Model
+    include WebhookDeliveryResult
+
+    def reason: () -> String
+    def response_status: () -> Integer?
+  end
+
+  # The Delivery had already ended before this Operation.
+  class WebhookDeliverySettled < Model
+    include WebhookDeliveryResult
+
+    def status: () -> String
+  end
+
+  # An Operation from webhook_subscriptions.test or .redrive.
+  class WebhookDeliveryOperation < Operation
+    def response: () -> WebhookDeliveryResult?
+  end
+end

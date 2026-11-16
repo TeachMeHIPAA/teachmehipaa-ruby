@@ -1,0 +1,33 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A LearnerCreated object.
+  class LearnerCreated < Model
+    # Unique identifier for the learner.
+    def learner_id: () -> String
+    # The learner's email address.
+    def email: () -> String
+    # The learner's full name.
+    def name: () -> String?
+    # Your own id for the learner.
+    def external_id: () -> String?
+    # The learner's training status. One of `not_started` (invited), `invite_bounced`,
+    # `in_progress`, `compliant`, `expiring_soon` (within 60 days of expiry), `expired` or
+    # `removed`.
+    #
+    # See LearnerStatus for known values; the API may send newer ones.
+    def status: () -> String
+    # The course the learner was invited to.
+    def course: () -> LearnerCreatedCourse
+    def invited_at: () -> Time?
+    def started_at: () -> Time?
+    def completed_at: () -> Time?
+    def due_at: () -> Time?
+    def certificate: () -> LearnerCreatedCertificate?
+    # How the invite was delivered: `email`, or `none` when you deliver it.
+    #
+    # See LearnerCreatedDelivery for known values; the API may send newer ones.
+    def delivery: () -> String?
+    # The invite link, returned once when `delivery` is `none`. Send it to the learner yourself.
+    def join_url: () -> String?
+  end
+end

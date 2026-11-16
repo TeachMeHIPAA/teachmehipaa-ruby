@@ -1,0 +1,14 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A Course object.
+  class Course < Model
+    # Unique identifier for the course.
+    def course_id: () -> String
+    # The course's title.
+    def title: () -> String
+    # The current version of the course content.
+    def course_version: () -> String
+    # The score needed to pass the course's assessment.
+    def passing_threshold: () -> Numeric
+  end
+end

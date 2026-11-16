@@ -1,0 +1,32 @@
+module TeachMeHipaa
+  # A position in the Event log; see Resources::Events#tail.
+  class EventTail
+    include Enumerable[Event]
+
+    # Ends a tail when +call+ returns true.
+    interface _Stop
+      def call: () -> boolish
+    end
+
+    attr_reader last_event_id: String?
+
+    def initialize: (events_after: ^(String? position) -> Page[Event], after: String?, follow: bool,
+                     interval: Float, stop: _Stop?, sleep: _Sleep) -> void
+    # Skipped by rbs:test, which would drain the returned Enumerator.
+    %a{rbs:test:skip} def each: () { (Event) -> void } -> self
+                              | () -> Enumerator[Event, self]
+
+    private
+
+    def stopped?: () -> bool
+  end
+
+  module Resources
+    class Events < EventsBase
+      DEFAULT_TAIL_INTERVAL: Float
+
+      def tail: (?after: String?, ?type: (String | Symbol)?, ?limit: Integer?, ?follow: bool, ?interval: Numeric,
+                 ?stop: EventTail::_Stop?, ?request_options: request_options) -> EventTail
+    end
+  end
+end

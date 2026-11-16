@@ -1,0 +1,18 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  module Resources
+    # The generated methods under +client.events+. The client exposes the hand-written subclass
+    # Events in lib/teachmehipaa/extensions/events.rb.
+    class EventsBase < Core::Resource
+      # List all events
+      #
+      # Returns a list of the organization's events from the last 30 days, oldest first. Pass the
+      # last `eventId` you processed as `after` to resume where you stopped, and `type` to list one
+      # event type.
+      #
+      # Needs the +webhooks:manage+ or +audit:read+ Scope.
+      def list: (?limit: Integer?, ?after: String?, ?type: (String | Symbol)?,
+                 ?request_options: request_options) -> Page[Event]
+    end
+  end
+end

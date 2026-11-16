@@ -1,0 +1,537 @@
+module TeachMeHipaa
+  VERSION: String
+
+  type environment = :live | :sandbox
+  type headers = Hash[String, String]
+  type app_info = { name: String, ?version: String, ?url: String }
+  # A nested object parameter: snake_case (or API) field names to values.
+  type params = Hash[Symbol | String, untyped]
+  # File content for a multipart part: a path, anything that reads the
+  # bytes, or the bytes in a FilePart.
+  type upload = String | Pathname | _Reader | FilePart
+
+  class FilePart
+    attr_reader data: String
+    attr_reader filename: String?
+
+    def initialize: (String data, ?filename: String?) -> void
+  end
+
+  interface _Reader
+    def read: () -> String
+  end
+
+  # An ETag for If-Match or If-None-Match: the String, or an object the
+  # client returned.
+  type etag = String | _ReadFromResponse
+
+  interface _ReadFromResponse
+    def last_response: () -> LastResponse?
+  end
+
+  class Omit
+  end
+
+  OMIT: Omit
+
+  ENVIRONMENTS: Hash[environment, String]
+  DEFAULT_MAX_RETRIES: Integer
+  DEFAULT_TIMEOUT: Float
+
+  interface _Logger
+    def info: (String message) -> untyped
+  end
+
+  interface _Clock
+    def call: () -> Float
+  end
+
+  interface _Sleep
+    def call: (Float seconds) -> untyped
+  end
+
+  interface _Transport
+    def call: (Transport::Request request) ?{ (Transport::Response streaming) -> Transport::Response } -> Transport::Response
+  end
+
+  interface _TokenProvider
+    def access_token: (Core::Connection connection) -> String
+    def invalidate: (String access_token) -> void
+  end
+
+  class FieldError < Data
+    attr_reader path: String
+    attr_reader message: String
+
+    def self.new: (path: String, message: String) -> instance
+  end
+
+  class Error < StandardError
+    attr_reader status: Integer?
+    attr_reader code: String?
+    attr_reader title: String?
+    attr_reader detail: String?
+    attr_reader errors: Array[FieldError]
+    attr_reader request_id: String?
+    attr_reader headers: headers
+    attr_reader body: String?
+
+    def initialize: (String message, ?status: Integer?, ?code: String?, ?title: String?, ?detail: String?,
+                     ?errors: Array[FieldError], ?request_id: String?, ?headers: headers, ?body: String?) -> void
+
+    def self.from_response: (Transport::Response response) -> Error
+    def self.from_oauth_response: (Transport::Response response) -> Error
+  end
+
+  class AuthenticationError < Error
+  end
+
+  class PermissionDeniedError < Error
+  end
+
+  class NotFoundError < Error
+  end
+
+  class ConflictError < Error
+  end
+
+  class PreconditionFailedError < Error
+  end
+
+  class InvalidRequestError < Error
+  end
+
+  class IdempotencyError < InvalidRequestError
+  end
+
+  class RateLimitError < Error
+    def retry_after: () -> Float?
+  end
+
+  class APIError < Error
+    def self.unexpected: (Transport::Response response, ?expected: String) -> APIError
+  end
+
+  class OAuthError < Error
+  end
+
+  class APIConnectionError < Error
+  end
+
+  class APITimeoutError < APIConnectionError
+  end
+
+  class OperationFailedError < Error
+    attr_reader operation: Operation
+
+    def initialize: (String message, operation: Operation, **untyped fields) -> void
+    def self.from_operation: (Operation operation) -> OperationFailedError
+    private def self.last_response_fields: (LastResponse? last_response) -> { ?request_id: String?, ?headers: headers }
+  end
+
+  class OperationTimeoutError < Error
+    attr_reader operation: Operation
+
+    def initialize: (String message, operation: Operation) -> void
+  end
+
+  class WebhookSignatureError < Error
+    def initialize: (String code, String message) -> void
+  end
+
+  module Webhook
+    # Request headers: a Hash in any key case, a Rack env, or Rails'
+    # request.headers.
+    interface _Headers
+      def each: () { ([untyped, untyped]) -> void } -> untyped
+    end
+
+    DEFAULT_TOLERANCE: Integer
+
+    # A nil or empty secret (an unset environment variable, say) raises
+    # ArgumentError.
+    def self.construct_event: (String payload, _Headers headers, String? secret, String path,
+                               ?tolerance: Numeric, ?received_at: Time?) -> (Event | TestDelivery)
+    def self.generate_test_headers: (payload: String, secret: String?, path: String, ?timestamp: Time?,
+                                     ?event_type: String?, ?event_id: String?, ?key_id: String?) -> headers
+  end
+
+  module Transport
+    class Request < Data
+      attr_reader http_method: String
+      attr_reader url: String
+      attr_reader headers: headers
+      attr_reader body: String?
+      attr_reader timeout: Float
+
+      def self.new: (http_method: String, url: String, headers: headers, body: String?, timeout: Float) -> instance
+    end
+
+    # A body's chunks, while a transport streams it.
+    interface _Chunks
+      def each: () { (String chunk) -> void } -> untyped
+    end
+
+    class Response < Data
+      attr_reader status: Integer
+      attr_reader headers: headers
+      attr_reader body: String | _Chunks
+
+      def self.new: (status: Integer, headers: headers, body: String | _Chunks) -> instance
+    end
+
+    class NetHttp
+      include _Transport
+    end
+  end
+
+  class Config < Data
+    attr_reader environment: environment
+    attr_reader base_url: String
+    attr_reader organization_id: String?
+    attr_reader max_retries: Integer
+    attr_reader timeout: Float
+    attr_reader user_agent: String
+    attr_reader logger: _Logger?
+    attr_reader clock: _Clock
+    attr_reader sleep: _Sleep
+
+    def self.build: (environment: environment | String, base_url: String?, organization_id: String?,
+                     max_retries: Integer, timeout: Numeric, app_info: app_info?, logger: _Logger?,
+                     clock: _Clock?, sleep: _Sleep?) -> Config
+    def self.check_environment: (environment | String environment) -> environment
+    def self.check_max_retries: (untyped max_retries) -> Integer
+    def self.check_timeout: (untyped timeout) -> Float
+    def self.check_request_options: (request_options options) -> request_options
+  end
+
+  class LastResponse < Data
+    attr_reader status: Integer
+    attr_reader headers: headers
+
+    def self.from: (Transport::Response response) -> LastResponse
+    def request_id: () -> String?
+    def etag: () -> String?
+  end
+
+  class Model
+    def self.fields: () -> Hash[Symbol, untyped]
+    def self.to_wire: (params params) -> Hash[String, untyped]
+    private def self.field: (Symbol name, String wire_name, ?type: untyped, ?reader: bool) -> void
+
+    attr_reader last_response: LastResponse?
+
+    def initialize: (Hash[String, untyped] data, ?last_response: LastResponse?) -> void
+    def not_modified?: () -> false
+    def []: (String | Symbol key) -> untyped
+    def to_h: () -> Hash[Symbol, untyped]
+    def ==: (untyped other) -> bool
+    def eql?: (untyped other) -> bool
+    def hash: () -> Integer
+  end
+
+  module Union
+    def new: (Hash[String, untyped] data, ?last_response: LastResponse?) -> Model
+    def to_wire: (params params) -> Hash[String, untyped]
+
+    private
+
+    def variants: (Hash[String, String] variants, fallback: String, ?property: String?) -> void
+  end
+
+  # One page of a list. Enumerable over this page's items only;
+  # #auto_paging_each iterates every page.
+  class Page[T]
+    include Enumerable[T]
+
+    attr_reader items: Array[T]
+    attr_reader next_cursor: String?
+    attr_reader last_response: LastResponse
+
+    def initialize: (items: Array[T], next_cursor: String?, last_response: LastResponse,
+                     ?fetch_next: (^(Page[T]) -> Page[T])?) -> void
+    # rbs:test checks a returned Enumerator by draining it, which would
+    # fetch every page; the iterators are tested through the client instead.
+    %a{rbs:test:skip} def each: () { (T) -> void } -> self
+                              | () -> Enumerator[T, self]
+    def next_page?: () -> bool
+    def next_page: () -> Page[T]
+    %a{rbs:test:skip} def each_page: () { (Page[T]) -> void } -> self
+                                   | () -> Enumerator[Page[T], self]
+    %a{rbs:test:skip} def auto_paging_each: () { (T) -> void } -> self
+                                          | () -> Enumerator[T, self]
+  end
+
+  class EmptyResponse < Data
+    attr_reader last_response: LastResponse
+
+    def self.new: (last_response: LastResponse) -> instance
+  end
+
+  class NotModified < Data
+    attr_reader last_response: LastResponse
+
+    def self.new: (last_response: LastResponse) -> instance
+    def not_modified?: () -> true
+  end
+
+  class BinaryResponse < Data
+    attr_reader data: String
+    attr_reader content_type: String?
+    attr_reader filename: String?
+    attr_reader last_response: LastResponse
+
+    def self.new: (data: String, content_type: String?, filename: String?, last_response: LastResponse) -> instance
+  end
+
+  class StreamedResponse < Data
+    attr_reader content_type: String?
+    attr_reader filename: String?
+    attr_reader last_response: LastResponse
+
+    def self.new: (content_type: String?, filename: String?, last_response: LastResponse) -> instance
+  end
+
+  module TokenProviders
+    REFRESH_MARGIN_SECONDS: Integer
+
+    class ClientCredentials
+      include _TokenProvider
+
+      def initialize: (client_id: String, client_secret: String, ?scopes: Array[String | Symbol]?) -> void
+    end
+
+    class Static
+      include _TokenProvider
+
+      def initialize: (String access_token) -> void
+    end
+  end
+
+  type request_options = {
+    ?headers: Hash[String, String],
+    ?timeout: Numeric,
+    ?max_retries: Integer,
+    ?idempotency_key: String,
+    ?request_id: String
+  }
+
+  # @api private
+  module Core
+    module Arguments
+      def self.text?: (untyped value) -> bool
+    end
+
+    module Values
+      def self.read: (untyped type, untyped value) -> untyped
+      def self.read_collection: (untyped type, untyped value) -> untyped
+      def self.write: (untyped type, untyped value) -> untyped
+      def self.write_object: (untyped type, Hash[untyped, untyped] value) -> Hash[String, untyped]
+    end
+
+    module Responses
+      class Reading < Data
+        attr_reader model: untyped
+        attr_reader accept: String?
+        attr_reader fetch_next: (^(Page[untyped]) -> Page[untyped])?
+        attr_reader requestor: Requestor
+
+        def self.new: (model: untyped, accept: String?, fetch_next: (^(Page[untyped]) -> Page[untyped])?,
+                       requestor: Requestor) -> instance
+        def with: (?fetch_next: (^(Page[untyped]) -> Page[untyped])?) -> instance
+      end
+
+      READERS: Hash[Symbol, ^(Transport::Response, LastResponse, Reading) -> untyped]
+
+      def self.read: (Transport::Response response, Symbol kind, Reading reading) -> untyped
+      def self.success?: (Integer status) -> bool
+      def self.media_type?: (String? content_type, String accept) -> bool
+      def self.check_media_type: (Transport::Response response, String accept) -> void
+      def self.filename: (String? content_disposition) -> String?
+    end
+
+    type pagination_style = :cursor | :after
+
+    # The IR's pagination for a list method.
+    type pagination = { style: pagination_style, cursor_param: String }
+
+    module Pagination
+      def self.position: (pagination_style style, Page[untyped] page) -> String?
+    end
+
+    module WebhookInput
+      ISO_8601_DATE_TIME: Regexp
+
+      def self.header: (Webhook::_Headers headers, String name) -> untyped
+      def self.required_header: (Webhook::_Headers headers, String name) -> String
+      def self.path_and_query: (untyped path) -> String
+      def self.check_secret: (untyped secret) -> void
+      def self.parse_timestamp: (String timestamp) -> Time
+      def self.parse: (String payload) -> (Event | TestDelivery)
+    end
+
+    module Conditional
+      def self.headers: (if_match: etag?, if_none_match: etag?) -> Hash[String, String]
+      def self.etag: (etag? value, Symbol name) -> String?
+    end
+
+    module Multipart
+      EXTENSIONS: Hash[String, String]
+
+      def self.encode: (Hash[String, untyped] body, Hash[String, String] binary_parts) -> [String, String]
+      def self.file_part: (String name, upload value, String content_type) -> String
+      def self.read_file: (String name, upload value, String default_filename) -> [String, String]
+      def self.read_path: (String name, String path) -> [String, String]
+      def self.read_io: (String name, _Reader io, String default_filename) -> [String, String]
+      def self.json_part: (String name, untyped value) -> String
+    end
+
+    module Json
+      def self.success_body: (Transport::Response response) -> untyped
+      def self.object_body: (Transport::Response response) -> Hash[String, untyped]?
+      def self.json?: (String? content_type) -> bool
+      def self.media_type: (String? content_type) -> String
+      def self.retry_after: (headers headers) -> Float?
+    end
+
+    # The keyword arguments of Connection#request.
+    type request = {
+      method: String,
+      path: String,
+      ?query: Hash[Symbol | String, untyped],
+      headers: Hash[String, String],
+      ?body: String?,
+      ?timeout: Numeric?,
+      ?stream: _Stream
+    }
+
+    # Picks the block for a response's chunks, or nil to read it whole.
+    interface _Stream
+      def call: (Integer status, headers headers) -> (^(String chunk) -> void)?
+    end
+
+    class BodyReader
+      attr_reader response: Transport::Response?
+
+      def initialize: (_Stream stream) -> void
+      def started?: () -> bool
+      def block_failed?: () -> bool
+      def read: (Transport::Response response) -> Transport::Response
+    end
+
+    module Retries
+      INITIAL_DELAY: Float
+      MAX_DELAY: Float
+      MAX_RETRY_AFTER: Float
+
+      class Policy < Data
+        attr_reader retry_safe: bool
+        attr_reader max_retries: Integer
+
+        def self.new: (retry_safe: bool, max_retries: Integer) -> instance
+        def self.for: (String method, retry_safe: bool, max_retries: Integer) -> Policy
+      end
+
+      NEVER_RETRIED: Array[String]
+
+      interface _ErrorMapper
+        def call: (Transport::Response response) -> Error
+      end
+
+      interface _Replay
+        def call: (request refused) -> bool
+      end
+
+      def self.call: (Connection connection, Policy policy, map_error: _ErrorMapper,
+                      ?replay: _Replay?, ?not_modified: bool) { () -> request } -> Transport::Response
+      def self.backoff: (Numeric base, Integer attempt, Numeric cap) -> Numeric
+    end
+
+    class AccessTokenCache
+      def initialize: () -> void
+      def fetch: (_Clock clock) { () -> [String, Float] } -> String
+      def invalidate: (String access_token) -> void
+    end
+
+    class Connection
+      NETWORK_ERRORS: Array[singleton(StandardError)]
+
+      attr_reader config: Config
+
+      def initialize: (Config config, _Transport transport) -> void
+      class Interrupted < StandardError
+        attr_reader error: APIConnectionError
+
+        def initialize: (APIConnectionError error) -> void
+      end
+
+      def request: (method: String, path: String, ?query: Hash[Symbol | String, untyped],
+                    ?headers: Hash[String, String], ?body: String?, ?timeout: Numeric?,
+                    ?stream: _Stream?) -> Transport::Response
+    end
+
+    class Requestor
+      PROBLEM_JSON: String
+      NO_CREDENTIALS: String
+
+      class Call < Data
+        attr_reader request: request
+        attr_reader policy: Retries::Policy
+        attr_reader authenticated: bool
+
+        def self.new: (request: request, policy: Retries::Policy, authenticated: bool) -> instance
+        def with: (?request: request) -> instance
+      end
+
+      def initialize: (Connection connection, _TokenProvider? token_provider) -> void
+      def request: (method: String, path: String, ?model: (_ModelClass[untyped] | singleton(Operation))?,
+                    ?path_params: Hash[Symbol | String, String],
+                    ?query: Hash[Symbol | String, untyped],
+                    ?body: Hash[String, untyped]?,
+                    ?content_type: String,
+                    ?binary_parts: Hash[String, String],
+                    ?retry_safe: bool,
+                    ?idempotency_key: (:required | nil),
+                    ?authenticated: bool,
+                    ?if_match: etag?,
+                    ?if_none_match: etag?,
+                    ?response: (:model | :page | :operation | :write_result | :empty | :binary),
+                    ?accept: String?,
+                    ?pagination: pagination?,
+                    ?request_options: request_options) ?{ (String chunk) -> void } -> untyped
+      def config: () -> Config
+    end
+
+    interface _ModelClass[M]
+      def new: (Hash[String, untyped] data, ?last_response: LastResponse?) -> M
+    end
+
+    class Resource
+      def initialize: (Requestor requestor) -> void
+
+      private
+
+      def request: (**untyped) ?{ (String chunk) -> void } -> untyped
+      def config: () -> Config
+      def fixed: (Hash[String, untyped] body, Array[String] path, untyped value) -> Hash[String, untyped]
+    end
+  end
+
+  class Client
+    include Resources::Root
+
+    attr_reader config: Config
+
+    def initialize: (?client_id: String?, ?client_secret: String?, ?token_provider: _TokenProvider?,
+                     ?environment: environment | String,
+                     ?base_url: String?, ?organization_id: String?, ?scopes: Array[String | Symbol]?,
+                     ?max_retries: Integer, ?timeout: Numeric, ?transport: _Transport?,
+                     ?logger: _Logger?, ?app_info: app_info?, ?clock: _Clock?, ?sleep: _Sleep?) -> void
+
+    def environment: () -> environment
+    def base_url: () -> String
+    def max_retries: () -> Integer
+    def timeout: () -> Float
+    def webhooks: () -> singleton(Webhook)
+  end
+end

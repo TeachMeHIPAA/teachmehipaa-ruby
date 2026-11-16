@@ -1,0 +1,9 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A CertificateRevokedEventData object.
+  class CertificateRevokedEventData < Model
+    def certificate_id: () -> String
+    def learner_id: () -> String
+    def course_id: () -> String
+  end
+end

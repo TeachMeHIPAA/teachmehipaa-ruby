@@ -1,0 +1,18 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A SeatsInventory object.
+  class SeatsInventory < Model
+    # All seats on record.
+    def total: () -> Integer
+    # Seats in use.
+    def used: () -> Integer
+    # Seats a new invite can use now.
+    def available: () -> Integer
+    # Seats the organization holds and hasn't been refunded for, including a trial seat.
+    def purchased: () -> Integer?
+    # Seats held by an invited or enrolled learner.
+    def assigned: () -> Integer?
+    # Seats by internal state. Prefer `purchased`, `assigned` and `available`.
+    def by_state: () -> SeatsInventoryByState
+  end
+end

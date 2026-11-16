@@ -1,0 +1,43 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An Enrollment object.
+  class Enrollment < Model
+    include CancelEnrollmentResponse
+
+    # Unique identifier for the enrollment.
+    def enrollment_id: () -> String
+    # The learner's member id.
+    def subject_id: () -> String
+    # The course.
+    def course_id: () -> String
+    # The organization's id.
+    def org_id: () -> String
+    # The stored lifecycle state: `INVITED`, `EMAIL_BOUNCED`, `STARTED`, `ASSESSMENT_IN_PROGRESS`,
+    # `CERTIFIED` or `CANCELLED`.
+    #
+    # See EnrollmentStatus for known values; the API may send newer ones.
+    def status: () -> String
+    # The status to display. Adds `EXPIRING`, `EXPIRED` and `ARCHIVED`, derived when you read it.
+    #
+    # See EnrollmentEffectiveStatus for known values; the API may send newer ones.
+    def effective_status: () -> String
+    # Whether the enrollment is archived.
+    def archived: () -> bool
+    # The certification cycle, starting at 0. Renewing adds one.
+    def cycle: () -> Integer
+    # The resource's revision. Its strong `ETag` is derived from it.
+    def rev: () -> Integer
+    # When the learner was invited (ISO 8601).
+    def invited_at: () -> String?
+    # When the learner started.
+    def started_at: () -> String?
+    # When the learner completed the course.
+    def completed_at: () -> String?
+    # When the learner was certified.
+    def certified_at: () -> String?
+    # When the certification expires.
+    def expires_at: () -> String?
+    # The certificate issued for this cycle, if any.
+    def certificate_id: () -> String?
+  end
+end

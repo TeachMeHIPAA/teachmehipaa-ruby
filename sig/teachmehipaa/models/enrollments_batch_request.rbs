@@ -1,0 +1,13 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An EnrollmentsBatchRequest object.
+  class EnrollmentsBatchRequest < Model
+    # What to do to each enrollment: `remind`, `resendInvite`, `cancel`, `recertify`, `archive` or
+    # `unarchive`.
+    #
+    # See EnrollmentsBatchRequestOperation for known values; the API may send newer ones.
+    def operation: () -> String
+    # The enrollments to act on: a list of `enrollmentIds` (up to 500), or a `filter`.
+    def select: () -> EnrollmentsBatchRequestSelect
+  end
+end

@@ -1,0 +1,24 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A WebhookSubscriptionCreated object.
+  class WebhookSubscriptionCreated < Model
+    # Unique identifier for the subscription.
+    def subscription_id: () -> String
+    # The HTTPS URL events are delivered to.
+    def endpoint_url: () -> String
+    # The event types delivered.
+    #
+    # See EventType for known values; the API may send newer ones.
+    def event_types: () -> Array[String]
+    # Whether deliveries are on.
+    def enabled: () -> bool
+    def description: () -> String?
+    def seats_low_threshold: () -> Integer
+    # Identifies the signing secret.
+    def secret_key_id: () -> String
+    def created_at: () -> Time
+    def rev: () -> Integer
+    # The signing secret. Returned only once: store it now.
+    def secret: () -> String
+  end
+end

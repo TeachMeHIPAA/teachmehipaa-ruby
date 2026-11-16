@@ -1,0 +1,10 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An AuditEventActorScim object.
+  class AuditEventActorScim < Model
+    include AuditEventActor
+
+    def type: () -> String
+    def key_id: () -> String
+  end
+end

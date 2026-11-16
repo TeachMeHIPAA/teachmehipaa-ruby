@@ -1,0 +1,7 @@
+# Written by `bundle exec rake generate`; collapsed in diffs.
+lib/teachmehipaa/models/** linguist-generated=true
+lib/teachmehipaa/resources/** linguist-generated=true
+lib/teachmehipaa/models.rb linguist-generated=true
+lib/teachmehipaa/resources.rb linguist-generated=true
+sig/teachmehipaa/models/** linguist-generated=true
+sig/teachmehipaa/resources/** linguist-generated=true

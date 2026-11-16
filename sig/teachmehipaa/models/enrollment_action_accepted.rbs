@@ -1,0 +1,12 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An EnrollmentActionAccepted object.
+  class EnrollmentActionAccepted < Model
+    # The enrollment the request is for.
+    def enrollment_id: () -> String
+    # The action that was accepted: `remind` or `resendInvite`.
+    #
+    # See EnrollmentActionAcceptedAction for known values; the API may send newer ones.
+    def action: () -> String
+  end
+end

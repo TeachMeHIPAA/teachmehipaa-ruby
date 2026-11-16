@@ -1,0 +1,26 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A TokenIntrospection object.
+  class TokenIntrospection < Model
+    # `client` for an API client, `user` for a person.
+    #
+    # See TokenIntrospectionActorType for known values; the API may send newer ones.
+    def actor_type: () -> String
+    # The API client the token belongs to.
+    def client_id: () -> String?
+    # The person the token belongs to, for a user token.
+    def subject_id: () -> String?
+    # The organization the token is bound to, if any.
+    def org_id: () -> String?
+    # The scopes the token holds.
+    #
+    # See TokenIntrospectionScopesItem for known values; the API may send newer ones.
+    def scopes: () -> Array[String]
+    # `test` for a Sandbox client, `live` otherwise.
+    #
+    # See TokenIntrospectionMode for known values; the API may send newer ones.
+    def mode: () -> String?
+    # When the token expires (ISO 8601).
+    def expires_at: () -> Time?
+  end
+end

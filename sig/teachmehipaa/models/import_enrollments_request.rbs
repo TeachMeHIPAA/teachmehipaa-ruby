@@ -1,0 +1,9 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An ImportEnrollmentsRequest object.
+  class ImportEnrollmentsRequest < Model
+    # UTF-8 CSV (RFC 4180: quoted fields, `""` escapes, CRLF/LF). Header row required.
+    def file: () -> untyped
+    def options: () -> ImportOptions?
+  end
+end

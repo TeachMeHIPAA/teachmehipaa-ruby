@@ -1,0 +1,12 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # A LearnerRemindAccepted object.
+  class LearnerRemindAccepted < Model
+    # The learner the reminder is for.
+    def learner_id: () -> String
+    # Always `remind`.
+    #
+    # See LearnerRemindAcceptedAction for known values; the API may send newer ones.
+    def action: () -> String
+  end
+end

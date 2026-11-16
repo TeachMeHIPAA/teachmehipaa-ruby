@@ -1,0 +1,13 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # Known values; the API may add more at any time, so handle values you don't recognize.
+  module OAuthErrorCode
+    INVALID_REQUEST: String
+    INVALID_CLIENT: String
+    INVALID_GRANT: String
+    INVALID_SCOPE: String
+    UNSUPPORTED_GRANT_TYPE: String
+    SLOW_DOWN: String
+    TEMPORARILY_UNAVAILABLE: String
+  end
+end

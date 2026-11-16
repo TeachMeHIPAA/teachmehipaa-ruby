@@ -1,0 +1,14 @@
+# Generated from openapi/sdk-ir.json - do not edit. Run `bundle exec rake generate`.
+module TeachMeHipaa
+  # An AuditEventSeatGranted object.
+  class AuditEventSeatGranted < Model
+    include AuditEvent
+
+    def event_id: () -> String
+    def at: () -> String
+    def type: () -> String
+    def actor_subject_id: () -> String
+    def actor: () -> AuditEventActor
+    def quantity: () -> Integer
+  end
+end
