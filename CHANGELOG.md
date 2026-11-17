@@ -65,19 +65,14 @@ the Developer API document release `trimmed-2026-11-15`.
 
 ### Documentation
 
-- `docs/reference/code-samples.json`, a generated Ruby sample for every operation in the TeachMeHIPAA API reference, and a rewritten README with eight guides (now including Rails) in place of the original ten.
-- A shorter README, with a pre-release status note, CI and license badges,
-  and a link to a guide for every topic.
-- Guides in `docs/guides/`: getting started, authentication, errors and
-  retries, pagination and events, webhooks, operations and files,
-  conditional requests, testing, configuration and versioning. Every Ruby
-  sample in them runs in the test suite.
-- `docs/reference/resources.md`, a resource reference generated from the
-  SDK IR: every method's Ruby call, HTTP request, Scopes, retry and
-  conditional behaviour, parameters and return type.
-- An API reference built with YARD (`bundle exec rake docs`), with parameter
-  and return types on every resource method and model field, published to
-  GitHub Pages from `main`.
+- Documentation lives at
+  [docs.teachmehipaa.com/api](https://docs.teachmehipaa.com/api?lang=ruby).
+  `docs/reference/code-samples.json` feeds it: a generated Ruby sample for
+  every operation, each run in the test suite.
+- A short README with a pre-release status note, install, a quickstart run
+  in the test suite, and a link to the hosted docs.
+- Doc comments with parameter and return types on every resource method and
+  model field, and RBS signatures in `sig/`.
 - Runnable programs in `examples/`: a quickstart, a roster sync by External
   ID, a Sinatra webhook endpoint and a Certificate export.
 - Resource method doc comments now name the Scopes each method needs.
