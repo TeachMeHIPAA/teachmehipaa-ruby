@@ -4,5 +4,3 @@
 /coverage/
 /Gemfile.lock
 *.gem
-/.yardoc/
-/doc/

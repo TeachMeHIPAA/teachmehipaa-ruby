@@ -84,12 +84,16 @@ module SdkGenerator
       positional = method.path_params.map { |param| SampleCalls::PATH_VALUES.fetch(param.wire).inspect }
       keywords = entry.fetch(:args).map { |key, value| "#{key}: #{literal(value)}" }
       arguments = positional + keywords
-      head = "#{entry.fetch(:result)} = #{Reference.accessor(path)}.#{method.ruby_name}"
+      head = "#{entry.fetch(:result)} = #{accessor(path)}.#{method.ruby_name}"
       tail = entry[:chain].to_s
       one_line = arguments.empty? ? "#{head}#{tail}" : "#{head}(#{arguments.join(", ")})#{tail}"
       return one_line if one_line.length <= WIDTH
 
       "#{head}(\n#{arguments.map { |argument| "  #{argument},\n" }.join})#{tail}"
+    end
+
+    def accessor(path)
+      "client.#{path.map { |segment| Naming.snake(segment) }.join(".")}"
     end
 
     def literal(value)

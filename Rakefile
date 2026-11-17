@@ -4,8 +4,8 @@ require "bundler/gem_tasks"
 require "minitest/test_task"
 require "rubocop/rake_task"
 
-# The contract, sandbox and Rails suites live in subdirectories, so a plain
-# `rake test` needs neither Node, credentials nor Rails.
+# The contract and sandbox suites live in subdirectories, so a plain
+# `rake test` needs neither Node nor credentials.
 Minitest::TestTask.create(:test) do |t|
   t.test_globs = ["test/*_test.rb"]
 end
@@ -20,11 +20,6 @@ namespace :test do
     t.test_globs = ["test/sandbox/**/*_test.rb"]
   end
   Rake::Task["test:sandbox"].clear_comments.add_description "Smoke-test the real Sandbox (needs credentials)"
-
-  Minitest::TestTask.create(:rails) do |t|
-    t.test_globs = ["test/rails/**/*_test.rb"]
-  end
-  Rake::Task["test:rails"].clear_comments.add_description "Run the Rails guide samples under Action Pack"
 end
 
 RuboCop::RakeTask.new(:rubocop)
@@ -52,25 +47,4 @@ namespace :rbs do
   end
 end
 
-desc "Build the API reference into doc/; fails on any YARD warning or undocumented public API"
-task docs: "docs:coverage" do
-  sh "yard", "doc", "--fail-on-warning"
-end
-
-namespace :docs do
-  desc "Fail if a public class, module, method, attribute or constant has no doc comment"
-  task :coverage do
-    require "yard"
-    stats = YARD::CLI::Stats.new
-    stats.run("--no-save", "--fail-on-warning")
-    # A generated enum module's constants are its known values; each one's
-    # name and value are its documentation.
-    public_api = stats.all_objects.select { |object| %i[module class constant method].include?(object.type) }
-    undocumented = public_api.select { |object| object.docstring.blank? }.reject do |object|
-      object.type == :constant && object.file.start_with?("lib/teachmehipaa/models/")
-    end
-    abort "Undocumented public API:\n  #{undocumented.map(&:path).sort.join("\n  ")}" if undocumented.any?
-  end
-end
-
-task default: %i[rubocop rbs:validate rbs:test test:rails]
+task default: %i[rubocop rbs:validate rbs:test]

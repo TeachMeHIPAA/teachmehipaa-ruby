@@ -2,14 +2,12 @@
 
 require_relative "test_helper"
 
-# Every relative link in the hand-written docs and the generated reference
-# points at a file in the repository, and every #fragment at a heading in
-# its target, using GitHub's heading anchors (the YARD build translates
-# them; see scripts/yard_links.rb).
+# Every relative link in the hand-written docs points at a file in the
+# repository, and every #fragment at a heading in its target, using GitHub's
+# heading anchors.
 class DocLinksTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  DOCUMENTS = ["README.md", "CONTRIBUTING.md", "docs/README.md", "docs/reference/resources.md",
-               "examples/README.md", *Dir.glob("docs/guides/*.md", base: ROOT)].freeze
+  DOCUMENTS = ["README.md", "CONTRIBUTING.md", "docs/README.md", "examples/README.md"].freeze
   LINK = /\]\(([^)\s]+)\)/
 
   def test_every_relative_link_resolves
@@ -18,10 +16,6 @@ class DocLinksTest < Minitest::Test
     end
 
     assert_empty broken, "broken links"
-  end
-
-  def test_checks_every_guide
-    assert_operator DOCUMENTS.count { |document| document.start_with?("docs/guides/") }, :>=, 8
   end
 
   private

@@ -2,8 +2,8 @@
 
 module SdkGenerator
   # The YARD tags under a resource method's doc comment in the Ruby source,
-  # which the API reference (`bundle exec rake docs`) renders. The types
-  # match the method's RBS signature.
+  # which editors and documentation tools render. The types match the
+  # method's RBS signature.
   class YardTags
     REQUEST_OPTIONS_DOC = "Options for this call only: +idempotency_key+, +max_retries+, +timeout+, " \
                           "+request_id+ and +headers+."

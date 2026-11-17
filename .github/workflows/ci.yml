@@ -33,8 +33,6 @@ jobs:
         run: bundle exec rake rbs:validate
       - name: Test (with runtime signature checks)
         run: bundle exec rake rbs:test
-      - name: Rails guide samples
-        run: bundle exec rake test:rails
       - name: Build
         run: gem build teachmehipaa.gemspec --strict
 
